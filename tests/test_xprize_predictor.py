@@ -9,6 +9,9 @@ from xprize.xprize_predictor import XPrizePredictor
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 FIXTURES_PATH = os.path.join(ROOT_DIR, 'fixtures')
 DATA_URL = os.path.join(FIXTURES_PATH, "OxCGRT_latest.csv")
+PREDICTOR_27 = os.path.join(FIXTURES_PATH, "20200727_predictor.h5")
+PREDICTOR_30 = os.path.join(FIXTURES_PATH, "20200730_predictor.h5")
+PREDICTOR_31 = os.path.join(FIXTURES_PATH, "20200731_predictor.h5")
 
 SUBMISSION_DATE = np.datetime64("2020-07-31")
 NPI_COLUMNS = ['C1_School closing',
@@ -25,6 +28,9 @@ NPI_COLUMNS = ['C1_School closing',
 
 
 class TestMultiplicativeEvaluator(unittest.TestCase):
+
+    _latest_df = None
+    _snapshot_df = None
 
     @classmethod
     def setUpClass(cls):
@@ -51,9 +57,11 @@ class TestMultiplicativeEvaluator(unittest.TestCase):
 
     def test_simple_roll_out(self):
         cls = self.__class__
-        predictor = XPrizePredictor()
-        # Forecast for the first day after submission
-        day_1 = SUBMISSION_DATE + np.timedelta64(1, 'D')
-        day_1_npis_df = cls._snapshot_df[cls._snapshot_df.Date <= day_1]
-        pred = predictor.submission_predict(day_1, day_1_npis_df)
-        self.assertEqual(pred, 0, "Not the expect prediction")
+        predictor = XPrizePredictor(PREDICTOR_27, cls._snapshot_df, NPI_COLUMNS)
+        start_date = SUBMISSION_DATE + np.timedelta64(1, 'D')
+        end_date = start_date + np.timedelta64(3, 'D')
+        npis_df = cls._latest_df[(cls._latest_df.Date >= start_date) &
+                                 (cls._latest_df.Date <= end_date)]
+        pred = predictor.submission_predict(start_date, end_date, npis_df)
+        self.assertIsInstance(pred, pd.DataFrame)
+        # self.assertEqual(pred, 0, "Not the expect prediction")
