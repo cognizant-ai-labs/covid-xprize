@@ -1,9 +1,15 @@
+import os
 import unittest
 
 import numpy as np
 import pandas as pd
 
-DATA_URL = "tests/fixtures/OxCGRT_latest.csv"
+from xprize.xprize_predictor import XPrizePredictor
+
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+FIXTURES_PATH = os.path.join(ROOT_DIR, 'fixtures')
+DATA_URL = os.path.join(FIXTURES_PATH, "OxCGRT_latest.csv")
+
 SUBMISSION_DATE = np.datetime64("2020-07-31")
 NPI_COLUMNS = ['C1_School closing',
                'C2_Workplace closing',
@@ -44,4 +50,10 @@ class TestMultiplicativeEvaluator(unittest.TestCase):
         pass
 
     def test_simple_roll_out(self):
-        pass
+        cls = self.__class__
+        predictor = XPrizePredictor()
+        # Forecast for the first day after submission
+        day_1 = SUBMISSION_DATE + np.timedelta64(1, 'D')
+        day_1_npis_df = cls._snapshot_df[cls._snapshot_df.Date <= day_1]
+        pred = predictor.submission_predict(day_1, day_1_npis_df)
+        self.assertEqual(pred, 0, "Not the expect prediction")

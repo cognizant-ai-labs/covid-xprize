@@ -23,6 +23,7 @@ class XPrizePredictor(object):
         :param npis: the actual npis between the submission date (excluded) and the prediction_day
         :return: a Pandas DataFrame containing the prediction [`CountryName`, `Date`, `NewCases]
         """
+        return 0
 
     def simple_roll_out(self,
                         predictor,
