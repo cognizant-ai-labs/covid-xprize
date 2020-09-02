@@ -12,6 +12,9 @@ DATA_URL = os.path.join(FIXTURES_PATH, "OxCGRT_latest.csv")
 PREDICTOR_27 = os.path.join(FIXTURES_PATH, "20200727_predictor.h5")
 PREDICTOR_30 = os.path.join(FIXTURES_PATH, "20200730_predictor.h5")
 PREDICTOR_31 = os.path.join(FIXTURES_PATH, "20200731_predictor.h5")
+PREDICTIONS_27 = os.path.join(FIXTURES_PATH, "20200727_predictions.csv")
+PREDICTIONS_30 = os.path.join(FIXTURES_PATH, "20200730_predictions.csv")
+PREDICTIONS_31 = os.path.join(FIXTURES_PATH, "20200731_predictions.csv")
 
 SUBMISSION_DATE = np.datetime64("2020-07-31")
 NPI_COLUMNS = ['C1_School closing',
@@ -57,11 +60,12 @@ class TestMultiplicativeEvaluator(unittest.TestCase):
 
     def test_simple_roll_out(self):
         cls = self.__class__
-        predictor = XPrizePredictor(PREDICTOR_27, cls._snapshot_df, NPI_COLUMNS)
+        predictor = XPrizePredictor(PREDICTOR_31, cls._snapshot_df, NPI_COLUMNS)
         start_date = SUBMISSION_DATE + np.timedelta64(1, 'D')
         end_date = start_date + np.timedelta64(3, 'D')
         npis_df = cls._latest_df[(cls._latest_df.Date >= start_date) &
                                  (cls._latest_df.Date <= end_date)]
         pred = predictor.submission_predict(start_date, end_date, npis_df)
         self.assertIsInstance(pred, pd.DataFrame)
+        pred.to_csv(PREDICTIONS_31, index=False)
         # self.assertEqual(pred, 0, "Not the expect prediction")
