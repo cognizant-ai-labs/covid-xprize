@@ -1,5 +1,6 @@
 import os
 
+# noinspection PyPep8Naming
 import keras.backend as K
 import numpy as np
 import pandas as pd
@@ -52,21 +53,73 @@ class XPrizePredictor(object):
         self.countries = self.df.CountryName.unique()
         self.country_samples = self._create_country_samples(self.df, self.countries)
 
-    def submission_predict(self,
-                           start_date: np.datetime64,
-                           end_date: np.datetime64,
-                           npis: pd.DataFrame) -> pd.DataFrame:
+    def predict(self,
+                start_date: np.datetime64,
+                end_date: np.datetime64,
+                npis_df: pd.DataFrame) -> pd.DataFrame:
         """
         Makes a prediction of daily confirmed cases for a given day.
         :param start_date: the day from which to start making predictions
         :param end_date: the day on which to stop making predictions
-        :param npis: the actual npis between start_date and end_date
+        :param npis_df: the actual npis between start_date and end_date
         :return: a Pandas DataFrame containing the prediction [`CountryName`, `Date`, `NewCases]
         """
-        return self.simple_roll_out(start_date, end_date, npis)
+        # Prepare the output
+        forecast = {"CountryName": [],
+                    "Date": [],
+                    "PredictedDailyNewCases": []}
 
-    def _prepare_dataframe(self,
-                           measures_by_country_df=None) -> (pd.DataFrame, pd.DataFrame):
+        # For each country, each region
+        for c in self.countries:
+            cdf = self.df[self.df.CountryName == c]
+            cdf = cdf[cdf.ConfirmedCases.notnull()]
+            initial_context_input = self.country_samples[c]['X_test_context'][-1]
+            initial_action_input = self.country_samples[c]['X_test_action'][-1]
+
+            # Predictions with passed npis
+            cnpis_df = npis_df[npis_df.CountryName == c]
+            npis_sequence = np.array(cnpis_df[self.npi_columns])
+
+            # Get the predictions with the passed NPIs
+            preds = self._roll_out_predictions(self.predictor,
+                                               initial_context_input,
+                                               initial_action_input,
+                                               npis_sequence)
+
+            # Gather info to convert to total cases
+            prev_confirmed_cases = np.array(cdf.ConfirmedCases)
+            prev_new_cases = np.array(cdf.NewCases)
+            initial_total_cases = prev_confirmed_cases[-1]
+            pop_size = np.array(cdf.Population)[-1]  # Population size doesn't change over time
+
+            # Compute predictor's forecast
+            pred_total_cases, pred_new_cases = self._convert_ratios_to_total_cases(
+                preds,
+                WINDOW_SIZE,
+                prev_new_cases,
+                initial_total_cases,
+                pop_size)
+            # OPTIONAL: Smooth out pred_new_cases
+            # # If window size is 7, take the previous 6 new cases so we start doing a 7 day moving average for
+            # # the first pred new cases
+            # temp_pred_new_cases = list(prev_new_cases[-(WINDOW_SIZE-1):]) + pred_new_cases
+            # smooth_pred_new_cases = self._smooth_case_list(temp_pred_new_cases, WINDOW_SIZE)
+            # # Get rid of the first window_size - 1 NaN values where
+            # # there was not enough data to compute a moving average
+            # pred_new_cases = smooth_pred_new_cases[WINDOW_SIZE-1:]
+
+            # Append forecast data to results to return
+            for i, pred in enumerate(pred_new_cases):
+                forecast["CountryName"].append(c)
+                current_date = start_date + np.timedelta64(i, 'D')
+                forecast["Date"].append(current_date)
+                # forecast["ConfirmedCases"].append(pred_total_cases[i])
+                forecast["PredictedDailyNewCases"].append(pred)
+
+        forecast_df = pd.DataFrame.from_dict(forecast)
+        return forecast_df
+
+    def _prepare_dataframe(self, measures_by_country_df=None) -> (pd.DataFrame, pd.DataFrame):
         """
         Loads the Oxford dataset, cleans it up and prepares the necessary columns. Depending on options, also
         loads the Johns Hopkins dataset and merges that in.
@@ -204,65 +257,6 @@ class XPrizePredictor(object):
                     'y_test': y[-NB_TEST_DAYS:],
                 }
         return country_samples
-
-    def simple_roll_out(self,
-                        start_date,
-                        end_date,
-                        npis_df):
-        # Prepare the output
-        forecast = {"CountryName": [],
-                    "Date": [],
-                    "PredictedDailyNewCases": []}
-
-        # For each country, each region
-        for c in self.countries:
-            cdf = self.df[self.df.CountryName == c]
-            cdf = cdf[cdf.ConfirmedCases.notnull()]
-            initial_context_input = self.country_samples[c]['X_test_context'][-1]
-            initial_action_input = self.country_samples[c]['X_test_action'][-1]
-
-            # Predictions with passed npis
-            cnpis_df = npis_df[npis_df.CountryName == c]
-            npis_sequence = np.array(cnpis_df[self.npi_columns])
-
-            # Get the predictions with the passed NPIs
-            preds = self._roll_out_predictions(self.predictor,
-                                               initial_context_input,
-                                               initial_action_input,
-                                               npis_sequence)
-
-            # Gather info to convert to total cases
-            prev_confirmed_cases = np.array(cdf.ConfirmedCases)
-            prev_new_cases = np.array(cdf.NewCases)
-            initial_total_cases = prev_confirmed_cases[-1]
-            pop_size = np.array(cdf.Population)[-1]  # Population size doesn't change over time
-
-            # Compute predictor's forecast
-            pred_total_cases, pred_new_cases = self._convert_ratios_to_total_cases(
-                preds,
-                WINDOW_SIZE,
-                prev_new_cases,
-                initial_total_cases,
-                pop_size)
-            # OPTIONAL: Smooth out pred_new_cases
-            # # If window size is 7, take the previous 6 new cases so we start doing a 7 day moving average for
-            # # the first pred new cases
-            # temp_pred_new_cases = list(prev_new_cases[-(WINDOW_SIZE-1):]) + pred_new_cases
-            # smooth_pred_new_cases = self._smooth_case_list(temp_pred_new_cases, WINDOW_SIZE)
-            # # Get rid of the first window_size - 1 NaN values where
-            # # there was not enough data to compute a moving average
-            # pred_new_cases = smooth_pred_new_cases[WINDOW_SIZE-1:]
-
-            # Append forecast data to results to return
-            for i, pred in enumerate(pred_new_cases):
-                forecast["CountryName"].append(c)
-                current_date = start_date + np.timedelta64(i, 'D')
-                forecast["Date"].append(current_date)
-                # forecast["ConfirmedCases"].append(pred_total_cases[i])
-                forecast["PredictedDailyNewCases"].append(pred)
-
-        forecast_df = pd.DataFrame.from_dict(forecast)
-        return forecast_df
 
     # Function for performing roll outs into the future
     @staticmethod
@@ -409,6 +403,7 @@ class XPrizePredictor(object):
 
         # Select best model
         best_model = models[np.argmin(test_case_maes)]
+        self.predictor = best_model
         print("Done")
         return best_model
 

@@ -65,7 +65,7 @@ class TestMultiplicativeEvaluator(unittest.TestCase):
         end_date = start_date + np.timedelta64(3, 'D')
         npis_df = cls._latest_df[(cls._latest_df.Date >= start_date) &
                                  (cls._latest_df.Date <= end_date)]
-        pred = predictor.submission_predict(start_date, end_date, npis_df)
+        pred = predictor.predict(start_date, end_date, npis_df)
         self.assertIsInstance(pred, pd.DataFrame)
         pred.to_csv(PREDICTIONS_31, index=False)
         # self.assertEqual(pred, 0, "Not the expect prediction")
