@@ -1,10 +1,15 @@
 import os
 
-import pandas as pd
-import numpy as np
-
 import keras.backend as K
+import numpy as np
+import pandas as pd
+from keras.callbacks import EarlyStopping
 from keras.constraints import Constraint
+from keras.layers import Dense
+from keras.layers import Input
+from keras.layers import LSTM
+from keras.layers import Lambda
+from keras.models import Model
 from keras.models import load_model
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -19,8 +24,13 @@ CONTEXT_COLUMNS = ['CountryName',
                    'ConfirmedCases',
                    'ConfirmedDeaths',
                    'Population']
+NB_LOOKBACK_DAYS = 21
+NB_TEST_DAYS = 14
 WINDOW_SIZE = 7
 US_PREFIX = "United States / "
+NUM_TRIALS = 1
+LSTM_SIZE = 32
+MAX_NB_COUNTRIES = 20
 
 
 class Positive(Constraint):
@@ -35,7 +45,8 @@ class XPrizePredictor(object):
     """
 
     def __init__(self, path_to_model, snapshot_df, npi_columns):
-        self.predictor = load_model(path_to_model, custom_objects={"Positive": Positive})
+        if path_to_model:
+            self.predictor = load_model(path_to_model, custom_objects={"Positive": Positive})
         self.npi_columns = npi_columns
         self.df = self._prepare_dataframe(snapshot_df)
         self.countries = self.df.CountryName.unique()
@@ -159,8 +170,6 @@ class XPrizePredictor(object):
         :param countries: a list of country names
         :return: a dictionary of train and test sets, for each specified country
         """
-        nb_lookback_days = 21
-        nb_test_days = 14
         context_column = 'PredictionRatio'
         action_columns = self.npi_columns
         outcome_column = 'PredictionRatio'
@@ -175,9 +184,9 @@ class XPrizePredictor(object):
             action_samples = []
             outcome_samples = []
             nb_total_days = outcome_data.shape[0]
-            for d in range(nb_lookback_days, nb_total_days):
-                context_samples.append(context_data[d - nb_lookback_days:d])
-                action_samples.append(action_data[d - nb_lookback_days:d])
+            for d in range(NB_LOOKBACK_DAYS, nb_total_days):
+                context_samples.append(context_data[d - NB_LOOKBACK_DAYS:d])
+                action_samples.append(action_data[d - NB_LOOKBACK_DAYS:d])
                 outcome_samples.append(outcome_data[d])
             if len(outcome_samples) > 0:
                 X_context = np.expand_dims(np.stack(context_samples, axis=0), axis=2)
@@ -187,12 +196,12 @@ class XPrizePredictor(object):
                     'X_context': X_context,
                     'X_action': X_action,
                     'y': y,
-                    'X_train_context': X_context[:-nb_test_days],
-                    'X_train_action': X_action[:-nb_test_days],
-                    'y_train': y[:-nb_test_days],
-                    'X_test_context': X_context[-nb_test_days:],
-                    'X_test_action': X_action[-nb_test_days:],
-                    'y_test': y[-nb_test_days:],
+                    'X_train_context': X_context[:-NB_TEST_DAYS],
+                    'X_train_action': X_action[:-NB_TEST_DAYS],
+                    'y_train': y[:-NB_TEST_DAYS],
+                    'X_test_context': X_context[-NB_TEST_DAYS:],
+                    'X_test_action': X_action[-NB_TEST_DAYS:],
+                    'y_test': y[-NB_TEST_DAYS:],
                 }
         return country_samples
 
@@ -311,3 +320,233 @@ class XPrizePredictor(object):
     @staticmethod
     def _smooth_case_list(case_list, window):
         return pd.Series(case_list).rolling(window).mean().to_numpy()
+
+    def train(self):
+        print("Creating numpy arrays for Keras for each country...")
+        countries = self._most_affected_countries(self.df, MAX_NB_COUNTRIES, NB_LOOKBACK_DAYS)
+        country_samples = self._create_country_samples(self.df, countries)
+        print("Numpy arrays created")
+
+        # Aggregate data for training
+        all_X_context_list = [country_samples[c]['X_train_context']
+                              for c in country_samples]
+        all_X_action_list = [country_samples[c]['X_train_action']
+                             for c in country_samples]
+        all_y_list = [country_samples[c]['y_train']
+                      for c in country_samples]
+        X_context = np.concatenate(all_X_context_list)
+        X_action = np.concatenate(all_X_action_list)
+        y = np.concatenate(all_y_list)
+
+        # Clip outliers
+        MIN_VALUE = 0.
+        MAX_VALUE = 2.
+        X_context = np.clip(X_context, MIN_VALUE, MAX_VALUE)
+        y = np.clip(y, MIN_VALUE, MAX_VALUE)
+
+        # Aggregate data for testing only on top countries
+        test_all_X_context_list = [country_samples[c]['X_train_context']
+                                   for c in countries]
+        test_all_X_action_list = [country_samples[c]['X_train_action']
+                                  for c in countries]
+        test_all_y_list = [country_samples[c]['y_train']
+                           for c in countries]
+        test_X_context = np.concatenate(test_all_X_context_list)
+        test_X_action = np.concatenate(test_all_X_action_list)
+        test_y = np.concatenate(test_all_y_list)
+
+        test_X_context = np.clip(test_X_context, MIN_VALUE, MAX_VALUE)
+        test_y = np.clip(test_y, MIN_VALUE, MAX_VALUE)
+
+        # Run full training several times to find best model
+        # and gather data for setting acceptance threshold
+        models = []
+        train_losses = []
+        val_losses = []
+        test_losses = []
+        for t in range(NUM_TRIALS):
+            print('Trial', t)
+            X_context, X_action, y = self._permute_data(X_context, X_action, y, seed=t)
+            model, training_model = self._construct_model(X_context=X_context,
+                                                          X_action=X_action,
+                                                          lstm_size=LSTM_SIZE,
+                                                          nb_lookback_days=NB_LOOKBACK_DAYS)
+            history = self._train_model(training_model, X_context, X_action, y, epochs=1000, verbose=0)
+            top_epoch = np.argmin(history.history['val_loss'])
+            train_loss = history.history['loss'][top_epoch]
+            val_loss = history.history['val_loss'][top_epoch]
+            test_loss = training_model.evaluate([test_X_context, test_X_action], [test_y])
+            train_losses.append(train_loss)
+            val_losses.append(val_loss)
+            test_losses.append(test_loss)
+            models.append(model)
+            print('Train Loss:', train_loss)
+            print('Val Loss:', val_loss)
+            print('Test Loss:', test_loss)
+
+        # Gather test info
+        country_indeps = []
+        country_predss = []
+        country_casess = []
+        for model in models:
+            country_indep, country_preds, country_cases = self._lstm_get_test_rollouts(model,
+                                                                                       self.df,
+                                                                                       countries,
+                                                                                       country_samples)
+            country_indeps.append(country_indep)
+            country_predss.append(country_preds)
+            country_casess.append(country_cases)
+
+        # Compute cases mae
+        test_case_maes = []
+        for m in range(len(models)):
+            total_loss = 0
+            for c in countries:
+                true_cases = np.sum(np.array(self.df[self.df.CountryName == c].NewCases)[-NB_TEST_DAYS:])
+                pred_cases = np.sum(country_casess[m][c][-NB_TEST_DAYS:])
+                total_loss += np.abs(true_cases - pred_cases)
+            test_case_maes.append(total_loss)
+
+        # Select best model
+        best_model = models[np.argmin(test_case_maes)]
+        print("Done")
+        return best_model
+
+    def _most_affected_countries(self, df, nb_countries, min_historical_days):
+        """
+        Returns the list of most affected countries, in terms of confirmed deaths.
+        :param df: the data frame containing the historical data
+        :param nb_countries: the number of countries to return
+        :param min_historical_days: the minimum days of historical data the countries must have
+        :return: a list of country names of size nb_countries if there were enough, and otherwise a list of all the
+        country names that have at least min_look_back_days data points.
+        """
+        # By default use most affected countries with enough history
+        gdf = df.groupby('CountryName')['ConfirmedDeaths'].agg(['max', 'count']).sort_values(by='max', ascending=False)
+        filtered_gdf = gdf[gdf["count"] > min_historical_days]
+        countries = list(filtered_gdf.head(nb_countries).index)
+        return countries
+
+    # Shuffling data prior to train/val split
+    def _permute_data(self, X_context, X_action, y, seed=301):
+        np.random.seed(seed)
+        p = np.random.permutation(y.shape[0])
+        X_context = X_context[p]
+        X_action = X_action[p]
+        y = y[p]
+        return X_context, X_action, y
+
+    # Construct model
+    def _construct_model(self, X_context, X_action, lstm_size=32, nb_lookback_days=21):
+        nb_context = X_context.shape[-1]
+        nb_action = X_action.shape[-1]
+
+        # Create context encoder
+        context_input = Input(shape=(nb_lookback_days, nb_context),
+                              name='context_input')
+        x = LSTM(lstm_size, name='context_lstm')(context_input)
+        context_output = Dense(units=1,
+                               activation='softplus',
+                               name='context_dense')(x)
+
+        # Create action encoder
+        # Every aspect is monotonic and nonnegative except final bias
+        action_input = Input(shape=(nb_lookback_days, nb_action),
+                             name='action_input')
+        x = LSTM(units=lstm_size,
+                 kernel_constraint=Positive(),
+                 recurrent_constraint=Positive(),
+                 bias_constraint=Positive(),
+                 return_sequences=False,
+                 name='action_lstm')(action_input)
+        action_output = Dense(units=1,
+                              activation='sigmoid',
+                              kernel_constraint=Positive(),
+                              name='action_dense')(x)
+
+        # Create prediction model
+        model_output = Lambda(self._combine_r_and_d, name='prediction')(
+            [context_output, action_output])
+        model = Model(inputs=[context_input, action_input],
+                      outputs=[model_output])
+        model.compile(loss='mae', optimizer='adam')
+
+        # Create training model, which includes loss to measure
+        # variance of action_output predictions
+        training_model = Model(inputs=[context_input, action_input],
+                               outputs=[model_output])
+        training_model.compile(loss='mae',
+                               optimizer='adam')
+
+        return model, training_model
+
+    # Train model
+    def _train_model(self, training_model, X_context, X_action, y, epochs=1, verbose=0):
+        early_stopping = EarlyStopping(patience=20,
+                                       restore_best_weights=True)
+        history = training_model.fit([X_context, X_action], [y],
+                                     epochs=epochs,
+                                     batch_size=32,
+                                     validation_split=0.1,
+                                     callbacks=[early_stopping],
+                                     verbose=verbose)
+        return history
+
+    # Functions for computing test metrics
+    def _lstm_roll_out_predictions(self, model, initial_context_input, initial_action_input, future_action_sequence):
+        nb_test_days = future_action_sequence.shape[0]
+        pred_output = np.zeros(nb_test_days)
+        context_input = np.expand_dims(np.copy(initial_context_input), axis=0)
+        action_input = np.expand_dims(np.copy(initial_action_input), axis=0)
+        for d in range(nb_test_days):
+            action_input[:, :-1] = action_input[:, 1:]
+            action_input[:, -1] = future_action_sequence[d]
+            pred = model.predict([context_input, action_input])
+            pred_output[d] = pred
+            context_input[:, :-1] = context_input[:, 1:]
+            context_input[:, -1] = pred
+        return pred_output
+
+    def _lstm_get_test_rollouts(self, model, df, top_countries, country_samples):
+        country_indep = {}
+        country_preds = {}
+        country_cases = {}
+        for c in top_countries:
+            X_test_context = country_samples[c]['X_test_context']
+            X_test_action = country_samples[c]['X_test_action']
+            country_indep[c] = model.predict([X_test_context, X_test_action])
+
+            initial_context_input = country_samples[c]['X_test_context'][0]
+            initial_action_input = country_samples[c]['X_test_action'][0]
+            y_test = country_samples[c]['y_test']
+
+            nb_test_days = y_test.shape[0]
+            nb_actions = initial_action_input.shape[-1]
+
+            future_action_sequence = np.zeros((nb_test_days, nb_actions))
+            future_action_sequence[:nb_test_days] = country_samples[c]['X_test_action'][:, -1, :]
+            current_action = country_samples[c]['X_test_action'][:, -1, :][-1]
+            future_action_sequence[14:] = current_action
+            preds = self._lstm_roll_out_predictions(model,
+                                                    initial_context_input,
+                                                    initial_action_input,
+                                                    future_action_sequence)
+            country_preds[c] = preds
+
+            prev_confirmed_cases = np.array(
+                df[df.CountryName == c].ConfirmedCases)[:-nb_test_days]
+            prev_new_cases = np.array(
+                df[df.CountryName == c].NewCases)[:-nb_test_days]
+            initial_total_cases = prev_confirmed_cases[-1]
+            pop_size = np.array(df[df.CountryName == c].Population)[0]
+
+            _, pred_new_cases = self._convert_ratios_to_total_cases(
+                preds, WINDOW_SIZE, prev_new_cases, initial_total_cases, pop_size)
+            country_cases[c] = pred_new_cases
+
+        return country_indep, country_preds, country_cases
+
+    # Functions to be used for lambda layers in model
+    def _combine_r_and_d(self, x):
+        r, d = x
+        return r * (1. - d)

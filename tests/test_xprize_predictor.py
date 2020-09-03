@@ -58,7 +58,7 @@ class TestMultiplicativeEvaluator(unittest.TestCase):
         # Executed before each test
         pass
 
-    def test_simple_roll_out(self):
+    def test_predict(self):
         cls = self.__class__
         predictor = XPrizePredictor(PREDICTOR_31, cls._snapshot_df, NPI_COLUMNS)
         start_date = SUBMISSION_DATE + np.timedelta64(1, 'D')
@@ -69,3 +69,9 @@ class TestMultiplicativeEvaluator(unittest.TestCase):
         self.assertIsInstance(pred, pd.DataFrame)
         pred.to_csv(PREDICTIONS_31, index=False)
         # self.assertEqual(pred, 0, "Not the expect prediction")
+
+    def test_train(self):
+        cls = self.__class__
+        predictor = XPrizePredictor(None, cls._snapshot_df, NPI_COLUMNS)
+        model = predictor.train()
+        self.assertIsNotNone(model)
