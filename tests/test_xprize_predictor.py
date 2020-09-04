@@ -8,14 +8,14 @@ from xprize.xprize_predictor import XPrizePredictor
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 FIXTURES_PATH = os.path.join(ROOT_DIR, 'fixtures')
-EXAMPLE_INPUT_FILE = os.path.join(ROOT_DIR, "..", "20200801_20200804_npis.csv")
-DATA_URL = os.path.join(ROOT_DIR, "../data", "OxCGRT_latest.csv")
-PREDICTOR_27 = os.path.join(FIXTURES_PATH, "20200727_predictor.h5")
-PREDICTOR_30 = os.path.join(FIXTURES_PATH, "20200730_predictor.h5")
-PREDICTOR_31 = os.path.join(FIXTURES_PATH, "20200731_predictor.h5")
-PREDICTIONS_27 = os.path.join(FIXTURES_PATH, "20200727_predictions.csv")
-PREDICTIONS_30 = os.path.join(FIXTURES_PATH, "20200730_predictions.csv")
-PREDICTIONS_31 = os.path.join(FIXTURES_PATH, "20200731_predictions.csv")
+EXAMPLE_INPUT_FILE = os.path.join(ROOT_DIR, "../data/input", "20200801_20200804_npis.csv")
+DATA_URL = os.path.join(ROOT_DIR, "../data/additional", "OxCGRT_latest.csv")
+PREDICTOR_27 = os.path.join(FIXTURES_PATH, "pred27", "predictor.h5")
+PREDICTOR_30 = os.path.join(FIXTURES_PATH, "pred30", "predictor.h5")
+PREDICTOR_31 = os.path.join(FIXTURES_PATH, "pred31", "predictor.h5")
+PREDICTIONS_27 = os.path.join(FIXTURES_PATH, "pred27", "20200801_20200804_predictions.csv")
+PREDICTIONS_30 = os.path.join(FIXTURES_PATH, "pred30", "20200801_20200804_predictions.csv")
+PREDICTIONS_31 = os.path.join(FIXTURES_PATH, "pred31", "20200801_20200804_predictions.csv")
 
 CUTOFF_DATE = np.datetime64("2020-07-31")
 NPI_COLUMNS = ['C1_School closing',
