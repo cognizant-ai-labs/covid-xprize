@@ -8,6 +8,7 @@ from xprize.xprize_predictor import XPrizePredictor
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 FIXTURES_PATH = os.path.join(ROOT_DIR, 'fixtures')
+EXAMPLE_INPUT_FILE = os.path.join(ROOT_DIR, "..", "20200801_20200804_npis.csv")
 DATA_URL = os.path.join(FIXTURES_PATH, "OxCGRT_latest.csv")
 PREDICTOR_27 = os.path.join(FIXTURES_PATH, "20200727_predictor.h5")
 PREDICTOR_30 = os.path.join(FIXTURES_PATH, "20200730_predictor.h5")
@@ -33,7 +34,6 @@ NPI_COLUMNS = ['C1_School closing',
 class TestMultiplicativeEvaluator(unittest.TestCase):
 
     def test_predict(self):
-        cls = self.__class__
         predictor = XPrizePredictor(PREDICTOR_31, DATA_URL, CUTOFF_DATE, NPI_COLUMNS)
         start_date = CUTOFF_DATE + np.timedelta64(1, 'D')
         end_date = start_date + np.timedelta64(3, 'D')
@@ -42,7 +42,7 @@ class TestMultiplicativeEvaluator(unittest.TestCase):
                               encoding="ISO-8859-1")
         pred = predictor.predict(start_date, end_date, npis_df)
         self.assertIsInstance(pred, pd.DataFrame)
-        pred.to_csv(PREDICTIONS_31, index=False)
+        # pred.to_csv(PREDICTIONS_31, index=False)
         # self.assertEqual(pred, 0, "Not the expect prediction")
 
     def test_train(self):
