@@ -199,7 +199,6 @@ class XPrizePredictor(object):
         snapshot_df = latest_df[latest_df.Date <= cutoff_date]
         return snapshot_df
 
-
     def _fill_missing_values(self, df):
         """
         # Fill missing values by interpolation, ffill, and filling NaNs
