@@ -9,7 +9,7 @@ from xprize.xprize_predictor import XPrizePredictor
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 FIXTURES_PATH = os.path.join(ROOT_DIR, 'fixtures')
 EXAMPLE_INPUT_FILE = os.path.join(ROOT_DIR, "..", "20200801_20200804_npis.csv")
-DATA_URL = os.path.join(FIXTURES_PATH, "OxCGRT_latest.csv")
+DATA_URL = os.path.join(ROOT_DIR, "../data", "OxCGRT_latest.csv")
 PREDICTOR_27 = os.path.join(FIXTURES_PATH, "20200727_predictor.h5")
 PREDICTOR_30 = os.path.join(FIXTURES_PATH, "20200730_predictor.h5")
 PREDICTOR_31 = os.path.join(FIXTURES_PATH, "20200731_predictor.h5")
