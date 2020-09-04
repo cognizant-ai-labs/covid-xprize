@@ -45,11 +45,11 @@ class XPrizePredictor(object):
     A class that computes a fitness for Prescriptor candidates.
     """
 
-    def __init__(self, path_to_model, snapshot_df, npi_columns):
+    def __init__(self, path_to_model, data_url, cutoff_date, npi_columns):
         if path_to_model:
             self.predictor = load_model(path_to_model, custom_objects={"Positive": Positive})
         self.npi_columns = npi_columns
-        self.df = self._prepare_dataframe(snapshot_df)
+        self.df = self._prepare_dataframe(data_url, cutoff_date)
         self.countries = self.df.CountryName.unique()
         self.country_samples = self._create_country_samples(self.df, self.countries)
 
@@ -119,15 +119,16 @@ class XPrizePredictor(object):
         forecast_df = pd.DataFrame.from_dict(forecast)
         return forecast_df
 
-    def _prepare_dataframe(self, measures_by_country_df=None) -> (pd.DataFrame, pd.DataFrame):
+    def _prepare_dataframe(self, data_url: str, cutoff_date: np.datetime64) -> (pd.DataFrame, pd.DataFrame):
         """
         Loads the Oxford dataset, cleans it up and prepares the necessary columns. Depending on options, also
         loads the Johns Hopkins dataset and merges that in.
-        :param measures_by_country_df: the DataFrame containing the initial data
+        :param data_url: the url containing the original data
+        :param cutoff_date: last date to use when loading the data
         :return: a Pandas DataFrame with the historical data
         """
         # Original df from Oxford
-        df1 = measures_by_country_df
+        df1 = self._load_original_data(data_url, cutoff_date)
 
         # Additional context df (e.g Population for each country)
         df2 = self._load_additional_context_df()
@@ -175,6 +176,23 @@ class XPrizePredictor(object):
         df['PredictionRatio'] = df['CaseRatio'] / (1 - df['ProportionInfected'])
 
         return df
+
+    def _load_original_data(self, data_url, cutoff_date):
+        latest_df = pd.read_csv(data_url,
+                                parse_dates=['Date'],
+                                encoding="ISO-8859-1",
+                                error_bad_lines=False)
+        # Handle regions
+        latest_df["RegionName"].fillna('', inplace=True)
+        # Replace CountryName by CountryName / RegionName
+        # np.where usage: if A then B else C
+        latest_df["CountryName"] = np.where(latest_df["RegionName"] == '',
+                                            latest_df["CountryName"],
+                                            latest_df["CountryName"] + ' / ' + latest_df["RegionName"])
+        # Take a snapshot on cutoff_date
+        snapshot_df = latest_df[latest_df.Date <= cutoff_date]
+        return snapshot_df
+
 
     def _fill_missing_values(self, df):
         """
