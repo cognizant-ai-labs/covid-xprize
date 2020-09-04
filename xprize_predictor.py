@@ -40,6 +40,12 @@ class Positive(Constraint):
         return K.abs(w)
 
 
+# Functions to be used for lambda layers in model
+def _combine_r_and_d(x):
+    r, d = x
+    return r * (1. - d)
+
+
 class XPrizePredictor(object):
     """
     A class that computes a fitness for Prescriptor candidates.
@@ -478,7 +484,7 @@ class XPrizePredictor(object):
                               name='action_dense')(x)
 
         # Create prediction model
-        model_output = Lambda(self._combine_r_and_d, name='prediction')(
+        model_output = Lambda(_combine_r_and_d, name='prediction')(
             [context_output, action_output])
         model = Model(inputs=[context_input, action_input],
                       outputs=[model_output])
@@ -558,8 +564,3 @@ class XPrizePredictor(object):
             country_cases[c] = pred_new_cases
 
         return country_indep, country_preds, country_cases
-
-    # Functions to be used for lambda layers in model
-    def _combine_r_and_d(self, x):
-        r, d = x
-        return r * (1. - d)
