@@ -20,7 +20,7 @@ ADDITIONAL_US_STATES_CONTEXT = os.path.join(DATA_PATH, "US_states_populations.cs
 ADDITIONAL_UK_CONTEXT = os.path.join(DATA_PATH, "uk_populations.csv")
 
 CONTEXT_COLUMNS = ['CountryName',
-                   'CountryCode',
+                   'RegionName',
                    'Date',
                    'ConfirmedCases',
                    'ConfirmedDeaths',
@@ -51,27 +51,46 @@ class XPrizePredictor(object):
     A class that computes a fitness for Prescriptor candidates.
     """
 
-    def __init__(self, path_to_model, data_url, cutoff_date, npi_columns):
+    def __init__(self, path_to_model, data_url, cutoff_date_str, npi_columns):
         if path_to_model:
             self.predictor = load_model(path_to_model, custom_objects={"Positive": Positive})
         self.npi_columns = npi_columns
+        cutoff_date = pd.to_datetime(cutoff_date_str, format='%Y-%m-%d')
         self.df = self._prepare_dataframe(data_url, cutoff_date)
         self.countries = self.df.CountryName.unique()
         self.country_samples = self._create_country_samples(self.df, self.countries)
 
     def predict(self,
-                start_date: np.datetime64,
-                end_date: np.datetime64,
-                npis_df: pd.DataFrame) -> pd.DataFrame:
+                start_date: str,
+                end_date: str,
+                npis_csv: str):
         """
-        Makes a prediction of daily confirmed cases for a given day.
-        :param start_date: the day from which to start making predictions
-        :param end_date: the day on which to stop making predictions
-        :param npis_df: the actual npis between start_date and end_date
-        :return: a Pandas DataFrame containing the prediction [`CountryName`, `Date`, `NewCases]
+        Generates a file with daily confirmed cases predictions for the given countries, regions and npis, between
+        start_date and end_date, included.
+        :param start_date: the day from which to start making predictions, as a string, format YYYY-MM-DDD
+        :param end_date: the day on which to stop making predictions, as a string, format YYYY-MM-DDD
+        :param npis_csv: the path to a csv file containing the actual npis between start_date and end_date
+        :return: Nothing. Creates a csv file with columns "CountryName,RegionName,Date,PredictedDailyNewCases"
         """
+        preds_df = self._predict(start_date, end_date, npis_csv)
+        # Save to a csv file
+        output_file = npis_csv.replace("input", "output").replace("npis", "predictions")
+        preds_df.to_csv(output_file, index=False)
+        print(f"Saved predictions to {output_file}")
+
+    def _predict(self,
+                 start_date_str: str,
+                 end_date_str: str,
+                 npis_csv: str) -> pd.DataFrame:
+        start_date = pd.to_datetime(start_date_str, format='%Y-%m-%d')
+        # end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
+
+        # Load the npis into a DataFrame, handling regions
+        npis_df = self._load_original_data(npis_csv)
+
         # Prepare the output
         forecast = {"CountryName": [],
+                    "RegionName": [],
                     "Date": [],
                     "PredictedDailyNewCases": []}
 
@@ -116,8 +135,13 @@ class XPrizePredictor(object):
 
             # Append forecast data to results to return
             for i, pred in enumerate(pred_new_cases):
-                forecast["CountryName"].append(c)
-                current_date = start_date + np.timedelta64(i, 'D')
+                # Split CountryName back into CountryName and RegionName
+                c_split = c.split(" / ")
+                country = c_split[0]
+                region = c_split[1] if len(c_split) > 1 else np.NaN
+                forecast["CountryName"].append(country)
+                forecast["RegionName"].append(region)
+                current_date = start_date + pd.offsets.Day(i)
                 forecast["Date"].append(current_date)
                 # forecast["ConfirmedCases"].append(pred_total_cases[i])
                 forecast["PredictedDailyNewCases"].append(pred)
@@ -125,7 +149,7 @@ class XPrizePredictor(object):
         forecast_df = pd.DataFrame.from_dict(forecast)
         return forecast_df
 
-    def _prepare_dataframe(self, data_url: str, cutoff_date: np.datetime64) -> (pd.DataFrame, pd.DataFrame):
+    def _prepare_dataframe(self, data_url: str, cutoff_date: pd.Timestamp) -> (pd.DataFrame, pd.DataFrame):
         """
         Loads the Oxford dataset, cleans it up and prepares the necessary columns. Depending on options, also
         loads the Johns Hopkins dataset and merges that in.
@@ -183,7 +207,7 @@ class XPrizePredictor(object):
 
         return df
 
-    def _load_original_data(self, data_url, cutoff_date):
+    def _load_original_data(self, data_url, cutoff_date=None):
         latest_df = pd.read_csv(data_url,
                                 parse_dates=['Date'],
                                 encoding="ISO-8859-1",
@@ -196,8 +220,10 @@ class XPrizePredictor(object):
                                             latest_df["CountryName"],
                                             latest_df["CountryName"] + ' / ' + latest_df["RegionName"])
         # Take a snapshot on cutoff_date
-        snapshot_df = latest_df[latest_df.Date <= cutoff_date]
-        return snapshot_df
+        if cutoff_date:
+            return latest_df[latest_df.Date <= cutoff_date]
+        else:
+            return latest_df
 
     def _fill_missing_values(self, df):
         """

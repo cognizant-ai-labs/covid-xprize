@@ -1,7 +1,6 @@
 import os
 import unittest
 
-import numpy as np
 import pandas as pd
 
 from xprize.xprize_predictor import XPrizePredictor
@@ -17,7 +16,10 @@ PREDICTIONS_27 = os.path.join(FIXTURES_PATH, "pred27", "20200801_20200804_predic
 PREDICTIONS_30 = os.path.join(FIXTURES_PATH, "pred30", "20200801_20200804_predictions.csv")
 PREDICTIONS_31 = os.path.join(FIXTURES_PATH, "pred31", "20200801_20200804_predictions.csv")
 
-CUTOFF_DATE = np.datetime64("2020-07-31")
+CUTOFF_DATE = "2020-07-31"
+START_DATE = "2020-08-01"
+END_DATE = "2020-08-04"
+
 NPI_COLUMNS = ['C1_School closing',
                'C2_Workplace closing',
                'C3_Cancel public events',
@@ -35,15 +37,8 @@ class TestMultiplicativeEvaluator(unittest.TestCase):
 
     def test_predict(self):
         predictor = XPrizePredictor(PREDICTOR_31, DATA_URL, CUTOFF_DATE, NPI_COLUMNS)
-        start_date = CUTOFF_DATE + np.timedelta64(1, 'D')
-        end_date = start_date + np.timedelta64(3, 'D')
-        npis_df = pd.read_csv(EXAMPLE_INPUT_FILE,
-                              parse_dates=['Date'],
-                              encoding="ISO-8859-1")
-        pred = predictor.predict(start_date, end_date, npis_df)
-        self.assertIsInstance(pred, pd.DataFrame)
-        # pred.to_csv(PREDICTIONS_31, index=False)
-        # self.assertEqual(pred, 0, "Not the expect prediction")
+        pred_df = predictor._predict(START_DATE, END_DATE, EXAMPLE_INPUT_FILE)
+        self.assertIsInstance(pred_df, pd.DataFrame)
 
     def test_train(self):
         predictor = XPrizePredictor(None, DATA_URL, CUTOFF_DATE, NPI_COLUMNS)
