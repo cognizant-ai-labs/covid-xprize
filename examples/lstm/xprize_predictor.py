@@ -14,7 +14,7 @@ from keras.models import Model
 from keras.models import load_model
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_PATH = os.path.join(ROOT_DIR, 'data/additional')
+DATA_PATH = os.path.join(ROOT_DIR, 'data')
 ADDITIONAL_CONTEXT_FILE = os.path.join(DATA_PATH, "Additional_Context_Data_Global.csv")
 ADDITIONAL_US_STATES_CONTEXT = os.path.join(DATA_PATH, "US_states_populations.csv")
 ADDITIONAL_UK_CONTEXT = os.path.join(DATA_PATH, "uk_populations.csv")
