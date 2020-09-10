@@ -75,7 +75,7 @@ class XPrizePredictor(object):
         """
         preds_df = self._predict(start_date, end_date, path_to_ips_file)
         # Save to a csv file
-        output_file = path_to_ips_file.replace("input", "output").replace("npis", "predictions")
+        output_file = start_date + "_" + end_date + ".csv"
         preds_df.to_csv(output_file, index=False)
         print(f"Saved predictions to {output_file}")
 
