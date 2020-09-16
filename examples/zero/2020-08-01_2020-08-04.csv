@@ -1,0 +1,965 @@
+CountryName,RegionName,Date,PredictedDailyNewCases
+Aruba,,2020-08-01,0
+Aruba,,2020-08-02,0
+Aruba,,2020-08-03,0
+Aruba,,2020-08-04,0
+Afghanistan,,2020-08-01,0
+Afghanistan,,2020-08-02,0
+Afghanistan,,2020-08-03,0
+Afghanistan,,2020-08-04,0
+Angola,,2020-08-01,0
+Angola,,2020-08-02,0
+Angola,,2020-08-03,0
+Angola,,2020-08-04,0
+Anguilla,,2020-08-01,0
+Anguilla,,2020-08-02,0
+Anguilla,,2020-08-03,0
+Anguilla,,2020-08-04,0
+Albania,,2020-08-01,0
+Albania,,2020-08-02,0
+Albania,,2020-08-03,0
+Albania,,2020-08-04,0
+Andorra,,2020-08-01,0
+Andorra,,2020-08-02,0
+Andorra,,2020-08-03,0
+Andorra,,2020-08-04,0
+United Arab Emirates,,2020-08-01,0
+United Arab Emirates,,2020-08-02,0
+United Arab Emirates,,2020-08-03,0
+United Arab Emirates,,2020-08-04,0
+Argentina,,2020-08-01,0
+Argentina,,2020-08-02,0
+Argentina,,2020-08-03,0
+Argentina,,2020-08-04,0
+Australia,,2020-08-01,0
+Australia,,2020-08-02,0
+Australia,,2020-08-03,0
+Australia,,2020-08-04,0
+Austria,,2020-08-01,0
+Austria,,2020-08-02,0
+Austria,,2020-08-03,0
+Austria,,2020-08-04,0
+Azerbaijan,,2020-08-01,0
+Azerbaijan,,2020-08-02,0
+Azerbaijan,,2020-08-03,0
+Azerbaijan,,2020-08-04,0
+Burundi,,2020-08-01,0
+Burundi,,2020-08-02,0
+Burundi,,2020-08-03,0
+Burundi,,2020-08-04,0
+Belgium,,2020-08-01,0
+Belgium,,2020-08-02,0
+Belgium,,2020-08-03,0
+Belgium,,2020-08-04,0
+Benin,,2020-08-01,0
+Benin,,2020-08-02,0
+Benin,,2020-08-03,0
+Benin,,2020-08-04,0
+Burkina Faso,,2020-08-01,0
+Burkina Faso,,2020-08-02,0
+Burkina Faso,,2020-08-03,0
+Burkina Faso,,2020-08-04,0
+Bangladesh,,2020-08-01,0
+Bangladesh,,2020-08-02,0
+Bangladesh,,2020-08-03,0
+Bangladesh,,2020-08-04,0
+Bulgaria,,2020-08-01,0
+Bulgaria,,2020-08-02,0
+Bulgaria,,2020-08-03,0
+Bulgaria,,2020-08-04,0
+Bahrain,,2020-08-01,0
+Bahrain,,2020-08-02,0
+Bahrain,,2020-08-03,0
+Bahrain,,2020-08-04,0
+Bosnia and Herzegovina,,2020-08-01,0
+Bosnia and Herzegovina,,2020-08-02,0
+Bosnia and Herzegovina,,2020-08-03,0
+Bosnia and Herzegovina,,2020-08-04,0
+Belarus,,2020-08-01,0
+Belarus,,2020-08-02,0
+Belarus,,2020-08-03,0
+Belarus,,2020-08-04,0
+Belize,,2020-08-01,0
+Belize,,2020-08-02,0
+Belize,,2020-08-03,0
+Belize,,2020-08-04,0
+Bermuda,,2020-08-01,0
+Bermuda,,2020-08-02,0
+Bermuda,,2020-08-03,0
+Bermuda,,2020-08-04,0
+Bolivia,,2020-08-01,0
+Bolivia,,2020-08-02,0
+Bolivia,,2020-08-03,0
+Bolivia,,2020-08-04,0
+Brazil,,2020-08-01,0
+Brazil,,2020-08-02,0
+Brazil,,2020-08-03,0
+Brazil,,2020-08-04,0
+Barbados,,2020-08-01,0
+Barbados,,2020-08-02,0
+Barbados,,2020-08-03,0
+Barbados,,2020-08-04,0
+Brunei,,2020-08-01,0
+Brunei,,2020-08-02,0
+Brunei,,2020-08-03,0
+Brunei,,2020-08-04,0
+Bhutan,,2020-08-01,0
+Bhutan,,2020-08-02,0
+Bhutan,,2020-08-03,0
+Bhutan,,2020-08-04,0
+Botswana,,2020-08-01,0
+Botswana,,2020-08-02,0
+Botswana,,2020-08-03,0
+Botswana,,2020-08-04,0
+Central African Republic,,2020-08-01,0
+Central African Republic,,2020-08-02,0
+Central African Republic,,2020-08-03,0
+Central African Republic,,2020-08-04,0
+Canada,,2020-08-01,0
+Canada,,2020-08-02,0
+Canada,,2020-08-03,0
+Canada,,2020-08-04,0
+Switzerland,,2020-08-01,0
+Switzerland,,2020-08-02,0
+Switzerland,,2020-08-03,0
+Switzerland,,2020-08-04,0
+Chile,,2020-08-01,0
+Chile,,2020-08-02,0
+Chile,,2020-08-03,0
+Chile,,2020-08-04,0
+China,,2020-08-01,0
+China,,2020-08-02,0
+China,,2020-08-03,0
+China,,2020-08-04,0
+Cote d'Ivoire,,2020-08-01,0
+Cote d'Ivoire,,2020-08-02,0
+Cote d'Ivoire,,2020-08-03,0
+Cote d'Ivoire,,2020-08-04,0
+Cameroon,,2020-08-01,0
+Cameroon,,2020-08-02,0
+Cameroon,,2020-08-03,0
+Cameroon,,2020-08-04,0
+Democratic Republic of Congo,,2020-08-01,0
+Democratic Republic of Congo,,2020-08-02,0
+Democratic Republic of Congo,,2020-08-03,0
+Democratic Republic of Congo,,2020-08-04,0
+Congo,,2020-08-01,0
+Congo,,2020-08-02,0
+Congo,,2020-08-03,0
+Congo,,2020-08-04,0
+Colombia,,2020-08-01,0
+Colombia,,2020-08-02,0
+Colombia,,2020-08-03,0
+Colombia,,2020-08-04,0
+Cape Verde,,2020-08-01,0
+Cape Verde,,2020-08-02,0
+Cape Verde,,2020-08-03,0
+Cape Verde,,2020-08-04,0
+Costa Rica,,2020-08-01,0
+Costa Rica,,2020-08-02,0
+Costa Rica,,2020-08-03,0
+Costa Rica,,2020-08-04,0
+Cuba,,2020-08-01,0
+Cuba,,2020-08-02,0
+Cuba,,2020-08-03,0
+Cuba,,2020-08-04,0
+Cayman Islands,,2020-08-01,0
+Cayman Islands,,2020-08-02,0
+Cayman Islands,,2020-08-03,0
+Cayman Islands,,2020-08-04,0
+Cyprus,,2020-08-01,0
+Cyprus,,2020-08-02,0
+Cyprus,,2020-08-03,0
+Cyprus,,2020-08-04,0
+Czech Republic,,2020-08-01,0
+Czech Republic,,2020-08-02,0
+Czech Republic,,2020-08-03,0
+Czech Republic,,2020-08-04,0
+Germany,,2020-08-01,0
+Germany,,2020-08-02,0
+Germany,,2020-08-03,0
+Germany,,2020-08-04,0
+Djibouti,,2020-08-01,0
+Djibouti,,2020-08-02,0
+Djibouti,,2020-08-03,0
+Djibouti,,2020-08-04,0
+Dominica,,2020-08-01,0
+Dominica,,2020-08-02,0
+Dominica,,2020-08-03,0
+Dominica,,2020-08-04,0
+Denmark,,2020-08-01,0
+Denmark,,2020-08-02,0
+Denmark,,2020-08-03,0
+Denmark,,2020-08-04,0
+Dominican Republic,,2020-08-01,0
+Dominican Republic,,2020-08-02,0
+Dominican Republic,,2020-08-03,0
+Dominican Republic,,2020-08-04,0
+Algeria,,2020-08-01,0
+Algeria,,2020-08-02,0
+Algeria,,2020-08-03,0
+Algeria,,2020-08-04,0
+Ecuador,,2020-08-01,0
+Ecuador,,2020-08-02,0
+Ecuador,,2020-08-03,0
+Ecuador,,2020-08-04,0
+Egypt,,2020-08-01,0
+Egypt,,2020-08-02,0
+Egypt,,2020-08-03,0
+Egypt,,2020-08-04,0
+Eritrea,,2020-08-01,0
+Eritrea,,2020-08-02,0
+Eritrea,,2020-08-03,0
+Eritrea,,2020-08-04,0
+Spain,,2020-08-01,0
+Spain,,2020-08-02,0
+Spain,,2020-08-03,0
+Spain,,2020-08-04,0
+Estonia,,2020-08-01,0
+Estonia,,2020-08-02,0
+Estonia,,2020-08-03,0
+Estonia,,2020-08-04,0
+Ethiopia,,2020-08-01,0
+Ethiopia,,2020-08-02,0
+Ethiopia,,2020-08-03,0
+Ethiopia,,2020-08-04,0
+Finland,,2020-08-01,0
+Finland,,2020-08-02,0
+Finland,,2020-08-03,0
+Finland,,2020-08-04,0
+Fiji,,2020-08-01,0
+Fiji,,2020-08-02,0
+Fiji,,2020-08-03,0
+Fiji,,2020-08-04,0
+Falkland Islands,,2020-08-01,0
+Falkland Islands,,2020-08-02,0
+Falkland Islands,,2020-08-03,0
+Falkland Islands,,2020-08-04,0
+France,,2020-08-01,0
+France,,2020-08-02,0
+France,,2020-08-03,0
+France,,2020-08-04,0
+Gabon,,2020-08-01,0
+Gabon,,2020-08-02,0
+Gabon,,2020-08-03,0
+Gabon,,2020-08-04,0
+United Kingdom,,2020-08-01,0
+United Kingdom,,2020-08-02,0
+United Kingdom,,2020-08-03,0
+United Kingdom,,2020-08-04,0
+United Kingdom,England,2020-08-01,0
+United Kingdom,England,2020-08-02,0
+United Kingdom,England,2020-08-03,0
+United Kingdom,England,2020-08-04,0
+United Kingdom,Northern Ireland,2020-08-01,0
+United Kingdom,Northern Ireland,2020-08-02,0
+United Kingdom,Northern Ireland,2020-08-03,0
+United Kingdom,Northern Ireland,2020-08-04,0
+United Kingdom,Scotland,2020-08-01,0
+United Kingdom,Scotland,2020-08-02,0
+United Kingdom,Scotland,2020-08-03,0
+United Kingdom,Scotland,2020-08-04,0
+United Kingdom,Wales,2020-08-01,0
+United Kingdom,Wales,2020-08-02,0
+United Kingdom,Wales,2020-08-03,0
+United Kingdom,Wales,2020-08-04,0
+Georgia,,2020-08-01,0
+Georgia,,2020-08-02,0
+Georgia,,2020-08-03,0
+Georgia,,2020-08-04,0
+Ghana,,2020-08-01,0
+Ghana,,2020-08-02,0
+Ghana,,2020-08-03,0
+Ghana,,2020-08-04,0
+Gibraltar,,2020-08-01,0
+Gibraltar,,2020-08-02,0
+Gibraltar,,2020-08-03,0
+Gibraltar,,2020-08-04,0
+Guinea,,2020-08-01,0
+Guinea,,2020-08-02,0
+Guinea,,2020-08-03,0
+Guinea,,2020-08-04,0
+Gambia,,2020-08-01,0
+Gambia,,2020-08-02,0
+Gambia,,2020-08-03,0
+Gambia,,2020-08-04,0
+Greece,,2020-08-01,0
+Greece,,2020-08-02,0
+Greece,,2020-08-03,0
+Greece,,2020-08-04,0
+Greenland,,2020-08-01,0
+Greenland,,2020-08-02,0
+Greenland,,2020-08-03,0
+Greenland,,2020-08-04,0
+Guatemala,,2020-08-01,0
+Guatemala,,2020-08-02,0
+Guatemala,,2020-08-03,0
+Guatemala,,2020-08-04,0
+Guam,,2020-08-01,0
+Guam,,2020-08-02,0
+Guam,,2020-08-03,0
+Guam,,2020-08-04,0
+Guyana,,2020-08-01,0
+Guyana,,2020-08-02,0
+Guyana,,2020-08-03,0
+Guyana,,2020-08-04,0
+Hong Kong,,2020-08-01,0
+Hong Kong,,2020-08-02,0
+Hong Kong,,2020-08-03,0
+Hong Kong,,2020-08-04,0
+Honduras,,2020-08-01,0
+Honduras,,2020-08-02,0
+Honduras,,2020-08-03,0
+Honduras,,2020-08-04,0
+Croatia,,2020-08-01,0
+Croatia,,2020-08-02,0
+Croatia,,2020-08-03,0
+Croatia,,2020-08-04,0
+Haiti,,2020-08-01,0
+Haiti,,2020-08-02,0
+Haiti,,2020-08-03,0
+Haiti,,2020-08-04,0
+Hungary,,2020-08-01,0
+Hungary,,2020-08-02,0
+Hungary,,2020-08-03,0
+Hungary,,2020-08-04,0
+Indonesia,,2020-08-01,0
+Indonesia,,2020-08-02,0
+Indonesia,,2020-08-03,0
+Indonesia,,2020-08-04,0
+India,,2020-08-01,0
+India,,2020-08-02,0
+India,,2020-08-03,0
+India,,2020-08-04,0
+Ireland,,2020-08-01,0
+Ireland,,2020-08-02,0
+Ireland,,2020-08-03,0
+Ireland,,2020-08-04,0
+Iran,,2020-08-01,0
+Iran,,2020-08-02,0
+Iran,,2020-08-03,0
+Iran,,2020-08-04,0
+Iraq,,2020-08-01,0
+Iraq,,2020-08-02,0
+Iraq,,2020-08-03,0
+Iraq,,2020-08-04,0
+Iceland,,2020-08-01,0
+Iceland,,2020-08-02,0
+Iceland,,2020-08-03,0
+Iceland,,2020-08-04,0
+Israel,,2020-08-01,0
+Israel,,2020-08-02,0
+Israel,,2020-08-03,0
+Israel,,2020-08-04,0
+Italy,,2020-08-01,0
+Italy,,2020-08-02,0
+Italy,,2020-08-03,0
+Italy,,2020-08-04,0
+Jamaica,,2020-08-01,0
+Jamaica,,2020-08-02,0
+Jamaica,,2020-08-03,0
+Jamaica,,2020-08-04,0
+Jordan,,2020-08-01,0
+Jordan,,2020-08-02,0
+Jordan,,2020-08-03,0
+Jordan,,2020-08-04,0
+Japan,,2020-08-01,0
+Japan,,2020-08-02,0
+Japan,,2020-08-03,0
+Japan,,2020-08-04,0
+Kazakhstan,,2020-08-01,0
+Kazakhstan,,2020-08-02,0
+Kazakhstan,,2020-08-03,0
+Kazakhstan,,2020-08-04,0
+Kenya,,2020-08-01,0
+Kenya,,2020-08-02,0
+Kenya,,2020-08-03,0
+Kenya,,2020-08-04,0
+Kyrgyz Republic,,2020-08-01,0
+Kyrgyz Republic,,2020-08-02,0
+Kyrgyz Republic,,2020-08-03,0
+Kyrgyz Republic,,2020-08-04,0
+Cambodia,,2020-08-01,0
+Cambodia,,2020-08-02,0
+Cambodia,,2020-08-03,0
+Cambodia,,2020-08-04,0
+South Korea,,2020-08-01,0
+South Korea,,2020-08-02,0
+South Korea,,2020-08-03,0
+South Korea,,2020-08-04,0
+Kuwait,,2020-08-01,0
+Kuwait,,2020-08-02,0
+Kuwait,,2020-08-03,0
+Kuwait,,2020-08-04,0
+Laos,,2020-08-01,0
+Laos,,2020-08-02,0
+Laos,,2020-08-03,0
+Laos,,2020-08-04,0
+Lebanon,,2020-08-01,0
+Lebanon,,2020-08-02,0
+Lebanon,,2020-08-03,0
+Lebanon,,2020-08-04,0
+Liberia,,2020-08-01,0
+Liberia,,2020-08-02,0
+Liberia,,2020-08-03,0
+Liberia,,2020-08-04,0
+Libya,,2020-08-01,0
+Libya,,2020-08-02,0
+Libya,,2020-08-03,0
+Libya,,2020-08-04,0
+Sri Lanka,,2020-08-01,0
+Sri Lanka,,2020-08-02,0
+Sri Lanka,,2020-08-03,0
+Sri Lanka,,2020-08-04,0
+Lesotho,,2020-08-01,0
+Lesotho,,2020-08-02,0
+Lesotho,,2020-08-03,0
+Lesotho,,2020-08-04,0
+Lithuania,,2020-08-01,0
+Lithuania,,2020-08-02,0
+Lithuania,,2020-08-03,0
+Lithuania,,2020-08-04,0
+Luxembourg,,2020-08-01,0
+Luxembourg,,2020-08-02,0
+Luxembourg,,2020-08-03,0
+Luxembourg,,2020-08-04,0
+Latvia,,2020-08-01,0
+Latvia,,2020-08-02,0
+Latvia,,2020-08-03,0
+Latvia,,2020-08-04,0
+Macao,,2020-08-01,0
+Macao,,2020-08-02,0
+Macao,,2020-08-03,0
+Macao,,2020-08-04,0
+Morocco,,2020-08-01,0
+Morocco,,2020-08-02,0
+Morocco,,2020-08-03,0
+Morocco,,2020-08-04,0
+Moldova,,2020-08-01,0
+Moldova,,2020-08-02,0
+Moldova,,2020-08-03,0
+Moldova,,2020-08-04,0
+Madagascar,,2020-08-01,0
+Madagascar,,2020-08-02,0
+Madagascar,,2020-08-03,0
+Madagascar,,2020-08-04,0
+Mexico,,2020-08-01,0
+Mexico,,2020-08-02,0
+Mexico,,2020-08-03,0
+Mexico,,2020-08-04,0
+Mali,,2020-08-01,0
+Mali,,2020-08-02,0
+Mali,,2020-08-03,0
+Mali,,2020-08-04,0
+Myanmar,,2020-08-01,0
+Myanmar,,2020-08-02,0
+Myanmar,,2020-08-03,0
+Myanmar,,2020-08-04,0
+Mongolia,,2020-08-01,0
+Mongolia,,2020-08-02,0
+Mongolia,,2020-08-03,0
+Mongolia,,2020-08-04,0
+Mozambique,,2020-08-01,0
+Mozambique,,2020-08-02,0
+Mozambique,,2020-08-03,0
+Mozambique,,2020-08-04,0
+Mauritania,,2020-08-01,0
+Mauritania,,2020-08-02,0
+Mauritania,,2020-08-03,0
+Mauritania,,2020-08-04,0
+Montserrat,,2020-08-01,0
+Montserrat,,2020-08-02,0
+Montserrat,,2020-08-03,0
+Montserrat,,2020-08-04,0
+Mauritius,,2020-08-01,0
+Mauritius,,2020-08-02,0
+Mauritius,,2020-08-03,0
+Mauritius,,2020-08-04,0
+Malawi,,2020-08-01,0
+Malawi,,2020-08-02,0
+Malawi,,2020-08-03,0
+Malawi,,2020-08-04,0
+Malaysia,,2020-08-01,0
+Malaysia,,2020-08-02,0
+Malaysia,,2020-08-03,0
+Malaysia,,2020-08-04,0
+Namibia,,2020-08-01,0
+Namibia,,2020-08-02,0
+Namibia,,2020-08-03,0
+Namibia,,2020-08-04,0
+Niger,,2020-08-01,0
+Niger,,2020-08-02,0
+Niger,,2020-08-03,0
+Niger,,2020-08-04,0
+Nigeria,,2020-08-01,0
+Nigeria,,2020-08-02,0
+Nigeria,,2020-08-03,0
+Nigeria,,2020-08-04,0
+Nicaragua,,2020-08-01,0
+Nicaragua,,2020-08-02,0
+Nicaragua,,2020-08-03,0
+Nicaragua,,2020-08-04,0
+Netherlands,,2020-08-01,0
+Netherlands,,2020-08-02,0
+Netherlands,,2020-08-03,0
+Netherlands,,2020-08-04,0
+Norway,,2020-08-01,0
+Norway,,2020-08-02,0
+Norway,,2020-08-03,0
+Norway,,2020-08-04,0
+Nepal,,2020-08-01,0
+Nepal,,2020-08-02,0
+Nepal,,2020-08-03,0
+Nepal,,2020-08-04,0
+New Zealand,,2020-08-01,0
+New Zealand,,2020-08-02,0
+New Zealand,,2020-08-03,0
+New Zealand,,2020-08-04,0
+Oman,,2020-08-01,0
+Oman,,2020-08-02,0
+Oman,,2020-08-03,0
+Oman,,2020-08-04,0
+Pakistan,,2020-08-01,0
+Pakistan,,2020-08-02,0
+Pakistan,,2020-08-03,0
+Pakistan,,2020-08-04,0
+Panama,,2020-08-01,0
+Panama,,2020-08-02,0
+Panama,,2020-08-03,0
+Panama,,2020-08-04,0
+Pitcairn Islands,,2020-08-01,0
+Pitcairn Islands,,2020-08-02,0
+Pitcairn Islands,,2020-08-03,0
+Pitcairn Islands,,2020-08-04,0
+Peru,,2020-08-01,0
+Peru,,2020-08-02,0
+Peru,,2020-08-03,0
+Peru,,2020-08-04,0
+Philippines,,2020-08-01,0
+Philippines,,2020-08-02,0
+Philippines,,2020-08-03,0
+Philippines,,2020-08-04,0
+Papua New Guinea,,2020-08-01,0
+Papua New Guinea,,2020-08-02,0
+Papua New Guinea,,2020-08-03,0
+Papua New Guinea,,2020-08-04,0
+Poland,,2020-08-01,0
+Poland,,2020-08-02,0
+Poland,,2020-08-03,0
+Poland,,2020-08-04,0
+Puerto Rico,,2020-08-01,0
+Puerto Rico,,2020-08-02,0
+Puerto Rico,,2020-08-03,0
+Puerto Rico,,2020-08-04,0
+Portugal,,2020-08-01,0
+Portugal,,2020-08-02,0
+Portugal,,2020-08-03,0
+Portugal,,2020-08-04,0
+Paraguay,,2020-08-01,0
+Paraguay,,2020-08-02,0
+Paraguay,,2020-08-03,0
+Paraguay,,2020-08-04,0
+Palestine,,2020-08-01,0
+Palestine,,2020-08-02,0
+Palestine,,2020-08-03,0
+Palestine,,2020-08-04,0
+Qatar,,2020-08-01,0
+Qatar,,2020-08-02,0
+Qatar,,2020-08-03,0
+Qatar,,2020-08-04,0
+Kosovo,,2020-08-01,0
+Kosovo,,2020-08-02,0
+Kosovo,,2020-08-03,0
+Kosovo,,2020-08-04,0
+Romania,,2020-08-01,0
+Romania,,2020-08-02,0
+Romania,,2020-08-03,0
+Romania,,2020-08-04,0
+Russia,,2020-08-01,0
+Russia,,2020-08-02,0
+Russia,,2020-08-03,0
+Russia,,2020-08-04,0
+Rwanda,,2020-08-01,0
+Rwanda,,2020-08-02,0
+Rwanda,,2020-08-03,0
+Rwanda,,2020-08-04,0
+Saudi Arabia,,2020-08-01,0
+Saudi Arabia,,2020-08-02,0
+Saudi Arabia,,2020-08-03,0
+Saudi Arabia,,2020-08-04,0
+Sudan,,2020-08-01,0
+Sudan,,2020-08-02,0
+Sudan,,2020-08-03,0
+Sudan,,2020-08-04,0
+Senegal,,2020-08-01,0
+Senegal,,2020-08-02,0
+Senegal,,2020-08-03,0
+Senegal,,2020-08-04,0
+Singapore,,2020-08-01,0
+Singapore,,2020-08-02,0
+Singapore,,2020-08-03,0
+Singapore,,2020-08-04,0
+Solomon Islands,,2020-08-01,0
+Solomon Islands,,2020-08-02,0
+Solomon Islands,,2020-08-03,0
+Solomon Islands,,2020-08-04,0
+Sierra Leone,,2020-08-01,0
+Sierra Leone,,2020-08-02,0
+Sierra Leone,,2020-08-03,0
+Sierra Leone,,2020-08-04,0
+El Salvador,,2020-08-01,0
+El Salvador,,2020-08-02,0
+El Salvador,,2020-08-03,0
+El Salvador,,2020-08-04,0
+San Marino,,2020-08-01,0
+San Marino,,2020-08-02,0
+San Marino,,2020-08-03,0
+San Marino,,2020-08-04,0
+Somalia,,2020-08-01,0
+Somalia,,2020-08-02,0
+Somalia,,2020-08-03,0
+Somalia,,2020-08-04,0
+Serbia,,2020-08-01,0
+Serbia,,2020-08-02,0
+Serbia,,2020-08-03,0
+Serbia,,2020-08-04,0
+South Sudan,,2020-08-01,0
+South Sudan,,2020-08-02,0
+South Sudan,,2020-08-03,0
+South Sudan,,2020-08-04,0
+Suriname,,2020-08-01,0
+Suriname,,2020-08-02,0
+Suriname,,2020-08-03,0
+Suriname,,2020-08-04,0
+Slovak Republic,,2020-08-01,0
+Slovak Republic,,2020-08-02,0
+Slovak Republic,,2020-08-03,0
+Slovak Republic,,2020-08-04,0
+Slovenia,,2020-08-01,0
+Slovenia,,2020-08-02,0
+Slovenia,,2020-08-03,0
+Slovenia,,2020-08-04,0
+Sweden,,2020-08-01,0
+Sweden,,2020-08-02,0
+Sweden,,2020-08-03,0
+Sweden,,2020-08-04,0
+Eswatini,,2020-08-01,0
+Eswatini,,2020-08-02,0
+Eswatini,,2020-08-03,0
+Eswatini,,2020-08-04,0
+Seychelles,,2020-08-01,0
+Seychelles,,2020-08-02,0
+Seychelles,,2020-08-03,0
+Seychelles,,2020-08-04,0
+Syria,,2020-08-01,0
+Syria,,2020-08-02,0
+Syria,,2020-08-03,0
+Syria,,2020-08-04,0
+Turks and Caicos Islands,,2020-08-01,0
+Turks and Caicos Islands,,2020-08-02,0
+Turks and Caicos Islands,,2020-08-03,0
+Turks and Caicos Islands,,2020-08-04,0
+Chad,,2020-08-01,0
+Chad,,2020-08-02,0
+Chad,,2020-08-03,0
+Chad,,2020-08-04,0
+Togo,,2020-08-01,0
+Togo,,2020-08-02,0
+Togo,,2020-08-03,0
+Togo,,2020-08-04,0
+Thailand,,2020-08-01,0
+Thailand,,2020-08-02,0
+Thailand,,2020-08-03,0
+Thailand,,2020-08-04,0
+Tajikistan,,2020-08-01,0
+Tajikistan,,2020-08-02,0
+Tajikistan,,2020-08-03,0
+Tajikistan,,2020-08-04,0
+Turkmenistan,,2020-08-01,0
+Turkmenistan,,2020-08-02,0
+Turkmenistan,,2020-08-03,0
+Turkmenistan,,2020-08-04,0
+Timor-Leste,,2020-08-01,0
+Timor-Leste,,2020-08-02,0
+Timor-Leste,,2020-08-03,0
+Timor-Leste,,2020-08-04,0
+Trinidad and Tobago,,2020-08-01,0
+Trinidad and Tobago,,2020-08-02,0
+Trinidad and Tobago,,2020-08-03,0
+Trinidad and Tobago,,2020-08-04,0
+Tunisia,,2020-08-01,0
+Tunisia,,2020-08-02,0
+Tunisia,,2020-08-03,0
+Tunisia,,2020-08-04,0
+Turkey,,2020-08-01,0
+Turkey,,2020-08-02,0
+Turkey,,2020-08-03,0
+Turkey,,2020-08-04,0
+Taiwan,,2020-08-01,0
+Taiwan,,2020-08-02,0
+Taiwan,,2020-08-03,0
+Taiwan,,2020-08-04,0
+Tanzania,,2020-08-01,0
+Tanzania,,2020-08-02,0
+Tanzania,,2020-08-03,0
+Tanzania,,2020-08-04,0
+Uganda,,2020-08-01,0
+Uganda,,2020-08-02,0
+Uganda,,2020-08-03,0
+Uganda,,2020-08-04,0
+Ukraine,,2020-08-01,0
+Ukraine,,2020-08-02,0
+Ukraine,,2020-08-03,0
+Ukraine,,2020-08-04,0
+Uruguay,,2020-08-01,0
+Uruguay,,2020-08-02,0
+Uruguay,,2020-08-03,0
+Uruguay,,2020-08-04,0
+United States,,2020-08-01,0
+United States,,2020-08-02,0
+United States,,2020-08-03,0
+United States,,2020-08-04,0
+United States,Alaska,2020-08-01,0
+United States,Alaska,2020-08-02,0
+United States,Alaska,2020-08-03,0
+United States,Alaska,2020-08-04,0
+United States,Alabama,2020-08-01,0
+United States,Alabama,2020-08-02,0
+United States,Alabama,2020-08-03,0
+United States,Alabama,2020-08-04,0
+United States,Arkansas,2020-08-01,0
+United States,Arkansas,2020-08-02,0
+United States,Arkansas,2020-08-03,0
+United States,Arkansas,2020-08-04,0
+United States,Arizona,2020-08-01,0
+United States,Arizona,2020-08-02,0
+United States,Arizona,2020-08-03,0
+United States,Arizona,2020-08-04,0
+United States,California,2020-08-01,0
+United States,California,2020-08-02,0
+United States,California,2020-08-03,0
+United States,California,2020-08-04,0
+United States,Colorado,2020-08-01,0
+United States,Colorado,2020-08-02,0
+United States,Colorado,2020-08-03,0
+United States,Colorado,2020-08-04,0
+United States,Connecticut,2020-08-01,0
+United States,Connecticut,2020-08-02,0
+United States,Connecticut,2020-08-03,0
+United States,Connecticut,2020-08-04,0
+United States,Washington DC,2020-08-01,0
+United States,Washington DC,2020-08-02,0
+United States,Washington DC,2020-08-03,0
+United States,Washington DC,2020-08-04,0
+United States,Delaware,2020-08-01,0
+United States,Delaware,2020-08-02,0
+United States,Delaware,2020-08-03,0
+United States,Delaware,2020-08-04,0
+United States,Florida,2020-08-01,0
+United States,Florida,2020-08-02,0
+United States,Florida,2020-08-03,0
+United States,Florida,2020-08-04,0
+United States,Georgia,2020-08-01,0
+United States,Georgia,2020-08-02,0
+United States,Georgia,2020-08-03,0
+United States,Georgia,2020-08-04,0
+United States,Hawaii,2020-08-01,0
+United States,Hawaii,2020-08-02,0
+United States,Hawaii,2020-08-03,0
+United States,Hawaii,2020-08-04,0
+United States,Iowa,2020-08-01,0
+United States,Iowa,2020-08-02,0
+United States,Iowa,2020-08-03,0
+United States,Iowa,2020-08-04,0
+United States,Idaho,2020-08-01,0
+United States,Idaho,2020-08-02,0
+United States,Idaho,2020-08-03,0
+United States,Idaho,2020-08-04,0
+United States,Illinois,2020-08-01,0
+United States,Illinois,2020-08-02,0
+United States,Illinois,2020-08-03,0
+United States,Illinois,2020-08-04,0
+United States,Indiana,2020-08-01,0
+United States,Indiana,2020-08-02,0
+United States,Indiana,2020-08-03,0
+United States,Indiana,2020-08-04,0
+United States,Kansas,2020-08-01,0
+United States,Kansas,2020-08-02,0
+United States,Kansas,2020-08-03,0
+United States,Kansas,2020-08-04,0
+United States,Kentucky,2020-08-01,0
+United States,Kentucky,2020-08-02,0
+United States,Kentucky,2020-08-03,0
+United States,Kentucky,2020-08-04,0
+United States,Louisiana,2020-08-01,0
+United States,Louisiana,2020-08-02,0
+United States,Louisiana,2020-08-03,0
+United States,Louisiana,2020-08-04,0
+United States,Massachusetts,2020-08-01,0
+United States,Massachusetts,2020-08-02,0
+United States,Massachusetts,2020-08-03,0
+United States,Massachusetts,2020-08-04,0
+United States,Maryland,2020-08-01,0
+United States,Maryland,2020-08-02,0
+United States,Maryland,2020-08-03,0
+United States,Maryland,2020-08-04,0
+United States,Maine,2020-08-01,0
+United States,Maine,2020-08-02,0
+United States,Maine,2020-08-03,0
+United States,Maine,2020-08-04,0
+United States,Michigan,2020-08-01,0
+United States,Michigan,2020-08-02,0
+United States,Michigan,2020-08-03,0
+United States,Michigan,2020-08-04,0
+United States,Minnesota,2020-08-01,0
+United States,Minnesota,2020-08-02,0
+United States,Minnesota,2020-08-03,0
+United States,Minnesota,2020-08-04,0
+United States,Missouri,2020-08-01,0
+United States,Missouri,2020-08-02,0
+United States,Missouri,2020-08-03,0
+United States,Missouri,2020-08-04,0
+United States,Mississippi,2020-08-01,0
+United States,Mississippi,2020-08-02,0
+United States,Mississippi,2020-08-03,0
+United States,Mississippi,2020-08-04,0
+United States,Montana,2020-08-01,0
+United States,Montana,2020-08-02,0
+United States,Montana,2020-08-03,0
+United States,Montana,2020-08-04,0
+United States,North Carolina,2020-08-01,0
+United States,North Carolina,2020-08-02,0
+United States,North Carolina,2020-08-03,0
+United States,North Carolina,2020-08-04,0
+United States,North Dakota,2020-08-01,0
+United States,North Dakota,2020-08-02,0
+United States,North Dakota,2020-08-03,0
+United States,North Dakota,2020-08-04,0
+United States,Nebraska,2020-08-01,0
+United States,Nebraska,2020-08-02,0
+United States,Nebraska,2020-08-03,0
+United States,Nebraska,2020-08-04,0
+United States,New Hampshire,2020-08-01,0
+United States,New Hampshire,2020-08-02,0
+United States,New Hampshire,2020-08-03,0
+United States,New Hampshire,2020-08-04,0
+United States,New Jersey,2020-08-01,0
+United States,New Jersey,2020-08-02,0
+United States,New Jersey,2020-08-03,0
+United States,New Jersey,2020-08-04,0
+United States,New Mexico,2020-08-01,0
+United States,New Mexico,2020-08-02,0
+United States,New Mexico,2020-08-03,0
+United States,New Mexico,2020-08-04,0
+United States,Nevada,2020-08-01,0
+United States,Nevada,2020-08-02,0
+United States,Nevada,2020-08-03,0
+United States,Nevada,2020-08-04,0
+United States,New York,2020-08-01,0
+United States,New York,2020-08-02,0
+United States,New York,2020-08-03,0
+United States,New York,2020-08-04,0
+United States,Ohio,2020-08-01,0
+United States,Ohio,2020-08-02,0
+United States,Ohio,2020-08-03,0
+United States,Ohio,2020-08-04,0
+United States,Oklahoma,2020-08-01,0
+United States,Oklahoma,2020-08-02,0
+United States,Oklahoma,2020-08-03,0
+United States,Oklahoma,2020-08-04,0
+United States,Oregon,2020-08-01,0
+United States,Oregon,2020-08-02,0
+United States,Oregon,2020-08-03,0
+United States,Oregon,2020-08-04,0
+United States,Pennsylvania,2020-08-01,0
+United States,Pennsylvania,2020-08-02,0
+United States,Pennsylvania,2020-08-03,0
+United States,Pennsylvania,2020-08-04,0
+United States,Rhode Island,2020-08-01,0
+United States,Rhode Island,2020-08-02,0
+United States,Rhode Island,2020-08-03,0
+United States,Rhode Island,2020-08-04,0
+United States,South Carolina,2020-08-01,0
+United States,South Carolina,2020-08-02,0
+United States,South Carolina,2020-08-03,0
+United States,South Carolina,2020-08-04,0
+United States,South Dakota,2020-08-01,0
+United States,South Dakota,2020-08-02,0
+United States,South Dakota,2020-08-03,0
+United States,South Dakota,2020-08-04,0
+United States,Tennessee,2020-08-01,0
+United States,Tennessee,2020-08-02,0
+United States,Tennessee,2020-08-03,0
+United States,Tennessee,2020-08-04,0
+United States,Texas,2020-08-01,0
+United States,Texas,2020-08-02,0
+United States,Texas,2020-08-03,0
+United States,Texas,2020-08-04,0
+United States,Utah,2020-08-01,0
+United States,Utah,2020-08-02,0
+United States,Utah,2020-08-03,0
+United States,Utah,2020-08-04,0
+United States,Virginia,2020-08-01,0
+United States,Virginia,2020-08-02,0
+United States,Virginia,2020-08-03,0
+United States,Virginia,2020-08-04,0
+United States,Virgin Islands,2020-08-01,0
+United States,Virgin Islands,2020-08-02,0
+United States,Virgin Islands,2020-08-03,0
+United States,Virgin Islands,2020-08-04,0
+United States,Vermont,2020-08-01,0
+United States,Vermont,2020-08-02,0
+United States,Vermont,2020-08-03,0
+United States,Vermont,2020-08-04,0
+United States,Washington,2020-08-01,0
+United States,Washington,2020-08-02,0
+United States,Washington,2020-08-03,0
+United States,Washington,2020-08-04,0
+United States,Wisconsin,2020-08-01,0
+United States,Wisconsin,2020-08-02,0
+United States,Wisconsin,2020-08-03,0
+United States,Wisconsin,2020-08-04,0
+United States,West Virginia,2020-08-01,0
+United States,West Virginia,2020-08-02,0
+United States,West Virginia,2020-08-03,0
+United States,West Virginia,2020-08-04,0
+United States,Wyoming,2020-08-01,0
+United States,Wyoming,2020-08-02,0
+United States,Wyoming,2020-08-03,0
+United States,Wyoming,2020-08-04,0
+Uzbekistan,,2020-08-01,0
+Uzbekistan,,2020-08-02,0
+Uzbekistan,,2020-08-03,0
+Uzbekistan,,2020-08-04,0
+Venezuela,,2020-08-01,0
+Venezuela,,2020-08-02,0
+Venezuela,,2020-08-03,0
+Venezuela,,2020-08-04,0
+British Virgin Islands,,2020-08-01,0
+British Virgin Islands,,2020-08-02,0
+British Virgin Islands,,2020-08-03,0
+British Virgin Islands,,2020-08-04,0
+Vietnam,,2020-08-01,0
+Vietnam,,2020-08-02,0
+Vietnam,,2020-08-03,0
+Vietnam,,2020-08-04,0
+Vanuatu,,2020-08-01,0
+Vanuatu,,2020-08-02,0
+Vanuatu,,2020-08-03,0
+Vanuatu,,2020-08-04,0
+Yemen,,2020-08-01,0
+Yemen,,2020-08-02,0
+Yemen,,2020-08-03,0
+Yemen,,2020-08-04,0
+South Africa,,2020-08-01,0
+South Africa,,2020-08-02,0
+South Africa,,2020-08-03,0
+South Africa,,2020-08-04,0
+Zambia,,2020-08-01,0
+Zambia,,2020-08-02,0
+Zambia,,2020-08-03,0
+Zambia,,2020-08-04,0
+Zimbabwe,,2020-08-01,0
+Zimbabwe,,2020-08-02,0
+Zimbabwe,,2020-08-03,0
+Zimbabwe,,2020-08-04,0
