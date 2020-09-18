@@ -1,4 +1,4 @@
-CountryName,RegionName,Date,PredictedNewCases
+CountryName,RegionName,Date,PredictedDailyNewCases
 Aruba,,2020-08-01,36.97432703121546
 Aruba,,2020-08-02,40.82571889683008
 Aruba,,2020-08-03,39.00155848076339
