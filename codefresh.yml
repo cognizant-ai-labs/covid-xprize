@@ -1,5 +1,12 @@
 version: '1.0'
 steps:
+  clone_main_repo:
+    type: git-clone
+    title: "Clone repo"
+    repo: leaf-ai/covid-xprize
+    revision: '${{CF_REVISION}}'
+    git: github
+
   covid-prize-build:
     title: Build covid-xprize Docker image
     image_name: covid-xprize
