@@ -2,4 +2,5 @@ venv/
 .ipynb_checkpoints/
 __pycache__
 *.pyc
+/examples/*/*.csv
 .idea/
