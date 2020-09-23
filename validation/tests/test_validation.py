@@ -21,7 +21,7 @@ class TestMultiplicativeEvaluator(unittest.TestCase):
 
     def test_valid_submission(self):
         errors = validate_submission("2020-08-01", "2020-08-04", VALID_SUBMISSION)
-        self.assertIsNone(errors)
+        self.assertTrue(not errors)
 
     def test_nan_submission(self):
         errors = validate_submission("2020-08-01", "2020-08-04", NAN_SUBMISSION)
@@ -37,14 +37,14 @@ class TestMultiplicativeEvaluator(unittest.TestCase):
         errors = validate_submission("2020-08-01", "2020-08-04", BAD_DATES_SUBMISSION)
         self.assertIsNotNone(errors)
         self.assertEqual(10, len(errors), "Not the expected number of errors")
-        expected_errors = ['Afghanistan: Expected prediction for date 2020-08-01 00:00:00 but got 2020-07-01 00:00:00',
-                           'Afghanistan: Expected prediction for date 2020-08-02 00:00:00 but got 2020-07-02 00:00:00',
-                           'Afghanistan: Expected prediction for date 2020-08-03 00:00:00 but got 2020-07-03 00:00:00',
-                           'Afghanistan: Expected prediction for date 2020-08-04 00:00:00 but got 2020-07-04 00:00:00',
-                           'Albania: Expected prediction for date 2020-08-03 00:00:00 but got None',
-                           'Albania: Expected prediction for date 2020-08-04 00:00:00 but got None',
-                           'Angola: Was not expecting prediction for 2020-08-05 00:00:00',
-                           'Aruba: Expected prediction for date 2020-08-02 00:00:00 but got 2020-08-03 00:00:00',
-                           'Aruba: Expected prediction for date 2020-08-03 00:00:00 but got 2020-08-04 00:00:00',
-                           'Aruba: Expected prediction for date 2020-08-04 00:00:00 but got None']
+        expected_errors = ['Afghanistan: Expected prediction for date 2020-08-01 but got 2020-07-01',
+                           'Afghanistan: Expected prediction for date 2020-08-02 but got 2020-07-02',
+                           'Afghanistan: Expected prediction for date 2020-08-03 but got 2020-07-03',
+                           'Afghanistan: Expected prediction for date 2020-08-04 but got 2020-07-04',
+                           'Albania: Expected prediction for date 2020-08-03 but got None',
+                           'Albania: Expected prediction for date 2020-08-04 but got None',
+                           'Angola: Expected prediction for date None but got 2020-08-05',
+                           'Aruba: Expected prediction for date 2020-08-02 but got 2020-08-03',
+                           'Aruba: Expected prediction for date 2020-08-03 but got 2020-08-04',
+                           'Aruba: Expected prediction for date 2020-08-04 but got None']
         self.assertEqual(expected_errors, errors)

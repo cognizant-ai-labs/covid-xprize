@@ -1,6 +1,5 @@
 import itertools
 from typing import List
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -13,7 +12,9 @@ COLUMNS = ["CountryName",
            PREDICTED_DAILY_NEW_CASES]
 
 
-def validate_submission(start_date: str, end_date: str, submission_url: str) -> Optional[List[str]]:
+def validate_submission(start_date: str,
+                        end_date: str,
+                        submission_url: str) -> List[str]:
     """
     Checks a submission file is valid.
     Args:
@@ -21,7 +22,7 @@ def validate_submission(start_date: str, end_date: str, submission_url: str) -> 
         end_date: the submission end date as a string, format YYYY-MM-DDD
         submission_url: path to a file-like object
 
-    Returns: a list of string messages if errors were detected, None otherwise
+    Returns: a list of string messages if errors were detected, an empty list otherwise
 
     """
     df = pd.read_csv(submission_url,
@@ -44,10 +45,7 @@ def validate_submission(start_date: str, end_date: str, submission_url: str) -> 
         if errors:
             all_errors.extend(errors)
 
-    if all_errors:
-        return all_errors
-    else:
-        return None
+    return all_errors
 
 
 def _check_columns(expected_columns, df):
@@ -83,15 +81,14 @@ def _check_days(start_date, end_date, df):
     num_days = (end_date - start_date).days + 1
     expected_dates = [start_date + pd.offsets.Day(i) for i in range(num_days)]
     # Get the geo names
-    geoids = list(df.GeoID.unique())
-    for geoid in geoids:
-        pred_dates = df[df.GeoID == geoid].Date
+    geo_ids = list(df.GeoID.unique())
+    for geo_id in geo_ids:
+        pred_dates = df[df.GeoID == geo_id].Date
         for expected_date, pred_date in itertools.zip_longest(expected_dates, pred_dates, fillvalue=None):
             if not expected_date == pred_date:
-                if expected_date is None:
-                    errors.append(f"{geoid}: Was not expecting prediction for {pred_date}")
-                else:
-                 errors.append(f"{geoid}: Expected prediction for date {expected_date} but got {pred_date}")
+                errors.append(f"{geo_id}: Expected prediction for date "
+                              f"{expected_date.strftime('%Y-%m-%d') if expected_date is not None else None}"
+                              f" but got {pred_date.strftime('%Y-%m-%d') if pred_date is not None else None}")
     if errors:
         return errors
     else:
