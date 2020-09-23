@@ -9,7 +9,7 @@ steps:
 
   covid-prize-build:
     title: Build covid-xprize Docker image
-    image_name: covid-xprize
+    image_name: intermediate
     type: build
     dockerfile: ./Dockerfile
     working_directory: ${{CF_REPO_NAME}}
