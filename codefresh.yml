@@ -1,0 +1,17 @@
+version: '1.0'
+steps:
+  covid-prize-build:
+    title: Build covid-xprize Docker image
+    image_name: covid-xprize
+    type: build
+    dockerfile: ./Dockerfile
+    working_directory: ${{CF_REPO_NAME}}
+    tag: ${{CF_REVISION}}
+
+  tests:
+    title: Run unit tests
+    image: ${{covid-prize-build}}
+    description: Run unit tests (nosetests)
+    working_directory: ${{CF_REPO_NAME}}
+    commands:
+      - nosetests -v
