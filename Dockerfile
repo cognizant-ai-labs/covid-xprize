@@ -6,12 +6,12 @@ FROM python:3.6-stretch
 ENV APPS_HOME /usr/local/cognizant
 ENV COVID_APP_HOME ${APPS_HOME}/covid-xprize
 
-RUN pip3 install --upgrade pip
+RUN pip3 install --no-cache-dir --upgrade pip
 
 # Copy requirements file only. That way, we don't have to rebuild the requirements layer, which takes a long time,
 # each time the source changes.
 COPY ./requirements.txt ${COVID_APP_HOME}/requirements.txt
-RUN pip3 install -r ${COVID_APP_HOME}/requirements.txt
+RUN pip3 install --no-cache-dir -r ${COVID_APP_HOME}/requirements.txt
 
 # Copy rest of source dir
 COPY ./ ${COVID_APP_HOME}
