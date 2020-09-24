@@ -7,7 +7,7 @@ from ..xprize_predictor import XPrizePredictor
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 FIXTURES_PATH = os.path.join(ROOT_DIR, 'fixtures')
-EXAMPLE_INPUT_FILE = os.path.join(ROOT_DIR, "../../../2020-08-01_2020-08-04_npis_example.csv")
+EXAMPLE_INPUT_FILE = os.path.join(ROOT_DIR, "../../../validation/data/2020-08-01_2020-08-04_ip.csv")
 DATA_FILE = os.path.join(ROOT_DIR, "../data/OxCGRT_latest.csv")
 PREDICTOR_27 = os.path.join(FIXTURES_PATH, "pred27", "predictor.h5")
 PREDICTOR_30 = os.path.join(FIXTURES_PATH, "pred30", "predictor.h5")

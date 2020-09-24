@@ -228,7 +228,7 @@ class XPrizePredictor(object):
         latest_df["RegionName"].fillna('', inplace=True)
         # Replace CountryName by CountryName / RegionName
         # np.where usage: if A then B else C
-        latest_df["CountryName"] = np.where(latest_df["RegionName"] == '',
+        latest_df["CountryName"] = np.where(latest_df["RegionName"].isnull(),
                                             latest_df["CountryName"],
                                             latest_df["CountryName"] + ' / ' + latest_df["RegionName"])
         # Take a snapshot on cutoff_date
