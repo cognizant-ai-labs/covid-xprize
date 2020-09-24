@@ -25,7 +25,7 @@ class TestMultiplicativeEvaluator(unittest.TestCase):
 
     def test_predict(self):
         predictor = XPrizePredictor(PREDICTOR_31, DATA_FILE, CUTOFF_DATE)
-        pred_df = predictor._predict(START_DATE, END_DATE, EXAMPLE_INPUT_FILE)
+        pred_df = predictor.predict(START_DATE, END_DATE, EXAMPLE_INPUT_FILE)
         self.assertIsInstance(pred_df, pd.DataFrame)
 
     def test_train(self):

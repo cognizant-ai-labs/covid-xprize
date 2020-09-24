@@ -29,7 +29,11 @@ def predict(start_date: str,
     cutoff_date = pd.to_datetime(CUTOFF_DATE, format='%Y-%m-%d')
     predictor = XPrizePredictor(MODEL_FILE, DATA_FILE, cutoff_date)
     # Saves the predictions in a .csv file
-    predictor.predict(start_date, end_date, path_to_ips_file)
+    preds_df = predictor.predict(start_date, end_date, path_to_ips_file)
+    # Save to a csv file
+    output_file = start_date + "_" + end_date + ".csv"
+    preds_df.to_csv(output_file, index=False)
+    print(f"Saved predictions to {output_file}")
 
 
 # !!! PLEASE DO NOT EDIT. THIS IS THE OFFICIAL COMPETITION API !!!

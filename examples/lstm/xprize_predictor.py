@@ -72,28 +72,9 @@ class XPrizePredictor(object):
         self.country_samples = self._create_country_samples(self.df, self.countries)
 
     def predict(self,
-                start_date: str,
-                end_date: str,
-                path_to_ips_file: str):
-        """
-        Generates a file with daily new cases predictions for the given countries, regions and npis, between
-        start_date and end_date, included.
-        :param start_date: day from which to start making predictions, as a string, format YYYY-MM-DDD
-        :param end_date: day on which to stop making predictions, as a string, format YYYY-MM-DDD
-        :param path_to_ips_file: path to a csv file containing the intervention plans between start_date and end_date
-        :return: Nothing. Saves a csv file called 'start_date_end_date.csv'
-        with columns "CountryName,RegionName,Date,PredictedDailyNewCases"
-        """
-        preds_df = self._predict(start_date, end_date, path_to_ips_file)
-        # Save to a csv file
-        output_file = start_date + "_" + end_date + ".csv"
-        preds_df.to_csv(output_file, index=False)
-        print(f"Saved predictions to {output_file}")
-
-    def _predict(self,
-                 start_date_str: str,
-                 end_date_str: str,
-                 npis_csv: str) -> pd.DataFrame:
+                start_date_str: str,
+                end_date_str: str,
+                npis_csv: str) -> pd.DataFrame:
         start_date = pd.to_datetime(start_date_str, format='%Y-%m-%d')
         # end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
 
