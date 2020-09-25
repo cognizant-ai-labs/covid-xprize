@@ -15,7 +15,7 @@ CUTOFF_DATE = pd.to_datetime("2020-07-31", format='%Y-%m-%d')
 
 def predict(start_date: str,
             end_date: str,
-            path_to_ips_file: str):
+            path_to_ips_file: str) -> None:
     """
     Generates a file with daily new cases predictions for the given countries, regions and intervention plans, between
     start_date and end_date, included.

@@ -3,7 +3,7 @@ import argparse
 
 def predict(start_date: str,
             end_date: str,
-            path_to_ips_file: str):
+            path_to_ips_file: str) -> None:
     """
     Generates a file with daily new cases predictions for the given countries, regions and intervention plans, between
     start_date and end_date, included.
@@ -23,14 +23,17 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--start_date",
                         dest="start_date",
                         type=str,
+                        required=True,
                         help="Start date from which to predict, included, as YYYY-MM-DD. For example 2020-08-01")
     parser.add_argument("-e", "--end_date",
                         dest="end_date",
                         type=str,
+                        required=True,
                         help="End date for the last prediction, included, as YYYY-MM-DD. For example 2020-08-31")
-    parser.add_argument("-f", "--interventions_file",
+    parser.add_argument("-ip", "--interventions_plan",
                         dest="ip_file",
                         type=str,
+                        required=True,
                         help="The path to an intervention plan .csv file")
     args = parser.parse_args()
     print(f"Generating predictions from {args.start_date} to {args.end_date}...")
