@@ -12,24 +12,13 @@ from keras.layers import LSTM
 from keras.layers import Lambda
 from keras.models import Model
 from keras.models import load_model
+from common.constants import Constants
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(ROOT_DIR, 'data')
 ADDITIONAL_CONTEXT_FILE = os.path.join(DATA_PATH, "Additional_Context_Data_Global.csv")
 ADDITIONAL_US_STATES_CONTEXT = os.path.join(DATA_PATH, "US_states_populations.csv")
 ADDITIONAL_UK_CONTEXT = os.path.join(DATA_PATH, "uk_populations.csv")
-
-NPI_COLUMNS = ['C1_School closing',
-               'C2_Workplace closing',
-               'C3_Cancel public events',
-               'C4_Restrictions on gatherings',
-               'C5_Close public transport',
-               'C6_Stay at home requirements',
-               'C7_Restrictions on internal movement',
-               'C8_International travel controls',
-               'H1_Public information campaigns',
-               'H2_Testing policy',
-               'H3_Contact tracing']
 
 CONTEXT_COLUMNS = ['CountryName',
                    'RegionName',
@@ -96,7 +85,7 @@ class XPrizePredictor(object):
 
             # Predictions with passed npis
             cnpis_df = npis_df[npis_df.CountryName == c]
-            npis_sequence = np.array(cnpis_df[NPI_COLUMNS])
+            npis_sequence = np.array(cnpis_df[Constants.NPI_COLUMNS])
 
             # Get the predictions with the passed NPIs
             preds = self._roll_out_predictions(self.predictor,
@@ -163,7 +152,7 @@ class XPrizePredictor(object):
         df.dropna(subset=['Population'], inplace=True)
 
         #  Keep only needed columns
-        columns = CONTEXT_COLUMNS + NPI_COLUMNS
+        columns = CONTEXT_COLUMNS + Constants.NPI_COLUMNS
         df = df[columns]
 
         # Fill in missing values
@@ -229,7 +218,7 @@ class XPrizePredictor(object):
         df.update(df.groupby('CountryName').ConfirmedDeaths.apply(
             lambda group: group.interpolate(limit_area='inside')))
         df.dropna(subset=['ConfirmedDeaths'], inplace=True)
-        for npi_column in NPI_COLUMNS:
+        for npi_column in Constants.NPI_COLUMNS:
             df.update(df.groupby('CountryName')[npi_column].ffill().fillna(0))
 
     @staticmethod
@@ -266,7 +255,7 @@ class XPrizePredictor(object):
         :return: a dictionary of train and test sets, for each specified country
         """
         context_column = 'PredictionRatio'
-        action_columns = NPI_COLUMNS
+        action_columns = Constants.NPI_COLUMNS
         outcome_column = 'PredictionRatio'
         country_samples = {}
         for c in countries:

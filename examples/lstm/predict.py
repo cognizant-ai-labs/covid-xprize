@@ -31,7 +31,7 @@ def predict(start_date: str,
     # Saves the predictions in a .csv file
     preds_df = predictor.predict(start_date, end_date, path_to_ips_file)
     # Save to a csv file
-    output_file = start_date + "_" + end_date + ".csv"
+    output_file = os.path.join(ROOT_DIR, start_date + "_" + end_date + ".csv")
     preds_df.to_csv(output_file, index=False)
     print(f"Saved predictions to {output_file}")
 
