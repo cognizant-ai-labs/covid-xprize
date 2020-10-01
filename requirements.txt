@@ -9,8 +9,11 @@ keras==2.4.3
 xgboost==1.2.0
 
 # plotting
-plotly==4.10.0
+plotly==4.11.0
 matplotlib==3.3.2
+dash==1.16.2
+dash-renderer==1.8.2
+dash-bootstrap-components==0.10.6
 
 # S3 access
 s3fs==0.5.1

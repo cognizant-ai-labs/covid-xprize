@@ -84,14 +84,7 @@ def get_predictions_from_file(predictor_name, predictions_file, ma_df):
 def rank_submissions(start_date: str, end_date: str, submissions_date: str) -> DataFrame:
     actual_df, ma_df = _get_reference_datasets(start_date, end_date)
 
-    # predictions = {"Zero": "examples/zero/2020-08-01_2020-08-31.csv",
-    #                "Linear": "examples/linear/2020-08-01_2020-08-31.csv",
-    #                "LSTM": "examples/lstm/2020-08-01_2020-08-31.csv",
-    #                "XGBoost": "examples/xgboost/2020-08-01_2020-08-31.csv"
-    #                }
-
     # Find submissions in S3
-    # f's3://{Constants.S3_BUCKET}/predictions/{prediction_date}/teams/{team}/{prediction_file_name}'
     teams_folder = f's3://{Constants.S3_BUCKET}/predictions/{submissions_date}/teams'
     teams = FS.ls(teams_folder)
     prediction_file_name = start_date + "_" + end_date + ".csv"
@@ -112,30 +105,30 @@ def rank_submissions(start_date: str, end_date: str, submissions_date: str) -> D
         # validate
         errors = validate_submission(start_date, end_date, predictions_file_path)
         if not errors:
-            preds_df = get_predictions_from_file(team, predictions_file_path, ma_df)
+            LOGGER.info(f'"{team_name}" submission passes validation')
+            preds_df = get_predictions_from_file(team_name, predictions_file_path, ma_df)
             merged_df = actual_df.merge(preds_df, on=['CountryName', 'RegionName', 'Date', 'GeoID'], how='left')
             ranking_df = ranking_df.append(merged_df)
         else:
             LOGGER.warning(f'Team "{team_name}" did not submit valid predictions! Errors: ')
             LOGGER.warning('\n'.join(errors))
 
-        ranking_df['DiffDaily'] = (ranking_df["ActualDailyNewCases"] - ranking_df["PredictedDailyNewCases"]).abs()
-        ranking_df['Diff7DMA'] = (ranking_df["ActualDailyNewCases7DMA"] - ranking_df["PredictedDailyNewCases7DMA"]).abs()
+    ranking_df['DiffDaily'] = (ranking_df["ActualDailyNewCases"] - ranking_df["PredictedDailyNewCases"]).abs()
+    ranking_df['Diff7DMA'] = (ranking_df["ActualDailyNewCases7DMA"] - ranking_df["PredictedDailyNewCases7DMA"]).abs()
 
-        # Compute the cumulative sum of 7DMA errors
-        ranking_df['CumulDiff7DMA'] = ranking_df.groupby(["GeoID", "PredictorName"])['Diff7DMA'].cumsum()
+    # Compute the cumulative sum of 7DMA errors
+    ranking_df['CumulDiff7DMA'] = ranking_df.groupby(["GeoID", "PredictorName"])['Diff7DMA'].cumsum()
 
-        # Keep only predictions (either Prediction == True) or on or after start_date
-        ranking_df = ranking_df[ranking_df["Date"] >= start_date]
+    # Keep only predictions (either Prediction == True) or on or after start_date
+    ranking_df = ranking_df[ranking_df["Date"] >= start_date]
 
-        # Sort by 7 days moving average diff
-        ranking_df.sort_values(by=["CountryName", "RegionName", "Date", "Diff7DMA"], inplace=True)
+    # Sort by 7 days moving average diff
+    ranking_df.sort_values(by=["CountryName", "RegionName", "Date", "Diff7DMA"], inplace=True)
 
-        ranking_df.groupby('PredictorName').Diff7DMA.sum().sort_values()
+    ranking_df.groupby('PredictorName').Diff7DMA.sum().sort_values()
 
-        ranking_df[(ranking_df.CountryName == "United States") & (ranking_df.RegionName == "")].groupby(
-            ["PredictorName"]).Diff7DMA.sum().sort_values()
-
+    ranking_df[(ranking_df.CountryName == "United States") & (ranking_df.RegionName == "")].groupby(
+        ["PredictorName"]).Diff7DMA.sum().sort_values()
 
     return ranking_df
 
@@ -164,7 +157,7 @@ if __name__ == '__main__':
 
     today_date = date.today().strftime("%Y_%m_%d")
     LOGGER.info(f'Generating rankings for {today_date} start date {args.start_date} end date {args.end_date}...')
-    ranking_df = rank_submissions(args.start_date, args.end_date, today_date)
-    upload_to_s3(today_date, ranking_df)
+    rankings = rank_submissions(args.start_date, args.end_date, today_date)
+    upload_to_s3(today_date, rankings)
     LOGGER.info(f'Done with rankings for for {today_date} start date {args.start_date} end date {args.end_date}')
 
