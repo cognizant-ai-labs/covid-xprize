@@ -9,6 +9,7 @@ from datetime import date
 
 import s3fs
 
+from common.args import parse_args
 from common.constants import Constants
 
 # Set up logging
@@ -38,6 +39,7 @@ def generate_predictions(start_date: str, end_date: str, ip_file: str) -> None:
             LOGGER.warning(f'{predict_module} not found for {team} so cannot process this entry.')
             continue
 
+        # Spawn an external process to run each predictor. In future this may be parallel and even distributed
         subprocess.call(
             [
                 'python', predict_module,
@@ -50,8 +52,8 @@ def generate_predictions(start_date: str, end_date: str, ip_file: str) -> None:
 
 def upload_to_s3(start_date, end_date, prediction_date):
     sub_dirs = [f.path for f in os.scandir(SANDBOXES_DIR) if f.is_dir()]
+    prediction_file_name = start_date + "_" + end_date + ".csv"
     for team in sub_dirs:
-        prediction_file_name = start_date + "_" + end_date + ".csv"
         predictions_file_path = os.path.join(team, prediction_file_name)
         if not os.path.isfile(predictions_file_path):
             LOGGER.warning(f'Expected predictions for {team} from {start_date} to {end_date} missing: {predictions_file_path}')
@@ -65,29 +67,11 @@ def upload_to_s3(start_date, end_date, prediction_date):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-s", "--start_date",
-                        dest="start_date",
-                        type=str,
-                        required=True,
-                        help="Start date from which to predict, included, as YYYY-MM-DD. For example 2020-08-01")
-    parser.add_argument("-e", "--end_date",
-                        dest="end_date",
-                        type=str,
-                        required=True,
-                        help="End date for the last prediction, included, as YYYY-MM-DD. For example 2020-08-31")
-    parser.add_argument("-ip", "--interventions_plan",
-                        dest="ip_file",
-                        type=str,
-                        required=True,
-                        help="The path to an intervention plan .csv file")
-    args = parser.parse_args()
-    LOGGER.info(f"Generating predictions from {args.start_date} to {args.end_date}...")
+    args = parse_args()
+    today_date = date.today().strftime("%Y_%m_%d")
+    LOGGER.info(
+        f'Generating predictions for {today_date} from start date {args.start_date} to end date {args.end_date}...')
     generate_predictions(args.start_date, args.end_date, args.ip_file)
 
-    today = date.today()
-
-    # dd/mm/YY
-    today_date = today.strftime("%Y_%m_%d")
     upload_to_s3(args.start_date, args.end_date, today_date)
-    LOGGER.info("Done!")
+    LOGGER.info(f"Done with predictions for {today_date} from start date {args.start_date} to end date {args.end_date}")

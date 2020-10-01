@@ -1,5 +1,7 @@
 import argparse
 
+from common.args import parse_args
+
 
 def predict(start_date: str,
             end_date: str,
@@ -19,23 +21,8 @@ def predict(start_date: str,
 
 # !!! PLEASE DO NOT EDIT. THIS IS THE OFFICIAL COMPETITION API !!!
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-s", "--start_date",
-                        dest="start_date",
-                        type=str,
-                        required=True,
-                        help="Start date from which to predict, included, as YYYY-MM-DD. For example 2020-08-01")
-    parser.add_argument("-e", "--end_date",
-                        dest="end_date",
-                        type=str,
-                        required=True,
-                        help="End date for the last prediction, included, as YYYY-MM-DD. For example 2020-08-31")
-    parser.add_argument("-ip", "--interventions_plan",
-                        dest="ip_file",
-                        type=str,
-                        required=True,
-                        help="The path to an intervention plan .csv file")
-    args = parser.parse_args()
+    args = parse_args()
+
     print(f"Generating predictions from {args.start_date} to {args.end_date}...")
     predict(args.start_date, args.end_date, args.ip_file)
     print("Done!")
