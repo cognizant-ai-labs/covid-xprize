@@ -4,6 +4,7 @@ __pycache__
 *.pyc
 .idea/
 # Run the training scripts to generate the models
+examples/linear/data/OxCGRT_latest.csv
 examples/linear/models.pkl
 examples/lstm/data/OxCGRT_latest.csv
 examples/lstm/trained_model.h5
