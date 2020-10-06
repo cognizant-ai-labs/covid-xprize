@@ -242,6 +242,7 @@ def main():
     app.layout = html.Div(
         className="container scalable",
         children=[
+            html.H1('Cognizant COVID X-Prize: Current standings'),
             dcc.Store(id='memory'),
             html.Div(
                 className="app_main_content",
