@@ -65,7 +65,7 @@ class XPrizePredictor(object):
                 end_date_str: str,
                 npis_csv: str) -> pd.DataFrame:
         start_date = pd.to_datetime(start_date_str, format='%Y-%m-%d')
-        # end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
+        end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
 
         # Load the npis into a DataFrame, handling regions
         npis_df = self._load_original_data(npis_csv)

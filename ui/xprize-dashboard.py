@@ -1,5 +1,5 @@
 import logging
-from datetime import date
+import os
 
 import dash
 import dash_core_components as dcc
@@ -7,12 +7,14 @@ import dash_html_components as html
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-# Dash app
 import s3fs
 from dash.dependencies import Input, Output
 
 from common.common_routines import load_dataset
 from common.constants import Constants
+
+# Path where this script lives
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Access to web app and server
 app = dash.Dash(__name__)
@@ -25,7 +27,7 @@ LOGGER = logging.getLogger('xprize-dashboard')
 # For bootstrapping visual components until we've calculated data
 EMPTY_FIGURE = go.Figure()
 
-ALL_GEO = "Overall"
+ALL_GEO = "All"
 DEFAULT_GEO = ALL_GEO
 
 NUM_PREV_DAYS_TO_INCLUDE = 6
@@ -34,12 +36,22 @@ WINDOW_SIZE = 7
 # Wrapper object for accessing S3
 FS = s3fs.S3FileSystem()
 
+# Continents and countries
+continents_df = pd.read_csv(
+    os.path.join(ROOT_DIR, 'data/continents_countries.csv'),
+    comment='#',
+    usecols=['Continent_Name', 'Country_Name']
+)
 
 def _get_ranking_df():
-    today_date = date.today().strftime("%Y_%m_%d")
+    # TODO: do we even need a date here?
+    # today_date = date.today().strftime("%Y_%m_%d")
+    today_date = '2020_10_01'
     s3_rankings_path = f's3://{Constants.S3_BUCKET}/predictions/{today_date}/rankings/ranking.csv'
     ranking_df = pd.read_csv(s3_rankings_path, parse_dates=['Date'], encoding="ISO-8859-1")
-    return ranking_df
+    ranking_df_with_continents = ranking_df.merge(
+        continents_df, how='inner', left_on=['CountryName'], right_on=['Country_Name'], copy=False)
+    return ranking_df_with_continents
 
 
 def _get_actual_cases(df, start_date, end_date):
@@ -53,124 +65,120 @@ def _get_actual_cases(df, start_date, end_date):
     actual_df["GeoID"] = np.where(actual_df["RegionName"] == '',
                                   actual_df["CountryName"],
                                   actual_df["CountryName"] + ' / ' + actual_df["RegionName"])
-    #     actual_df['GeoID'] = actual_df['CountryName'] + '__' + actual_df['RegionName'].astype(str)
     actual_df.sort_values(by=["GeoID","Date"], inplace=True)
     # Compute the diff
     actual_df["ActualDailyNewCases"] = actual_df.groupby("GeoID")["ConfirmedCases"].diff().fillna(0)
     # Compute the 7 day moving average
-    actual_df["ActualDailyNewCases7DMA"] = actual_df.groupby(
-        "GeoID")['ActualDailyNewCases'].rolling(
-        WINDOW_SIZE, center=False).mean().reset_index(0, drop=True)
-    #     # Return only the data between start_date and end_date
-    #     actual_df = actual_df[(actual_df.Date >= start_date) & (actual_df.Date <= end_date)]
+    actual_df["ActualDailyNewCases7DMA"] = actual_df \
+        .groupby("GeoID")['ActualDailyNewCases'] \
+        .rolling(WINDOW_SIZE, center=False) \
+        .mean() \
+        .reset_index(0, drop=True)
     return actual_df
 
 
 @app.callback(
     [
-        Output('rankings', 'figure')
+        Output('continent', 'value'),
+        Output('country', 'value'),
+        Output('region', 'value')
     ],
     [
-        Input('selected_geo_id', 'value')
+        Input('reset', 'n_clicks')
     ]
 )
-def update_figures(selected_geo_id):
+def reset_button(_):
+    return DEFAULT_GEO, DEFAULT_GEO, DEFAULT_GEO
+
+
+@app.callback(
+    [
+        Output('predictions', 'figure'),
+        Output('rankings', 'figure'),
+        Output('country', 'options'),
+        Output('region', 'options')
+    ],
+    [
+        Input('continent', 'value'),
+        Input('country', 'value'),
+        Input('region', 'value')
+    ]
+)
+def update_figures(selected_continent, selected_country, selected_region):
+    continent_to_use = selected_continent or DEFAULT_GEO
+    country_to_use = selected_country or DEFAULT_GEO
+    region_to_use = selected_region or DEFAULT_GEO
+
     latest_df = load_dataset()
 
     # TODO: make these params
     start_date = pd.to_datetime('2020-08-01', format='%Y-%m-%d')
     end_date = pd.to_datetime('2020-08-04', format='%Y-%m-%d')
 
-    actual_df = _get_actual_cases(latest_df, start_date, end_date)
+    ground_truth_df = _get_actual_cases(latest_df, start_date, end_date)
 
     ranking_df = _get_ranking_df()
 
-    fig = go.Figure(layout=dict(title=dict(text=f"{DEFAULT_GEO} Daily New Cases 7-day Average ",
-                                           y=0.9,
-                                           x=0.5,
-                                           xanchor='center',
-                                           yanchor='top'
-                                           ),
-                                plot_bgcolor='#f2f2f2',
-                                xaxis_title="Date",
-                                yaxis_title="Daily new cases 7-day average"
-                                ))
-
-    # Keep track of trace visibility by geo ID name
-    geoid_plot_names = []
-
-    all_df = ranking_df.groupby(["PredictorName", "Date"])[["GeoID", "PredictorName", "PredictedDailyNewCases7DMA"]].sum().sort_values(by=["PredictorName", "Date"]).reset_index()
-    predictor_names = list(ranking_df.PredictorName.dropna().unique())
-    geoid_names = list(ranking_df.GeoID.unique())
-
-    # Add 1 trace per predictor, for all geos
-    for predictor_name in predictor_names:
-        all_geo_df = all_df[all_df.PredictorName == predictor_name]
-        fig.add_trace(go.Scatter(x=all_geo_df.Date,
-                                 y=all_geo_df.PredictedDailyNewCases7DMA,
-                                 name=predictor_name,
-                                 visible=(ALL_GEO == DEFAULT_GEO))
-                      )
-        geoid_plot_names.append(ALL_GEO)
-
-    # Add 1 trace per predictor, per geo id
-    for predictor_name in predictor_names:
-        for geoid_name in geoid_names:
-            pred_geoid_df = ranking_df[(ranking_df.GeoID == geoid_name) &
-                                       (ranking_df.PredictorName == predictor_name)]
-            fig.add_trace(go.Scatter(x=pred_geoid_df.Date,
-                                     y=pred_geoid_df.PredictedDailyNewCases7DMA,
-                                     name=predictor_name,
-                                     visible=(geoid_name == DEFAULT_GEO))
-                          )
-            geoid_plot_names.append(geoid_name)
-
-    # For each geo
-    # Add 1 trace for the true number of cases
-    for geoid_name in geoid_names:
-        geo_actual_df = actual_df[(actual_df.GeoID == geoid_name) &
-                                  (actual_df.Date >= start_date)]
-        fig.add_trace(go.Scatter(x=geo_actual_df.Date,
-                                 y=geo_actual_df.ActualDailyNewCases7DMA,
-                                 name="Ground Truth",
-                                 visible=(geoid_name == DEFAULT_GEO),
-                                 line=dict(color='orange', width=4, dash='dash'))
-                      )
-        geoid_plot_names.append(geoid_name)
-
-    # Add 1 trace for the overall ground truth
-    overall_actual_df = actual_df[actual_df.Date >= start_date].groupby(["Date"])[["GeoID", "ActualDailyNewCases7DMA"]].sum().     sort_values(by=["Date"]).reset_index()
-    fig.add_trace(go.Scatter(x=overall_actual_df.Date,
-                             y=overall_actual_df.ActualDailyNewCases7DMA,
-                             name="Ground Truth",
-                             visible= (ALL_GEO == DEFAULT_GEO),
-                             line=dict(color='orange', width=4, dash='dash'))
-                  )
-    geoid_plot_names.append(selected_geo_id)
-
+    predictions_fig = go.Figure(layout=dict(title=dict(text=f"{continent_to_use}/{country_to_use}/{region_to_use} "
+                                                            f"Daily New Cases 7-day Average ",
+                                                       y=0.9,
+                                                       x=0.5,
+                                                       xanchor='center',
+                                                       yanchor='top'
+                                                       ),
+                                            plot_bgcolor='#f2f2f2',
+                                            xaxis_title="Date",
+                                            yaxis_title="Daily new cases 7-day average"
+                                            ))
     # Format x axis
-    fig.update_xaxes(
+    predictions_fig.update_xaxes(
         dtick="D1",  # Means 1 day
         tickformat="%d\n%b")
 
-    # Filter
-    buttons=[]
-    for geoid_name in ([ALL_GEO] + geoid_names):
-        buttons.append(dict(method='update',
-                            label=geoid_name,
-                            args = [{'visible': [geoid_name==r for r in geoid_plot_names]},
-                                    {'title': f"{geoid_name} Daily New Cases 7-day Average "}]))
-    fig.update_layout(showlegend=True,
-                      updatemenus=[{"buttons": buttons,
-                                    "direction": "down",
-                                    "active": ([ALL_GEO] + geoid_names).index(DEFAULT_GEO),
-                                    "showactive": True,
-                                    "x": 0.1,
-                                    "y": 1.15}])
+    predictor_names = list(ranking_df.PredictorName.dropna().unique())
 
-    fig.show()
+    filtered_df = ranking_df.copy()
+    if continent_to_use != ALL_GEO:
+        filtered_df = filtered_df[filtered_df.Continent_Name == continent_to_use]
 
+    if country_to_use != ALL_GEO:
+        filtered_df = filtered_df[filtered_df.CountryName == country_to_use]
 
+    if region_to_use != ALL_GEO:
+        filtered_df = filtered_df[filtered_df.RegionName == region_to_use]
+
+    filtered_df = filtered_df \
+            .groupby(["PredictorName", "Date"])[["GeoID", "PredictorName", "PredictedDailyNewCases7DMA", "ActualDailyNewCases7DMA"]] \
+            .sum() \
+            .sort_values(by=["PredictorName", "Date"]).reset_index()
+
+    # Add 1 trace per predictor, for selected geo area
+    for predictor_name in predictor_names:
+        predictor_df = filtered_df[filtered_df.PredictorName == predictor_name]
+        predictions_fig.add_trace(
+            go.Scatter(x=predictor_df.Date,
+                       y=predictor_df.PredictedDailyNewCases7DMA,
+                       name=predictor_name,
+                       visible=(ALL_GEO == DEFAULT_GEO))
+        )
+
+    # Add 1 trace for the overall ground truth
+    ground_truth_df = ground_truth_df[ground_truth_df.Date >= start_date] \
+        .groupby(["Date"])[["GeoID", "ActualDailyNewCases7DMA"]]\
+        .sum()\
+        .sort_values(by=["Date"])\
+        .reset_index()
+    predictions_fig.add_trace(
+        go.Scatter(
+            x=ground_truth_df.Date,
+            y=ground_truth_df.ActualDailyNewCases7DMA,
+            name="Ground Truth",
+            visible=(ALL_GEO == DEFAULT_GEO),
+            line=dict(color='orange', width=4, dash='dash')
+        )
+    )
+
+    # rankings / mean errors
     ranking_fig = go.Figure(layout=dict(title=dict(text=f'{DEFAULT_GEO} submission rankings',
                                                    y=0.9,
                                                    x=0.5,
@@ -181,56 +189,42 @@ def update_figures(selected_geo_id):
                                         xaxis_title="Date",
                                         yaxis_title="Cumulative 7DMA error"
                                         ))
-
-    # Keep track of trace visibility by geo name
-    ranking_geoid_plot_names = []
-
-    all_df = ranking_df.groupby(["PredictorName", "Date"])[["GeoID", "PredictorName", "CumulDiff7DMA"]].sum().     sort_values(by=["PredictorName", "Date"]).reset_index()
-
-    # Add 1 trace per predictor, for all geos
-    for predictor_name in predictor_names:
-        ranking_geoid_df = all_df[all_df.PredictorName == predictor_name]
-        ranking_fig.add_trace(go.Scatter(x=ranking_geoid_df.Date,
-                                         y=ranking_geoid_df.CumulDiff7DMA,
-                                         name=predictor_name,
-                                         visible=(ALL_GEO == DEFAULT_GEO))
-                              )
-        ranking_geoid_plot_names.append(ALL_GEO)
-
-
-    # Add 1 trace per predictor, per country
-    for predictor_name in predictor_names:
-        for geoid_name in geoid_names:
-            ranking_geoid_df = ranking_df[(ranking_df.GeoID == geoid_name) &
-                                          (ranking_df.PredictorName == predictor_name)]
-            ranking_fig.add_trace(go.Scatter(x=ranking_geoid_df.Date,
-                                             y=ranking_geoid_df.CumulDiff7DMA,
-                                             name=predictor_name,
-                                             visible= (geoid_name == DEFAULT_GEO))
-                                  )
-            ranking_geoid_plot_names.append(geoid_name)
-
     # Format x axis
     ranking_fig.update_xaxes(
         dtick="D1",  # Means 1 day
         tickformat="%d\n%b")
 
-    # Filter
-    buttons=[]
-    for geoid_name in ([ALL_GEO] + geoid_names):
-        buttons.append(dict(method='update',
-                            label=geoid_name,
-                            args = [{'visible': [geoid_name==r for r in ranking_geoid_plot_names]},
-                                    {'title': f'{geoid_name} submission rankings'}]))
-    ranking_fig.update_layout(showlegend=True,
-                              updatemenus=[{"buttons": buttons,
-                                            "direction": "down",
-                                            "active": ([ALL_GEO] + geoid_names).index(DEFAULT_GEO),
-                                            "showactive": True,
-                                            "x": 0.1,
-                                            "y": 1.15}])
+    # Add 1 trace per predictor showing MAE for the selected geo ID
+    filtered_df['Diff7DMA'] = (filtered_df["ActualDailyNewCases7DMA"] - filtered_df["PredictedDailyNewCases7DMA"]).abs()
+    filtered_df['CumulDiff7DMA'] = filtered_df.groupby(["PredictorName"])['Diff7DMA'].cumsum()
+    for predictor_name in predictor_names:
+        predictor_df = filtered_df[filtered_df.PredictorName == predictor_name]
+        ranking_fig.add_trace(
+            go.Scatter(
+                x=predictor_df.Date,
+                y=predictor_df.CumulDiff7DMA,
+                name=predictor_name
+            )
+        )
 
-    return ranking_fig
+    # Figure out regions for selected continent
+    # If it's "all continents" (DEFAULT_GEO) then list all countries
+    if continent_to_use == DEFAULT_GEO:
+        countries_list = [DEFAULT_GEO] + list(ranking_df.CountryName.dropna().sort_values().unique())
+    else:
+        countries_list = [DEFAULT_GEO] + list(
+            ranking_df[ranking_df['Continent_Name'] == continent_to_use]['CountryName'].sort_values().unique())
+    countries_dict = [{'label': c, 'value': c} for c in countries_list]
+
+    if country_to_use == DEFAULT_GEO:
+        regions_list = [DEFAULT_GEO] + list(ranking_df.RegionName.dropna().sort_values().unique())
+    else:
+        regions_list = [DEFAULT_GEO] + list(
+            ranking_df[ranking_df['CountryName'] == country_to_use]['RegionName'].sort_values().unique())
+
+    regions_dict = [{'label': r, 'value': r} for r in regions_list]
+
+    return predictions_fig, ranking_fig, countries_dict, regions_dict
 
 
 def main():
@@ -243,6 +237,8 @@ def main():
     app.css.append_css({'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'})
     app.css.append_css({'external_url': 'https://codepen.io/chriddyp/pen/brPBPO.css'})
 
+    continents = [DEFAULT_GEO] + list(continents_df.Continent_Name.sort_values().unique())
+    continents_dict = [{'label': c, 'value': c} for c in continents]
     app.layout = html.Div(
         className="container scalable",
         children=[
@@ -251,7 +247,6 @@ def main():
                 className="app_main_content",
                 children=[
                     html.Div(
-                        id="dropdown-select-outer",
                         className="row",
                         children=[
                             html.Div(
@@ -259,21 +254,33 @@ def main():
                                 children=[
                                     html.Div(
                                         children=[
-                                            html.P(id='forecast_date', children='Forecast Date', hidden=True),
+                                            html.P("Continent", style={"color": "#515151", "margin-top": "0px"}),
                                             dcc.Dropdown(
-                                                id='selected_geo_id',
-                                                options=[
-                                                    {'label': 'overall', 'value': 'Overall'}
-                                                ],
-                                                value='Overall',
-                                                style={"margin-bottom": "20px"}
+                                                id='continent',
+                                                options=continents_dict,
+                                                value=DEFAULT_GEO
                                             ),
-                                        ], className="bigbox configbox"
+                                            html.P("Country", style={"color": "#515151", "margin-top": "0px"}),
+                                            dcc.Dropdown(
+                                                id='country',
+                                                options=[{}],
+                                                value=DEFAULT_GEO
+                                            ),
+                                            html.P("Region", style={"color": "#515151", "margin-top": "0px"}),
+                                            dcc.Dropdown(
+                                                id='region',
+                                                options=[{}],
+                                                value=DEFAULT_GEO
+                                            ),
+                                            html.Br(),
+                                            html.Button('Reset', id='reset')
+                                        ]
                                     ),
                                 ],
                             ),
                             html.Div(
                                 [
+                                    dcc.Graph(id='predictions', figure=EMPTY_FIGURE),
                                     dcc.Graph(id='rankings', figure=EMPTY_FIGURE)
                                 ],
                                 className="eight columns",
@@ -290,3 +297,18 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
