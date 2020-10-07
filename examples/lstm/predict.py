@@ -15,25 +15,29 @@ CUTOFF_DATE = pd.to_datetime("2020-07-31", format='%Y-%m-%d')
 
 def predict(start_date: str,
             end_date: str,
-            path_to_ips_file: str) -> None:
+            path_to_ips_file: str,
+            output_file_path) -> None:
     """
-    Generates a file with daily new cases predictions for the given countries, regions and intervention plans, between
-    start_date and end_date, included.
+    Generates and saves a file with daily new cases predictions for the given countries, regions and intervention
+    plans, between start_date and end_date, included.
     :param start_date: day from which to start making predictions, as a string, format YYYY-MM-DDD
     :param end_date: day on which to stop making predictions, as a string, format YYYY-MM-DDD
-    :param path_to_ips_file: path to a csv file containing the intervention plans between start_date and end_date
-    :return: Nothing. Saves a .csv file called 'start_date_end_date.csv'
+    :param path_to_ips_file: path to a csv file containing the intervention plans between inception date (Jan 1 2020)
+     and end_date, for the countries and regions for which a prediction is needed
+    :param output_file_path: path to file to which to save the the predictions
+    :return: Nothing. Saves the generated predictions to an output_file_path CSV file
     with columns "CountryName,RegionName,Date,PredictedDailyNewCases"
     """
     # !!! YOUR CODE HERE !!!
     cutoff_date = pd.to_datetime(CUTOFF_DATE, format='%Y-%m-%d')
     predictor = XPrizePredictor(MODEL_FILE, DATA_FILE, cutoff_date)
-    # Saves the predictions in a .csv file
+    # Generate the predictions
     preds_df = predictor.predict(start_date, end_date, path_to_ips_file)
+    # Create the output path
+    os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
     # Save to a csv file
-    output_file = start_date + "_" + end_date + ".csv"
-    preds_df.to_csv(output_file, index=False)
-    print(f"Saved predictions to {output_file}")
+    preds_df.to_csv(output_file_path, index=False)
+    print(f"Saved predictions to {output_file_path}")
 
 
 # !!! PLEASE DO NOT EDIT. THIS IS THE OFFICIAL COMPETITION API !!!
@@ -54,7 +58,12 @@ if __name__ == '__main__':
                         type=str,
                         required=True,
                         help="The path to an intervention plan .csv file")
+    parser.add_argument("-o", "--output_file",
+                        dest="output_file",
+                        type=str,
+                        required=True,
+                        help="The path to an intervention plan .csv file")
     args = parser.parse_args()
     print(f"Generating predictions from {args.start_date} to {args.end_date}...")
-    predict(args.start_date, args.end_date, args.ip_file)
+    predict(args.start_date, args.end_date, args.ip_file, args.output_file)
     print("Done!")

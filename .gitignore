@@ -9,3 +9,5 @@ examples/linear/models.pkl
 examples/lstm/data/OxCGRT_latest.csv
 examples/lstm/trained_model.h5
 examples/xgboost/models.pkl
+# Run the validation scripts to generate the predictions
+examples/lstm/predictions/
