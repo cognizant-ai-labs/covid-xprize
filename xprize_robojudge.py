@@ -41,4 +41,3 @@ class XPrizeRobojudge(object):
         npis_df = latest_df[["CountryName", "Date"] + NPI_COLUMNS]
         actual_npis_df = npis_df[(npis_df.Date >= start_date) & (npis_df.Date <= end_date)]
         return actual_npis_df
-
