@@ -128,8 +128,6 @@ def update_figures(selected_continent, selected_country, selected_region):
 
     ground_truth_df = _get_actual_cases(latest_df, start_date, end_date)
 
-
-
     predictions_fig = go.Figure(layout=dict(title=dict(text=f"{continent_to_use}/{country_to_use}/{region_to_use} "
                                                             f"Daily New Cases 7-day Average ",
                                                        y=0.9,
@@ -239,10 +237,13 @@ def update_figures(selected_continent, selected_country, selected_region):
         .groupby('PredictorName') \
         .sum() \
         .round({'CumulDiff7DMA': 0}) \
-        .sort_values(by='CumulDiff7DMA', ascending=False) \
+        .sort_values(by='CumulDiff7DMA') \
         .reset_index()
 
     overall_ranking_df.rename(columns={'PredictorName': 'Team', 'CumulDiff7DMA': 'Score'}, inplace=True)
+
+    # insert rank
+    overall_ranking_df.insert(0, 'Rank', range(1, len(overall_ranking_df) + 1))
 
     return overall_ranking_df.to_dict('rows'), predictions_fig, ranking_fig, countries_dict, regions_dict
 
@@ -305,6 +306,7 @@ def main():
                                     html.Br(),
                                     DataTable(id='overall_ranking',
                                               columns=[
+                                                  {'name': 'Rank', 'id': 'Rank'},
                                                   {'name': 'Team', 'id': 'Team'},
                                                   {'name': 'Score', 'id': 'Score', 'type': 'numeric',
                                                    'format': Format(group=',')}
