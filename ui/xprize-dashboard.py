@@ -9,6 +9,8 @@ import pandas as pd
 import plotly.graph_objects as go
 import s3fs
 from dash.dependencies import Input, Output
+from dash_table import DataTable
+from dash_table.Format import Format
 
 from common.common_routines import load_dataset
 from common.constants import Constants
@@ -18,6 +20,7 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Access to web app and server
 app = dash.Dash(__name__)
+app.scripts.config.serve_locally = True
 server = app.server  # underlying Flask server
 
 # Set up logging
@@ -93,6 +96,7 @@ def reset_button(_):
 
 @app.callback(
     [
+        Output('overall_ranking', 'data'),
         Output('predictions', 'figure'),
         Output('rankings', 'figure'),
         Output('country', 'options'),
@@ -224,7 +228,16 @@ def update_figures(selected_continent, selected_country, selected_region):
 
     regions_dict = [{'label': r, 'value': r} for r in regions_list]
 
-    return predictions_fig, ranking_fig, countries_dict, regions_dict
+    overall_ranking_df = ranking_df[['PredictorName', 'CumulDiff7DMA']] \
+        .groupby('PredictorName') \
+        .sum() \
+        .round({'CumulDiff7DMA': 0}) \
+        .sort_values(by='CumulDiff7DMA', ascending=False) \
+        .reset_index()
+
+    overall_ranking_df.rename(columns={'PredictorName': 'Team', 'CumulDiff7DMA': 'Score'}, inplace=True)
+
+    return overall_ranking_df.to_dict('rows'), predictions_fig, ranking_fig, countries_dict, regions_dict
 
 
 def main():
@@ -281,6 +294,27 @@ def main():
                             ),
                             html.Div(
                                 [
+                                    html.H3('Overall ranking'),
+                                    html.Br(),
+                                    DataTable(id='overall_ranking',
+                                              columns=[
+                                                  {'name': 'Team', 'id': 'Team'},
+                                                  {'name': 'Score', 'id': 'Score', 'type': 'numeric',
+                                                   'format': Format(group=',')}
+                                              ],
+                                              style_as_list_view=False,
+                                              style_cell={'padding': '5px'},
+                                              style_header={
+                                                  'backgroundColor': 'white',
+                                                  'fontWeight': 'bold'
+                                              },
+                                              style_cell_conditional=[
+                                                  {
+                                                      'if': {'column_id': ['Team']},
+                                                      'textAlign': 'left'
+                                                  }
+                                              ],
+                                              data=None),
                                     dcc.Graph(id='predictions', figure=EMPTY_FIGURE),
                                     dcc.Graph(id='rankings', figure=EMPTY_FIGURE)
                                 ],

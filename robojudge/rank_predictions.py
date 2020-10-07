@@ -94,7 +94,6 @@ def rank_submissions(start_date: str, end_date: str, submissions_date: str) -> D
         # Get just team name without full path
         team_name = team.rsplit('/', 1)[1]
 
-        # predictions_file_path = os.path.join(team, prediction_file_name)
         predictions_file_path = f'{teams_folder}/{team_name}/{prediction_file_name}'
 
         if not FS.exists(predictions_file_path):
@@ -102,6 +101,7 @@ def rank_submissions(start_date: str, end_date: str, submissions_date: str) -> D
                            f'Cannot rank this team.')
             continue
 
+        LOGGER.info(f'Ranking submission for team: "{team_name}"')
         # validate
         errors = validate_submission(start_date, end_date, predictions_file_path)
         if not errors:
