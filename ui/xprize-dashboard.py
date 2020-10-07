@@ -47,16 +47,22 @@ continents_df = pd.read_csv(
 )
 
 def _get_ranking_df():
-    # TODO: do we even need a date here?
-    # today_date = date.today().strftime("%Y_%m_%d")
-    today_date = '2020_10_01'
-    s3_rankings_path = f's3://{Constants.S3_BUCKET}/predictions/{today_date}/rankings/ranking.csv'
+    predictions_dir = f's3://{Constants.S3_BUCKET}/predictions'
+
+    # Get latest rankings
+    rankings = FS.ls(predictions_dir, refresh=True)
+    rankings.sort(reverse=True)
+
+    rankings_date = rankings[0].rsplit('/', 1)[1]
+
+    s3_rankings_path = f'{predictions_dir}/{rankings_date}/rankings/ranking.csv'
     ranking_df = pd.read_csv(s3_rankings_path, parse_dates=['Date'], encoding="ISO-8859-1")
     ranking_df_with_continents = ranking_df.merge(
         continents_df, how='inner', left_on=['CountryName'], right_on=['Country_Name'], copy=False)
     return ranking_df_with_continents
 
-
+# TODO: should we be computing the ground truth here in the UI? Or calculating it and persisting it in the Ranking
+# script?
 def _get_actual_cases(df, start_date, end_date):
     # 1 day earlier to compute the daily diff
     start_date_for_diff = start_date - pd.offsets.Day(WINDOW_SIZE)
@@ -114,14 +120,15 @@ def update_figures(selected_continent, selected_country, selected_region):
     region_to_use = selected_region or DEFAULT_GEO
 
     latest_df = load_dataset()
+    ranking_df = _get_ranking_df()
 
-    # TODO: make these params
-    start_date = pd.to_datetime('2020-08-01', format='%Y-%m-%d')
-    end_date = pd.to_datetime('2020-08-04', format='%Y-%m-%d')
+    # Get start and end date by checking extreme date values in ranking_df
+    start_date = ranking_df.Date.min()
+    end_date = ranking_df.Date.max()
 
     ground_truth_df = _get_actual_cases(latest_df, start_date, end_date)
 
-    ranking_df = _get_ranking_df()
+
 
     predictions_fig = go.Figure(layout=dict(title=dict(text=f"{continent_to_use}/{country_to_use}/{region_to_use} "
                                                             f"Daily New Cases 7-day Average ",

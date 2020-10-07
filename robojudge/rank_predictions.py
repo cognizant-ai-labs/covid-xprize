@@ -68,9 +68,9 @@ def get_predictions_from_file(predictor_name, predictions_file, ma_df):
     preds_df["GeoID"] = np.where(preds_df["RegionName"].isnull(),
                                  preds_df["CountryName"],
                                  preds_df["CountryName"] + ' / ' + preds_df["RegionName"])
-    # Sort
-    #     preds_df.sort_values(by=["CountryName","RegionName", "Date"], inplace=True)
+
     preds_df.sort_values(by=["GeoID", "Date"], inplace=True)
+
     # Compute the 7 days moving average for PredictedDailyNewCases
     preds_df["PredictedDailyNewCases7DMA"] = preds_df.groupby(
         "GeoID")['PredictedDailyNewCases'].rolling(
