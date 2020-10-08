@@ -83,7 +83,11 @@ def _get_actual_cases(df, start_date, end_date):
         .rolling(WINDOW_SIZE, center=False) \
         .mean() \
         .reset_index(0, drop=True)
-    return actual_df
+
+    # Add in continent info
+    actual_df_with_continents = actual_df.merge(
+        continents_df, how='inner', left_on=['CountryName'], right_on=['Country_Name'], copy=False)
+    return actual_df_with_continents
 
 
 @app.callback(
@@ -147,14 +151,18 @@ def update_figures(selected_continent, selected_country, selected_region):
     predictor_names = list(ranking_df.PredictorName.dropna().unique())
 
     filtered_df = ranking_df.copy()
+    filtered_ground_truth_df = ground_truth_df.copy()
     if continent_to_use != ALL_GEO:
         filtered_df = filtered_df[filtered_df.Continent_Name == continent_to_use]
+        filtered_ground_truth_df = filtered_ground_truth_df[filtered_ground_truth_df.Continent_Name == continent_to_use]
 
     if country_to_use != ALL_GEO:
         filtered_df = filtered_df[filtered_df.CountryName == country_to_use]
+        filtered_ground_truth_df = filtered_ground_truth_df[filtered_ground_truth_df.CountryName == country_to_use]
 
     if region_to_use != ALL_GEO:
         filtered_df = filtered_df[filtered_df.RegionName == region_to_use]
+        filtered_ground_truth_df = filtered_ground_truth_df[filtered_ground_truth_df.RegionName == region_to_use]
 
     filtered_df = filtered_df \
             .groupby(["PredictorName", "Date"])[["GeoID", "PredictorName", "PredictedDailyNewCases7DMA", "ActualDailyNewCases7DMA"]] \
@@ -172,15 +180,15 @@ def update_figures(selected_continent, selected_country, selected_region):
         )
 
     # Add 1 trace for the overall ground truth
-    ground_truth_df = ground_truth_df[ground_truth_df.Date >= start_date] \
+    filtered_ground_truth_df = filtered_ground_truth_df[filtered_ground_truth_df.Date >= start_date] \
         .groupby(["Date"])[["GeoID", "ActualDailyNewCases7DMA"]]\
         .sum()\
         .sort_values(by=["Date"])\
         .reset_index()
     predictions_fig.add_trace(
         go.Scatter(
-            x=ground_truth_df.Date,
-            y=ground_truth_df.ActualDailyNewCases7DMA,
+            x=filtered_ground_truth_df.Date,
+            y=filtered_ground_truth_df.ActualDailyNewCases7DMA,
             name="Ground Truth",
             visible=(ALL_GEO == DEFAULT_GEO),
             line=dict(color='orange', width=4, dash='dash')
