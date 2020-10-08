@@ -57,8 +57,14 @@ def _get_ranking_df():
 
     s3_rankings_path = f'{predictions_dir}/{rankings_date}/rankings/ranking.csv'
     ranking_df = pd.read_csv(s3_rankings_path, parse_dates=['Date'], encoding="ISO-8859-1")
+
+    # HACK! Countries with regions are provided in the dataset in a format like `United States / Washington DC` but
+    # we only want the country name so it matches with the Continents dataset
+    ranking_df['CountryName'] = ranking_df['CountryName'].str.replace(r' / .*$', '')
+
     ranking_df_with_continents = ranking_df.merge(
         continents_df, how='inner', left_on=['CountryName'], right_on=['Country_Name'], copy=False)
+
     return ranking_df_with_continents
 
 # TODO: should we be computing the ground truth here in the UI? Or calculating it and persisting it in the Ranking
@@ -230,14 +236,14 @@ def update_figures(selected_continent, selected_country, selected_region):
         countries_list = [DEFAULT_GEO] + list(ranking_df.CountryName.dropna().sort_values().unique())
     else:
         countries_list = [DEFAULT_GEO] + list(
-            ranking_df[ranking_df['Continent_Name'] == continent_to_use]['CountryName'].sort_values().unique())
+            ranking_df[ranking_df['Continent_Name'] == continent_to_use]['CountryName'].dropna().sort_values().unique())
     countries_dict = [{'label': c, 'value': c} for c in countries_list]
 
     if country_to_use == DEFAULT_GEO:
         regions_list = [DEFAULT_GEO] + list(ranking_df.RegionName.dropna().sort_values().unique())
     else:
         regions_list = [DEFAULT_GEO] + list(
-            ranking_df[ranking_df['CountryName'] == country_to_use]['RegionName'].sort_values().unique())
+            ranking_df[ranking_df['CountryName'] == country_to_use]['RegionName'].dropna().sort_values().unique())
 
     regions_dict = [{'label': r, 'value': r} for r in regions_list]
 
