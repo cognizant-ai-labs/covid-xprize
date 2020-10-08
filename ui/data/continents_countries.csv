@@ -1,0 +1,262 @@
+# https://datahub.io/JohnSnowLabs/country-and-continent-codes-list
+Continent_Name,Continent_Code,Country_Name,Two_Letter_Country_Code,Three_Letter_Country_Code,Country_Number
+Africa,AF,Algeria,DZ,DZA,12
+Africa,AF,Angola,AO,AGO,24
+Africa,AF,Benin,BJ,BEN,204
+Africa,AF,Botswana,BW,BWA,72
+Africa,AF,Burundi,BI,BDI,108
+Africa,AF,Cameroon,CM,CMR,120
+Africa,AF,Cape Verde,CV,CPV,132
+Africa,AF,Chad,TD,TCD,148
+Africa,AF,Comoros,KM,COM,174
+Africa,AF,Cote d'Ivoire,CI,CIV,384
+Africa,AF,Democratic Republic of Congo,CD,COD,180
+Africa,AF,Djibouti,DJ,DJI,262
+Africa,AF,Egypt,EG,EGY,818
+Africa,AF,Equatorial Guinea,GQ,GNQ,226
+Africa,AF,Eritrea,ER,ERI,232
+Africa,AF,Eswatini,SZ,SWZ,748
+Africa,AF,Ethiopia,ET,ETH,231
+Africa,AF,Gabon,GA,GAB,266
+Africa,AF,Gambia,GM,GMB,270
+Africa,AF,Ghana,GH,GHA,288
+Africa,AF,Guinea,GN,GIN,324
+Africa,AF,Guinea-Bissau,GW,GNB,624
+Africa,AF,Kenya,KE,KEN,404
+Africa,AF,Lesotho,LS,LSO,426
+Africa,AF,Liberia,LR,LBR,430
+Africa,AF,Madagascar,MG,MDG,450
+Africa,AF,Malawi,MW,MWI,454
+Africa,AF,Mali,ML,MLI,466
+Africa,AF,Mauritania,MR,MRT,478
+Africa,AF,Mauritius,MU,MUS,480
+Africa,AF,Morocco,MA,MAR,504
+Africa,AF,Mozambique,MZ,MOZ,508
+Africa,AF,Namibia,NA,NAM,516
+Africa,AF,Niger,NE,NER,562
+Africa,AF,Nigeria,NG,NGA,566
+Africa,AF,Rwanda,RW,RWA,646
+Africa,AF,Sao Tome and Principe,ST,STP,678
+Africa,AF,Senegal,SN,SEN,686
+Africa,AF,Seychelles,SC,SYC,690
+Africa,AF,Sierra Leone,SL,SLE,694
+Africa,AF,Somalia, Somali Republic,SO,SOM,706
+Africa,AF,South Africa,ZA,ZAF,710
+Africa,AF,Sudan,SD,SDN,736
+Africa,AF,Tanzania,TZ,TZA,834
+Africa,AF,Togo,TG,TGO,768
+Africa,AF,Tunisia,TN,TUN,788
+Africa,AF,Uganda,UG,UGA,800
+Africa,AF,Zambia,ZM,ZMB,894
+Africa,AF,Zimbabwe,ZW,ZWE,716
+Africa,AF,Burkina Faso,BF,BFA,854
+Africa,AF,Central African Republic,CF,CAF,140
+Africa,AF,Libya,LY,LBY,434
+Africa,AF,Mayotte,YT,MYT,175
+Africa,AF,Reunion,RE,REU,638
+Africa,AF,Saint Helena,SH,SHN,654
+Africa,AF,South Sudan,SS,SSD,728
+Africa,AF,Western Sahara,EH,ESH,732
+Antarctica,AN,Antarctica,AQ,ATA,10
+Antarctica,AN,Bouvet Island,BV,BVT,74
+Antarctica,AN,French Southern Territories,TF,ATF,260
+Antarctica,AN,Heard Island and McDonald Islands,HM,HMD,334
+Antarctica,AN,South Georgia and the South Sandwich Islands,GS,SGS,239
+Asia,AS,Afghanistan,AF,AFG,4
+Asia,AS,Armenia,AM,ARM,51
+Asia,AS,Azerbaijan,AZ,AZE,31
+Asia,AS,Bahrain,BH,BHR,48
+Asia,AS,Bangladesh,BD,BGD,50
+Asia,AS,Bhutan,BT,BTN,64
+Asia,AS,Cambodia,KH,KHM,116
+Asia,AS,China,CN,CHN,156
+Asia,AS,Cyprus,CY,CYP,196
+Asia,AS,Hong Kong,HK,HKG,344
+Asia,AS,India,IN,IND,356
+Asia,AS,Indonesia,ID,IDN,360
+Asia,AS,Iran,IR,IRN,364
+Asia,AS,Iraq,IQ,IRQ,368
+Asia,AS,Israel,IL,ISR,376
+Asia,AS,Jordan,JO,JOR,400
+Asia,AS,Kazakhstan,KZ,KAZ,398
+Asia,AS,Kuwait,KW,KWT,414
+Asia,AS,Lebanon, Lebanese Republic,LB,LBN,422
+Asia,AS,Macao,MO,MAC,446
+Asia,AS,Maldives,MV,MDV,462
+Asia,AS,Myanmar,MM,MMR,104
+Asia,AS,Nepal,NP,NPL,524
+Asia,AS,Oman,OM,OMN,512
+Asia,AS,Pakistan,PK,PAK,586
+Asia,AS,Palestine,PS,PSE,275
+Asia,AS,Philippines,PH,PHL,608
+Asia,AS,Qatar,QA,QAT,634
+Asia,AS,Saudi Arabia,SA,SAU,682
+Asia,AS,Singapore,SG,SGP,702
+Asia,AS,South Korea,KP,PRK,408
+Asia,AS,Sri Lanka,LK,LKA,144
+Asia,AS,Tajikistan,TJ,TJK,762
+Asia,AS,Thailand,TH,THA,764
+Asia,AS,Timor-Leste,TL,TLS,626
+Asia,AS,Turkey,TR,TUR,792
+Asia,AS,Uzbekistan,UZ,UZB,860
+Asia,AS,Vietnam,VN,VNM,704
+Asia,AS,British Indian Ocean Territory,IO,IOT,86
+Asia,AS,Brunei,BN,BRN,96
+Asia,AS,Christmas Island,CX,CXR,162
+Asia,AS,Cocos (Keeling) Islands,CC,CCK,166
+Asia,AS,Georgia,GE,GEO,268
+Asia,AS,Iraq-Saudi Arabia Neutral Zone,XE,,
+Asia,AS,Japan,JP,JPN,392
+Asia,AS,Kyrgyz Republic,KG,KGZ,417
+Asia,AS,Laos,LA,LAO,418
+Asia,AS,Malaysia,MY,MYS,458
+Asia,AS,Mongolia,MN,MNG,496
+Asia,AS,Russia,RU,RUS,643
+Asia,AS,Spratly Islands,XS,,
+Asia,AS,Syrian,SY,SYR,760
+Asia,AS,Taiwan,TW,TWN,158
+Asia,AS,Turkmenistan,TM,TKM,795
+Asia,AS,United Arab Emirates,AE,ARE,784
+Asia,AS,United Nations Neutral Zone,XD,,
+Asia,AS,Yemen,YE,YEM,887
+Europe,EU,Albania,AL,ALB,8
+Europe,EU,Andorra,AD,AND,20
+Europe,EU,Armenia,AM,ARM,51
+Europe,EU,Austria,AT,AUT,40
+Europe,EU,Azerbaijan,AZ,AZE,31
+Europe,EU,Belarus,BY,BLR,112
+Europe,EU,Belgium,BE,BEL,56
+Europe,EU,Bulgaria,BG,BGR,100
+Europe,EU,Croatia,HR,HRV,191
+Europe,EU,Cyprus,CY,CYP,196
+Europe,EU,Denmark,DK,DNK,208
+Europe,EU,Estonia,EE,EST,233
+Europe,EU,Finland,FI,FIN,246
+Europe,EU,France,FR,FRA,250
+Europe,EU,Germany,DE,DEU,276
+Europe,EU,Greece,GR,GRC,300
+Europe,EU,Guernsey,GG,GGY,831
+Europe,EU,Hungary,HU,HUN,348
+Europe,EU,Iceland,IS,ISL,352
+Europe,EU,Italy,IT,ITA,380
+Europe,EU,Jersey,JE,JEY,832
+Europe,EU,Kazakhstan,KZ,KAZ,398
+Europe,EU,Latvia,LV,LVA,428
+Europe,EU,Liechtenstein,LI,LIE,438
+Europe,EU,Lithuania,LT,LTU,440
+Europe,EU,Luxembourg,LU,LUX,442
+Europe,EU,Macedonia,MK,MKD,807
+Europe,EU,Malta,MT,MLT,470
+Europe,EU,Moldova,MD,MDA,498
+Europe,EU,Monaco,MC,MCO,492
+Europe,EU,Montenegro,ME,MNE,499
+Europe,EU,Netherlands,NL,NLD,528
+Europe,EU,Norway,NO,NOR,578
+Europe,EU,Poland,PL,POL,616
+Europe,EU,Portugal,PT,PRT,620
+Europe,EU,San Marino,SM,SMR,674
+Europe,EU,Serbia,RS,SRB,688
+Europe,EU,Slovenia,SI,SVN,705
+Europe,EU,Spain,ES,ESP,724
+Europe,EU,Sweden,SE,SWE,752
+Europe,EU,Switzerland,CH,CHE,756
+Europe,EU,Turkey,TR,TUR,792
+Europe,EU,Bosnia and Herzegovina,BA,BIH,70
+Europe,EU,Czech Republic,CZ,CZE,203
+Europe,EU,Faroe Islands,FO,FRO,234
+Europe,EU,Georgia,GE,GEO,268
+Europe,EU,Gibraltar,GI,GIB,292
+Europe,EU,Holy See (Vatican City State),VA,VAT,336
+Europe,EU,Ireland,IE,IRL,372
+Europe,EU,Isle of Man,IM,IMN,833
+Europe,EU,Romania,RO,ROU,642
+Europe,EU,Russian Federation,RU,RUS,643
+Europe,EU,Slovak Republic,SK,SVK,703
+Europe,EU,Svalbard & Jan Mayen Islands,SJ,SJM,744
+Europe,EU,Ukraine,UA,UKR,804
+Europe,EU,United Kingdom,GB,GBR,826
+Europe,EU,Åland Islands,AX,ALA,248
+North America,NA,Bahamas,BS,BHS,44
+North America,NA,Bonaire, Sint Eustatius and Saba,BQ,BES,535
+North America,NA,Costa Rica,CR,CRI,188
+North America,NA,Cuba,CU,CUB,192
+North America,NA,Dominica,DM,DMA,212
+North America,NA,El Salvador,SV,SLV,222
+North America,NA,Guatemala,GT,GTM,320
+North America,NA,Haiti,HT,HTI,332
+North America,NA,Honduras,HN,HND,340
+North America,NA,Mexico, United Mexican States,MX,MEX,484
+North America,NA,Nicaragua,NI,NIC,558
+North America,NA,Panama,PA,PAN,591
+North America,NA,Puerto Rico,PR,PRI,630
+North America,NA,Saint Kitts and Nevisf,KN,KNA,659
+North America,NA,Trinidad and Tobago,TT,TTO,780
+North America,NA,Anguilla,AI,AIA,660
+North America,NA,Antigua and Barbuda,AG,ATG,28
+North America,NA,Aruba,AW,ABW,533
+North America,NA,Barbados,BB,BRB,52
+North America,NA,Belize,BZ,BLZ,84
+North America,NA,Bermuda,BM,BMU,60
+North America,NA,British Virgin Islands,VG,VGB,92
+North America,NA,Canada,CA,CAN,124
+North America,NA,Cayman Islands,KY,CYM,136
+North America,NA,Curaçao,CW,CUW,531
+North America,NA,Dominican Republic,DO,DOM,214
+North America,NA,Greenland,GL,GRL,304
+North America,NA,Grenada,GD,GRD,308
+North America,NA,Guadeloupe,GP,GLP,312
+North America,NA,Jamaica,JM,JAM,388
+North America,NA,Martinique,MQ,MTQ,474
+North America,NA,Montserrat,MS,MSR,500
+North America,NA,Netherlands Antilles,AN,ANT,530
+North America,NA,Saint Barthelemy,BL,BLM,652
+North America,NA,Saint Lucia,LC,LCA,662
+North America,NA,Saint Martin,MF,MAF,663
+North America,NA,Saint Pierre and Miquelon,PM,SPM,666
+North America,NA,Saint Vincent and the Grenadines,VC,VCT,670
+North America,NA,Sint Maarten,SX,SXM,534
+North America,NA,Turks and Caicos Islands,TC,TCA,796
+North America,NA,United States Minor Outlying Islands,UM,UMI,581
+North America,NA,United States,US,USA,840
+North America,NA,United States Virgin Islands,VI,VIR,850
+Oceania,OC,Australia,AU,AUS,36
+Oceania,OC,Fiji,FJ,FJI,242
+Oceania,OC,Kiribati,KI,KIR,296
+Oceania,OC,Marshall Islands the,MH,MHL,584
+Oceania,OC,Micronesia,FM,FSM,583
+Oceania,OC,Nauru,NR,NRU,520
+Oceania,OC,Northern Mariana Islands,MP,MNP,580
+Oceania,OC,Palau,PW,PLW,585
+Oceania,OC,Papua New Guinea,PG,PNG,598
+Oceania,OC,Samoa,WS,WSM,882
+Oceania,OC,Tonga,TO,TON,776
+Oceania,OC,Vanuatu,VU,VUT,548
+Oceania,OC,American Samoa,AS,ASM,16
+Oceania,OC,Cook Islands,CK,COK,184
+Oceania,OC,Disputed Territory,XX,,
+Oceania,OC,French Polynesia,PF,PYF,258
+Oceania,OC,Guam,GU,GUM,316
+Oceania,OC,New Caledonia,NC,NCL,540
+Oceania,OC,New Zealand,NZ,NZL,554
+Oceania,OC,Niue,NU,NIU,570
+Oceania,OC,Norfolk Island,NF,NFK,574
+Oceania,OC,Pitcairn Islands,PN,PCN,612
+Oceania,OC,Solomon Islands,SB,SLB,90
+Oceania,OC,Tokelau,TK,TKL,772
+Oceania,OC,Tuvalu,TV,TUV,798
+Oceania,OC,United States Minor Outlying Islands,UM,UMI,581
+Oceania,OC,Wallis and Futuna,WF,WLF,876
+South America,SA,Argentina, Argentine Republic,AR,ARG,32
+South America,SA,Bolivia,BO,BOL,68
+South America,SA,Brazil,BR,BRA,76
+South America,SA,Chile,CL,CHL,152
+South America,SA,Colombia,CO,COL,170
+South America,SA,Ecuador,EC,ECU,218
+South America,SA,Guyana,GY,GUY,328
+South America,SA,Paraguay,PY,PRY,600
+South America,SA,Peru,PE,PER,604
+South America,SA,Suriname,SR,SUR,740
+South America,SA,Uruguay,UY,URY,858
+South America,SA,Venezuela,VE,VEN,862
+South America,SA,Falkland Islands,FK,FLK,238
+South America,SA,French Guiana,GF,GUF,254
