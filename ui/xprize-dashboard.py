@@ -47,16 +47,28 @@ continents_df = pd.read_csv(
 )
 
 def _get_ranking_df():
-    # TODO: do we even need a date here?
-    # today_date = date.today().strftime("%Y_%m_%d")
-    today_date = '2020_10_01'
-    s3_rankings_path = f's3://{Constants.S3_BUCKET}/predictions/{today_date}/rankings/ranking.csv'
+    predictions_dir = f's3://{Constants.S3_BUCKET}/predictions'
+
+    # Get latest rankings
+    rankings = FS.ls(predictions_dir, refresh=True)
+    rankings.sort(reverse=True)
+
+    rankings_date = rankings[0].rsplit('/', 1)[1]
+
+    s3_rankings_path = f'{predictions_dir}/{rankings_date}/rankings/ranking.csv'
     ranking_df = pd.read_csv(s3_rankings_path, parse_dates=['Date'], encoding="ISO-8859-1")
+
+    # HACK! Countries with regions are provided in the dataset in a format like `United States / Washington DC` but
+    # we only want the country name so it matches with the Continents dataset
+    ranking_df['CountryName'] = ranking_df['CountryName'].str.replace(r' / .*$', '')
+
     ranking_df_with_continents = ranking_df.merge(
         continents_df, how='inner', left_on=['CountryName'], right_on=['Country_Name'], copy=False)
+
     return ranking_df_with_continents
 
-
+# TODO: should we be computing the ground truth here in the UI? Or calculating it and persisting it in the Ranking
+# script?
 def _get_actual_cases(df, start_date, end_date):
     # 1 day earlier to compute the daily diff
     start_date_for_diff = start_date - pd.offsets.Day(WINDOW_SIZE)
@@ -77,7 +89,11 @@ def _get_actual_cases(df, start_date, end_date):
         .rolling(WINDOW_SIZE, center=False) \
         .mean() \
         .reset_index(0, drop=True)
-    return actual_df
+
+    # Add in continent info
+    actual_df_with_continents = actual_df.merge(
+        continents_df, how='inner', left_on=['CountryName'], right_on=['Country_Name'], copy=False)
+    return actual_df_with_continents
 
 
 @app.callback(
@@ -114,14 +130,13 @@ def update_figures(selected_continent, selected_country, selected_region):
     region_to_use = selected_region or DEFAULT_GEO
 
     latest_df = load_dataset()
+    ranking_df = _get_ranking_df()
 
-    # TODO: make these params
-    start_date = pd.to_datetime('2020-08-01', format='%Y-%m-%d')
-    end_date = pd.to_datetime('2020-08-04', format='%Y-%m-%d')
+    # Get start and end date by checking extreme date values in ranking_df
+    start_date = ranking_df.Date.min()
+    end_date = ranking_df.Date.max()
 
     ground_truth_df = _get_actual_cases(latest_df, start_date, end_date)
-
-    ranking_df = _get_ranking_df()
 
     predictions_fig = go.Figure(layout=dict(title=dict(text=f"{continent_to_use}/{country_to_use}/{region_to_use} "
                                                             f"Daily New Cases 7-day Average ",
@@ -142,14 +157,18 @@ def update_figures(selected_continent, selected_country, selected_region):
     predictor_names = list(ranking_df.PredictorName.dropna().unique())
 
     filtered_df = ranking_df.copy()
+    filtered_ground_truth_df = ground_truth_df.copy()
     if continent_to_use != ALL_GEO:
         filtered_df = filtered_df[filtered_df.Continent_Name == continent_to_use]
+        filtered_ground_truth_df = filtered_ground_truth_df[filtered_ground_truth_df.Continent_Name == continent_to_use]
 
     if country_to_use != ALL_GEO:
         filtered_df = filtered_df[filtered_df.CountryName == country_to_use]
+        filtered_ground_truth_df = filtered_ground_truth_df[filtered_ground_truth_df.CountryName == country_to_use]
 
     if region_to_use != ALL_GEO:
         filtered_df = filtered_df[filtered_df.RegionName == region_to_use]
+        filtered_ground_truth_df = filtered_ground_truth_df[filtered_ground_truth_df.RegionName == region_to_use]
 
     filtered_df = filtered_df \
             .groupby(["PredictorName", "Date"])[["GeoID", "PredictorName", "PredictedDailyNewCases7DMA", "ActualDailyNewCases7DMA"]] \
@@ -167,15 +186,15 @@ def update_figures(selected_continent, selected_country, selected_region):
         )
 
     # Add 1 trace for the overall ground truth
-    ground_truth_df = ground_truth_df[ground_truth_df.Date >= start_date] \
+    filtered_ground_truth_df = filtered_ground_truth_df[filtered_ground_truth_df.Date >= start_date] \
         .groupby(["Date"])[["GeoID", "ActualDailyNewCases7DMA"]]\
         .sum()\
         .sort_values(by=["Date"])\
         .reset_index()
     predictions_fig.add_trace(
         go.Scatter(
-            x=ground_truth_df.Date,
-            y=ground_truth_df.ActualDailyNewCases7DMA,
+            x=filtered_ground_truth_df.Date,
+            y=filtered_ground_truth_df.ActualDailyNewCases7DMA,
             name="Ground Truth",
             visible=(ALL_GEO == DEFAULT_GEO),
             line=dict(color='orange', width=4, dash='dash')
@@ -217,14 +236,14 @@ def update_figures(selected_continent, selected_country, selected_region):
         countries_list = [DEFAULT_GEO] + list(ranking_df.CountryName.dropna().sort_values().unique())
     else:
         countries_list = [DEFAULT_GEO] + list(
-            ranking_df[ranking_df['Continent_Name'] == continent_to_use]['CountryName'].sort_values().unique())
+            ranking_df[ranking_df['Continent_Name'] == continent_to_use]['CountryName'].dropna().sort_values().unique())
     countries_dict = [{'label': c, 'value': c} for c in countries_list]
 
     if country_to_use == DEFAULT_GEO:
         regions_list = [DEFAULT_GEO] + list(ranking_df.RegionName.dropna().sort_values().unique())
     else:
         regions_list = [DEFAULT_GEO] + list(
-            ranking_df[ranking_df['CountryName'] == country_to_use]['RegionName'].sort_values().unique())
+            ranking_df[ranking_df['CountryName'] == country_to_use]['RegionName'].dropna().sort_values().unique())
 
     regions_dict = [{'label': r, 'value': r} for r in regions_list]
 
@@ -232,10 +251,13 @@ def update_figures(selected_continent, selected_country, selected_region):
         .groupby('PredictorName') \
         .sum() \
         .round({'CumulDiff7DMA': 0}) \
-        .sort_values(by='CumulDiff7DMA', ascending=False) \
+        .sort_values(by='CumulDiff7DMA') \
         .reset_index()
 
     overall_ranking_df.rename(columns={'PredictorName': 'Team', 'CumulDiff7DMA': 'Score'}, inplace=True)
+
+    # insert rank
+    overall_ranking_df.insert(0, 'Rank', range(1, len(overall_ranking_df) + 1))
 
     return overall_ranking_df.to_dict('rows'), predictions_fig, ranking_fig, countries_dict, regions_dict
 
@@ -298,6 +320,7 @@ def main():
                                     html.Br(),
                                     DataTable(id='overall_ranking',
                                               columns=[
+                                                  {'name': 'Rank', 'id': 'Rank'},
                                                   {'name': 'Team', 'id': 'Team'},
                                                   {'name': 'Score', 'id': 'Score', 'type': 'numeric',
                                                    'format': Format(group=',')}
