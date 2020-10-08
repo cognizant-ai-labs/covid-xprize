@@ -58,10 +58,6 @@ def _get_ranking_df():
     s3_rankings_path = f'{predictions_dir}/{rankings_date}/rankings/ranking.csv'
     ranking_df = pd.read_csv(s3_rankings_path, parse_dates=['Date'], encoding="ISO-8859-1")
 
-    # HACK! Countries with regions are provided in the dataset in a format like `United States / Washington DC` but
-    # we only want the country name so it matches with the Continents dataset
-    ranking_df['CountryName'] = ranking_df['CountryName'].str.replace(r' / .*$', '')
-
     ranking_df_with_continents = ranking_df.merge(
         continents_df, how='inner', left_on=['CountryName'], right_on=['Country_Name'], copy=False)
 
@@ -316,8 +312,7 @@ def main():
                             ),
                             html.Div(
                                 [
-                                    html.H3('Overall ranking'),
-                                    html.Br(),
+                                    html.H3('Overall ranking', style={'backgroundColor': 'white'}),
                                     DataTable(id='overall_ranking',
                                               columns=[
                                                   {'name': 'Rank', 'id': 'Rank'},
@@ -338,6 +333,7 @@ def main():
                                                   }
                                               ],
                                               data=None),
+                                    html.Br(),
                                     dcc.Graph(id='predictions', figure=EMPTY_FIGURE),
                                     dcc.Graph(id='rankings', figure=EMPTY_FIGURE)
                                 ],
