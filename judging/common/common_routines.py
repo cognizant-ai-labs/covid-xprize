@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from common.constants import Constants
+from judging.common.constants import Constants
 
 
 def load_dataset(url: str = Constants.LATEST_DATA_URL) -> pd.DataFrame:

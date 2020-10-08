@@ -4,7 +4,6 @@ Ranks the predictions and generates rankings. Uploads ranking to S3 for the UI t
 """
 
 import logging.config
-import os
 from datetime import date
 
 import numpy as np
@@ -12,9 +11,9 @@ import pandas as pd
 import s3fs
 from pandas import DataFrame
 
-from common.args import parse_args
-from common.constants import Constants
-from common.common_routines import load_dataset
+from judging.common.args import parse_args
+from judging.common.common_routines import load_dataset
+from judging.common.constants import Constants
 from validation.validation import validate_submission
 
 # Set up logging

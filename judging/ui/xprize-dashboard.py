@@ -12,8 +12,8 @@ from dash.dependencies import Input, Output
 from dash_table import DataTable
 from dash_table.Format import Format
 
-from common.common_routines import load_dataset
-from common.constants import Constants
+from judging.common import load_dataset
+from judging.common import Constants
 
 # Path where this script lives
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
