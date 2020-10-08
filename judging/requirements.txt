@@ -1,5 +1,6 @@
 # data science
 pandas==1.1.2
+numpy==1.19.2
 
 # plotting
 plotly==4.11.0
@@ -9,3 +10,7 @@ dash-bootstrap-components==0.10.7
 
 # S3 access
 s3fs==0.5.1
+
+# tests
+pytest==6.1.1
+nose==1.3.7
