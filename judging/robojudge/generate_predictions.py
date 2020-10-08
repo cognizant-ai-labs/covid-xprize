@@ -2,17 +2,17 @@
 Iterates through all sandboxes to generate predictions for each predictor, and uploads the results to S3
 """
 import logging.config
-import argparse
 import os
 import subprocess
 from datetime import date
 
 import s3fs
 
-from common.args import parse_args
-from common.constants import Constants
+from judging.common.args import parse_args
 
 # Set up logging
+from judging.common.constants import Constants
+
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger('robojudge')
 
