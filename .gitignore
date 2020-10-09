@@ -5,9 +5,10 @@ __pycache__
 .idea/
 # Run the training scripts to generate the models
 examples/linear/data/OxCGRT_latest.csv
-examples/linear/models.pkl
+examples/linear/model.pkl
 examples/lstm/data/OxCGRT_latest.csv
 examples/lstm/trained_model.h5
 examples/xgboost/models.pkl
 # Run the validation scripts to generate the predictions
+examples/linear/predictions/
 examples/lstm/predictions/
