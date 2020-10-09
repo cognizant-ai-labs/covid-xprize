@@ -78,12 +78,6 @@ def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str, ve
     for npi_col in NPI_COLS:
         ips_df.update(ips_df.groupby(['CountryName', 'RegionName'])[npi_col].ffill().fillna(0))
 
-    # Copy the test data frame
-    pred_df = ips_df[ID_COLS].copy()
-    # Keep only the requested prediction period.
-    # Note: this period *might* be in the future, and pred_df doesn't necessarily contain the requested rows
-    pred_df = pred_df[(pred_df.Date >= start_date) & (pred_df.Date <= end_date)]
-
     # Load historical data to use in making predictions in the same way
     # This is the data we trained on
     # We stored it locally as for predictions there will be no access to the internet
