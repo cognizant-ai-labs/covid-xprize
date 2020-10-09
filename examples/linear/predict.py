@@ -46,7 +46,7 @@ def predict(start_date: str,
     with columns "CountryName,RegionName,Date,PredictedDailyNewCases"
     """
     # !!! YOUR CODE HERE !!!
-    preds_df = predict_df(start_date, end_date, path_to_ips_file)
+    preds_df = predict_df(start_date, end_date, path_to_ips_file, verbose=False)
     # Create the output path
     os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
     # Save to a csv file
@@ -54,7 +54,7 @@ def predict(start_date: str,
     print(f"Saved predictions to {output_file_path}")
 
 
-def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str):
+def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str, verbose=False):
     """
     Generates a file with daily new cases predictions for the given countries, regions and npis, between
     start_date and end_date, included.
@@ -74,6 +74,9 @@ def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str):
 
     # Add RegionID column that combines CountryName and RegionName for easier manipulation of data\n",
     ips_df['GeoID'] = ips_df['CountryName'] + '__' + ips_df['RegionName'].astype(str)
+    # Fill any missing NPIs by assuming they are the same as previous day
+    for npi_col in NPI_COLS:
+        ips_df.update(ips_df.groupby(['CountryName', 'RegionName'])[npi_col].ffill().fillna(0))
 
     # Copy the test data frame
     pred_df = ips_df[ID_COLS].copy()
@@ -106,7 +109,8 @@ def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str):
     # Make predictions for each country,region pair
     geo_pred_dfs = []
     for g in ips_df.GeoID.unique():
-        print('\nPredicting for', g)
+        if verbose:
+            print('\nPredicting for', g)
 
         # Pull out all relevant data for country c
         hist_gdf = hist_df[hist_df.GeoID == g]
@@ -129,7 +133,8 @@ def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str):
             pred = model.predict(X.reshape(1, -1))[0]
             pred = max(0, pred)  # Do not allow predicting negative cases
             geo_preds.append(pred)
-            print(pred)
+            if verbose:
+                print(pred)
 
             # Append the prediction and npi's for next day
             # in order to rollout predictions for further days.
