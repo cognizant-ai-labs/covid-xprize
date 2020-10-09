@@ -12,8 +12,8 @@ from dash.dependencies import Input, Output
 from dash_table import DataTable
 from dash_table.Format import Format
 
-from judging.common import load_dataset
-from judging.common import Constants
+from judging.common.common_routines import load_dataset
+from judging.common.constants import Constants
 
 # Path where this script lives
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -250,7 +250,7 @@ def update_figures(selected_continent, selected_country, selected_region):
         .sort_values(by='CumulDiff7DMA') \
         .reset_index()
 
-    overall_ranking_df.rename(columns={'PredictorName': 'Team', 'CumulDiff7DMA': 'Score'}, inplace=True)
+    overall_ranking_df.rename(columns={'PredictorName': 'Team', 'CumulDiff7DMA': 'Error'}, inplace=True)
 
     # insert rank
     overall_ranking_df.insert(0, 'Rank', range(1, len(overall_ranking_df) + 1))
@@ -317,7 +317,7 @@ def main():
                                               columns=[
                                                   {'name': 'Rank', 'id': 'Rank'},
                                                   {'name': 'Team', 'id': 'Team'},
-                                                  {'name': 'Score', 'id': 'Score', 'type': 'numeric',
+                                                  {'name': 'Error', 'id': 'Error', 'type': 'numeric',
                                                    'format': Format(group=',')}
                                               ],
                                               style_as_list_view=False,
