@@ -8,6 +8,10 @@ tensorflow==2.2.0
 keras==2.4.3
 xgboost==1.2.0
 
+# plotting
+plotly==4.11.0
+matplotlib==3.3.2
+
 # tests
 pytest==6.1.1
 nose==1.3.7
