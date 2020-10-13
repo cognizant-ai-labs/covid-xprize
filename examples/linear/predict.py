@@ -7,7 +7,7 @@ import pandas as pd
 
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_FILE = os.path.join(ROOT_DIR, "models.pkl")
+MODEL_FILE = os.path.join(ROOT_DIR, "models", "model.pkl")
 DATA_FILE = os.path.join(ROOT_DIR, 'data', "OxCGRT_latest.csv")
 ID_COLS = ['CountryName',
            'RegionName',
@@ -97,7 +97,7 @@ def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str, ve
         hist_df.update(hist_df.groupby('GeoID')[npi_col].ffill().fillna(0))
 
     # Load model
-    with open('model.pkl', 'rb') as model_file:
+    with open(MODEL_FILE, 'rb') as model_file:
         model = pickle.load(model_file)
 
     # Make predictions for each country,region pair
