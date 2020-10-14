@@ -62,7 +62,7 @@ if __name__ == '__main__':
                         dest="output_file",
                         type=str,
                         required=True,
-                        help="The path to an intervention plan .csv file")
+                        help="The path to the CSV file where predictions should be written")
     args = parser.parse_args()
     print(f"Generating predictions from {args.start_date} to {args.end_date}...")
     predict(args.start_date, args.end_date, args.ip_file, args.output_file)
