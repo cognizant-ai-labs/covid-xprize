@@ -136,7 +136,8 @@ def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str, ve
             past_npis = np.append(past_npis, future_npis[days_ahead:days_ahead + 1], axis=0)
 
         # Create geo_pred_df with pred column
-        geo_pred_df = ips_gdf[ID_COLS].copy()
+        # ips_gdf contains the full history of ips. Filter it to keep only the dates we're interested in
+        geo_pred_df = ips_gdf[(ips_gdf.Date >= start_date) & (ips_gdf.Date <= end_date)][ID_COLS].copy()
         geo_pred_df['PredictedDailyNewCases'] = geo_preds
         geo_pred_dfs.append(geo_pred_df)
 
