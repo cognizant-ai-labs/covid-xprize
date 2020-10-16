@@ -81,3 +81,5 @@ For more details on this API, consult the Competition Guidelines or the support 
 For more information and support, refer to the competition guidelines which you should have received when registering
 for the contest, or post your questions in the support Slack channel, to which you should have also gained access 
 upon registering.
+
+Copyright 2020 (c) Cognizant Digital Business, Evolutionary AI. All rights reserved. Issued under the Apache 2.0 License.
