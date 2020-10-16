@@ -7,7 +7,7 @@ import pandas as pd
 
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_FILE = os.path.join(ROOT_DIR, "models.pkl")
+MODEL_FILE = os.path.join(ROOT_DIR, "models", "model.pkl")
 DATA_FILE = os.path.join(ROOT_DIR, 'data', "OxCGRT_latest.csv")
 ID_COLS = ['CountryName',
            'RegionName',
@@ -60,44 +60,47 @@ def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str, ve
     start_date and end_date, included.
     :param start_date_str: day from which to start making predictions, as a string, format YYYY-MM-DDD
     :param end_date_str: day on which to stop making predictions, as a string, format YYYY-MM-DDD
-    :param path_to_ips_file: path to a csv file containing the intervention plans between start_date and end_date
+    :param path_to_ips_file: path to a csv file containing the intervention plans between inception_date and end_date
+    :param verbose: True to print debug logs
     :return: a Pandas DataFrame containing the predictions
     """
     start_date = pd.to_datetime(start_date_str, format='%Y-%m-%d')
     end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
 
-    # Load the intervention plans
-    ips_df = pd.read_csv(path_to_ips_file,
-                         parse_dates=['Date'],
-                         encoding="ISO-8859-1",
-                         error_bad_lines=True)
+    # Load historical intervention plans, since inception
+    hist_ips_df = pd.read_csv(path_to_ips_file,
+                              parse_dates=['Date'],
+                              encoding="ISO-8859-1",
+                              error_bad_lines=True)
 
     # Add RegionID column that combines CountryName and RegionName for easier manipulation of data\n",
-    ips_df['GeoID'] = ips_df['CountryName'] + '__' + ips_df['RegionName'].astype(str)
+    hist_ips_df['GeoID'] = hist_ips_df['CountryName'] + '__' + hist_ips_df['RegionName'].astype(str)
     # Fill any missing NPIs by assuming they are the same as previous day
     for npi_col in NPI_COLS:
-        ips_df.update(ips_df.groupby(['CountryName', 'RegionName'])[npi_col].ffill().fillna(0))
+        hist_ips_df.update(hist_ips_df.groupby(['CountryName', 'RegionName'])[npi_col].ffill().fillna(0))
+
+    # Intervention plans to forecast for: those between start_date and end_date
+    ips_df = hist_ips_df[(hist_ips_df.Date >= start_date) & (hist_ips_df.Date <= end_date)]
 
     # Load historical data to use in making predictions in the same way
     # This is the data we trained on
     # We stored it locally as for predictions there will be no access to the internet
-    hist_df = pd.read_csv(DATA_FILE,
-                          parse_dates=['Date'],
-                          encoding="ISO-8859-1",
-                          error_bad_lines=False)
+    hist_cases_df = pd.read_csv(DATA_FILE,
+                                parse_dates=['Date'],
+                                encoding="ISO-8859-1",
+                                error_bad_lines=False)
     # Add RegionID column that combines CountryName and RegionName for easier manipulation of data
-    hist_df['GeoID'] = hist_df['CountryName'] + '__' + hist_df['RegionName'].astype(str)
+    hist_cases_df['GeoID'] = hist_cases_df['CountryName'] + '__' + hist_cases_df['RegionName'].astype(str)
     # Add new cases column
-    hist_df['NewCases'] = hist_df.groupby('GeoID').ConfirmedCases.diff().fillna(0)
+    hist_cases_df['NewCases'] = hist_cases_df.groupby('GeoID').ConfirmedCases.diff().fillna(0)
     # Fill any missing case values by interpolation and setting NaNs to 0
-    hist_df.update(hist_df.groupby('GeoID').NewCases.apply(
+    hist_cases_df.update(hist_cases_df.groupby('GeoID').NewCases.apply(
         lambda group: group.interpolate()).fillna(0))
-    # Fill any missing NPIs by assuming they are the same as previous day
-    for npi_col in NPI_COLS:
-        hist_df.update(hist_df.groupby('GeoID')[npi_col].ffill().fillna(0))
+    # Keep only the id and cases columns
+    hist_cases_df = hist_cases_df[ID_COLS + CASES_COL]
 
     # Load model
-    with open('model.pkl', 'rb') as model_file:
+    with open(MODEL_FILE, 'rb') as model_file:
         model = pickle.load(model_file)
 
     # Make predictions for each country,region pair
@@ -107,16 +110,18 @@ def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str, ve
             print('\nPredicting for', g)
 
         # Pull out all relevant data for country c
-        hist_gdf = hist_df[hist_df.GeoID == g]
+        hist_cases_gdf = hist_cases_df[hist_cases_df.GeoID == g]
+        last_known_date = hist_cases_gdf.Date.max()
         ips_gdf = ips_df[ips_df.GeoID == g]
-        past_cases = np.array(hist_gdf[CASES_COL])
-        past_npis = np.array(hist_gdf[NPI_COLS])
+        past_cases = np.array(hist_cases_gdf[CASES_COL])
+        past_npis = np.array(hist_ips_df[NPI_COLS])
         future_npis = np.array(ips_gdf[NPI_COLS])
 
         # Make prediction for each day
         geo_preds = []
-        nb_days_to_predict = (end_date - start_date).days + 1
-        for days_ahead in range(nb_days_to_predict):
+        current_date = last_known_date + np.timedelta64(1, 'D')
+        days_ahead = 0
+        while current_date <= end_date:
             # Prepare data
             X_cases = past_cases[-NB_LOOKBACK_DAYS:]
             X_npis = past_npis[-NB_LOOKBACK_DAYS:]
@@ -126,14 +131,23 @@ def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str, ve
             # Make the prediction (reshape so that sklearn is happy)
             pred = model.predict(X.reshape(1, -1))[0]
             pred = max(0, pred)  # Do not allow predicting negative cases
-            geo_preds.append(pred)
-            if verbose:
-                print(pred)
+            # Add if it's a requested date
+            if current_date >= start_date:
+                geo_preds.append(pred)
+                if verbose:
+                    print(f"{current_date.strftime('%Y-%m-%d')}: {pred}")
+            else:
+                if verbose:
+                    print(f"{current_date.strftime('%Y-%m-%d')}: {pred} - Skipped (intermediate missing daily cases)")
 
             # Append the prediction and npi's for next day
             # in order to rollout predictions for further days.
             past_cases = np.append(past_cases, pred)
             past_npis = np.append(past_npis, future_npis[days_ahead:days_ahead + 1], axis=0)
+
+            # Move to next day
+            current_date = current_date + np.timedelta64(1, 'D')
+            days_ahead += 1
 
         # Create geo_pred_df with pred column
         geo_pred_df = ips_gdf[ID_COLS].copy()
