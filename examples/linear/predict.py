@@ -75,7 +75,7 @@ def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str, ve
                               encoding="ISO-8859-1",
                               error_bad_lines=True)
 
-    # Add RegionID column that combines CountryName and RegionName for easier manipulation of data\n",
+    # Add GeoID column that combines CountryName and RegionName for easier manipulation of data",
     hist_ips_df['GeoID'] = hist_ips_df['CountryName'] + '__' + hist_ips_df['RegionName'].astype(str)
     # Fill any missing NPIs by assuming they are the same as previous day
     for npi_col in NPI_COLS:
