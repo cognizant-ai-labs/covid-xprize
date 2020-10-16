@@ -15,6 +15,4 @@ examples/lstm/data/OxCGRT_latest.csv
 examples/lstm/models/
 examples/lstm/predictions/
 
-examples/xgboost/models.pkl
-
 validation/tests/fixtures/OxCGRT_latest.csv
