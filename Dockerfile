@@ -1,3 +1,4 @@
+# Copyright 2020 (c) Cognizant Digital Business, Evolutionary AI. All rights reserved. Issued under the Apache 2.0 License.
 # DESCRIPTION: Docker file for covid-xprize
 # Created to make CI with Codefresh easier
 
