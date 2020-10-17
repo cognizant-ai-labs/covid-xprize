@@ -7,6 +7,7 @@ scipy==1.5.2
 tensorflow==2.2.0
 keras==2.4.3
 xgboost==1.2.0
+neat-python==0.92
 
 # plotting
 plotly==4.11.0
