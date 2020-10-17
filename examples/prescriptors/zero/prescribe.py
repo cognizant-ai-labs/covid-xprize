@@ -49,6 +49,9 @@ def prescribe(start_date_str: str,
     for npi_col in NPI_COLS:
         prescription_df[npi_col] = 0
 
+    # Add prescription index column.
+    prescription_df['PrescriptionIndex'] = 0
+
     # Create the output path
     os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
 
