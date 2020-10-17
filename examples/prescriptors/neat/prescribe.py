@@ -150,8 +150,8 @@ def prescribe(start_date_str: str,
                                                      geo_pred[PRED_CASES_COL].values[0])
 
         # Add prescription df to list of all prescriptions for this submission
-        prescription_df['PrescriptionIndex'] = prescription_idx
-        prescription_dfs.append(prescription_df)
+        pres_df['PrescriptionIndex'] = prescription_idx
+        prescription_dfs.append(pres_df)
 
     # Combine dfs for all prescriptions into a single df for the submission
     prescription_df = pd.concat(prescription_dfs)
