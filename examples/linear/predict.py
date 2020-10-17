@@ -121,7 +121,8 @@ def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str, ve
 
         # Make prediction for each day
         geo_preds = []
-        current_date = last_known_date + np.timedelta64(1, 'D')
+        # Start predicting from start_date, unless there's a gap since last known date
+        current_date = min(last_known_date + np.timedelta64(1, 'D'), start_date)
         days_ahead = 0
         while current_date <= end_date:
             # Prepare data
