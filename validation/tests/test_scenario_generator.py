@@ -6,12 +6,14 @@ import urllib.request
 
 import pandas as pd
 
-from validation.scenario_generator import generate_scenario
+from validation.scenario_generator import generate_scenario, NPI_COLUMNS, MAX_NPIS
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 FIXTURES_PATH = os.path.join(ROOT_DIR, 'fixtures')
 DATA_FILE = os.path.join(FIXTURES_PATH, "OxCGRT_latest.csv")
 DATA_URL = "https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv"
+
+ONE_NPIS = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 
 
 def _get_dataset():
@@ -61,3 +63,61 @@ class TestScenarioGenerator(unittest.TestCase):
         self.assertEqual(217*nb_geos,
                          len(scenario_df),
                          "Expected the number of days between inception and end date")
+
+    def test_generate_scenario_future(self):
+        # Scenario = Freeze
+        latest_df = _get_dataset()
+        start_date_str = "2021-01-01"
+        end_date_str = "2021-01-31"
+        countries = ["Italy"]
+        scenario_df = generate_scenario(start_date_str, end_date_str, latest_df, countries, scenario="Freeze")
+        self.assertIsNotNone(scenario_df)
+        # Misleading name but checks the elements, regardless of order
+        self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
+        # Inception is 1/1/2020
+        self.assertEqual(397, len(scenario_df), "Expected the number of days between inception and end date")
+        # The last 31 rows must be the same
+        self.assertEqual(0, scenario_df.tail(31)[NPI_COLUMNS].diff().sum().sum(),
+                         "Expected the last 31 rows to have the same frozen IP")
+
+        # Scenario = MIN
+        scenario_df = generate_scenario(start_date_str, end_date_str, latest_df, countries, scenario="MIN")
+        self.assertIsNotNone(scenario_df)
+        # Misleading name but checks the elements, regardless of order
+        self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
+        # Inception is 1/1/2020
+        self.assertEqual(397, len(scenario_df), "Expected the number of days between inception and end date")
+        # The last 31 rows must be the same
+        self.assertEqual(0, scenario_df.tail(31)[NPI_COLUMNS].sum().sum(),
+                         "Expected the last 31 rows to have NPIs set to 0")
+
+        # Scenario = MAX
+        scenario_df = generate_scenario(start_date_str, end_date_str, latest_df, countries, scenario="MAX")
+        self.assertIsNotNone(scenario_df)
+        # Misleading name but checks the elements, regardless of order
+        self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
+        # Inception is 1/1/2020
+        self.assertEqual(397, len(scenario_df), "Expected the number of days between inception and end date")
+        # The last 31 rows must be the same
+        self.assertEqual(sum(MAX_NPIS), scenario_df.tail(31)[NPI_COLUMNS].mean().sum(),
+                         "Expected the last 31 rows to have NPIs set to their max value")
+
+        # Scenario = Custom
+        scenario_df = generate_scenario(start_date_str, end_date_str, latest_df, countries, scenario=ONE_NPIS)
+        self.assertIsNotNone(scenario_df)
+        # Misleading name but checks the elements, regardless of order
+        self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
+        # Inception is 1/1/2020
+        self.assertEqual(397, len(scenario_df), "Expected the number of days between inception and end date")
+        # The last 31 rows must be the same
+        self.assertEqual(1, scenario_df.tail(31)[NPI_COLUMNS].mean().mean(),
+                         "Expected the last 31 rows to have all NPIs set to 1")
+
+        # Check 2 countries
+        countries = ["France", "Italy"]
+        scenario_df = generate_scenario(start_date_str, end_date_str, latest_df, countries, scenario="Freeze")
+        self.assertIsNotNone(scenario_df)
+        # Misleading name but checks the elements, regardless of order
+        self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
+        # Inception is 1/1/2020
+        self.assertEqual(397*2, len(scenario_df), "Expected the number of days between inception and end date")
