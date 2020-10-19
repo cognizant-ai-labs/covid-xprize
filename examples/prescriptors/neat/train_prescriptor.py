@@ -158,7 +158,13 @@ def eval_genomes(genomes, config):
         # stringency zero. To achieve more interesting behavior, a different fitness
         # function may be required.
         new_cases = pred_df[PRED_CASES_COL].mean().mean()
+
+        # Computing stringency in this way assumes all ip's are weighted equally.
+        # In general, ip's may be weighted according to their cost. Such a weighting
+        # could be applied here to compute stringency as a weighted sum instead of
+        # the simple mean.
         stringency = pres_df[IP_COLS].mean().mean()
+
         genome.fitness = -(new_cases * stringency)
 
         print('Evaluated Genome', genome_id)
