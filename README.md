@@ -1,10 +1,10 @@
 # Cognizant COVID X-Prize
 
 ## Introduction
-Welcome to the COVID X-Prize! This archive contains what you need to get started in creating your submission for the
+Welcome to the COVID X-Prize! This repository contains what you need to get started in creating your submission for the
 contest.
 
-Within this archive you will find:
+Within this repository you will find:
 * Sample predictors and prescriptors provided by Cognizant, in the form of Jupyter notebooks and python scripts
 * Sample implementations of the "predict" API and the "prescribe" API, which you will be required to implement 
 as part of your submission
@@ -73,7 +73,7 @@ judging.
 
 1. Within your sandbox, under your home directory you will find a pre-created `work` directory.
 1. Under this `work` directory, you must provide a Python script with the name `predict.py`. Examples of such scripts 
-are provided in this archive. This script will invoke your predictor model and save the predictions produced.
+are provided in this repository. This script will invoke your predictor model and save the predictions produced.
 1. Your script must accept particular command line parameters, and generate a particular output, as explained below. 
 1. Whatever models and other data files your predictor requires must be uploaded to your sandbox and visible to your 
 `predict.py` script, for example, by placing them in the `work` directory or subdirectories thereof.
