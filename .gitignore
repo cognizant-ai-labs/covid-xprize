@@ -5,6 +5,7 @@ venv/
 __pycache__
 *.pyc
 .idea/
+
 # Run the respective notebooks to download the data, train and persist the models and generate the predictions
 examples/linear/data/
 examples/linear/models/
@@ -14,4 +15,4 @@ examples/lstm/data/OxCGRT_latest.csv
 examples/lstm/models/
 examples/lstm/predictions/
 
-examples/xgboost/models.pkl
+validation/tests/fixtures/OxCGRT_latest.csv

@@ -14,7 +14,7 @@ NEGATIVE_SUBMISSION = os.path.join(FIXTURES_PATH, "negative_submission.csv")
 BAD_DATES_SUBMISSION = os.path.join(FIXTURES_PATH, "bad_dates_submission.csv")
 
 
-class TestMultiplicativeEvaluator(unittest.TestCase):
+class TestValidation(unittest.TestCase):
 
     def test_wrong_columns(self):
         errors = validate_submission("2020-08-01", "2020-08-01", WRONG_COLUMNS)
