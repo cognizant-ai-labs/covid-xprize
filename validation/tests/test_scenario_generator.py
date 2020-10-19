@@ -39,7 +39,7 @@ class TestScenarioGenerator(unittest.TestCase):
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
-        # Inception is 1/1/2020
+        # Inception is 2020-01-01, end date is 2020-08-4: that's 217 days of IP data
         self.assertEqual(217, len(scenario_df), "Expected the number of days between inception and end date")
 
         # Check multiple countries
@@ -48,7 +48,7 @@ class TestScenarioGenerator(unittest.TestCase):
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
-        # Inception is 1/1/2020
+        # Inception is 2020-01-01, end date is 2020-08-4: that's 217 days of IP data
         self.assertEqual(217*2, len(scenario_df), "Expected the number of days between inception and end date")
 
         # All countries: do not pass a countries list
@@ -57,7 +57,7 @@ class TestScenarioGenerator(unittest.TestCase):
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(latest_df.CountryName.unique(), scenario_df.CountryName.unique(),
                               "Not the requested countries")
-        # Inception is 1/1/2020
+        # Inception is 2020-01-01, end date is 2020-08-4: that's 217 days of IP data
         # Contains the regions too. -1 to remove the NaN region, already counted as a country
         nb_geos = len(latest_df.CountryName.unique()) + len(latest_df.RegionName.unique()) - 1
         self.assertEqual(217*nb_geos,
@@ -74,7 +74,7 @@ class TestScenarioGenerator(unittest.TestCase):
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
-        # Inception is 1/1/2020
+        # Inception is 2020-01-01. 366 days for 2020 + 31 for Jan 2021
         self.assertEqual(397, len(scenario_df), "Expected the number of days between inception and end date")
         # The last 31 rows must be the same
         self.assertEqual(0, scenario_df.tail(31)[NPI_COLUMNS].diff().sum().sum(),
@@ -85,7 +85,7 @@ class TestScenarioGenerator(unittest.TestCase):
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
-        # Inception is 1/1/2020
+        # Inception is 2020-01-01. 366 days for 2020 + 31 for Jan 2021
         self.assertEqual(397, len(scenario_df), "Expected the number of days between inception and end date")
         # The last 31 rows must be the same
         self.assertEqual(0, scenario_df.tail(31)[NPI_COLUMNS].sum().sum(),
@@ -96,7 +96,7 @@ class TestScenarioGenerator(unittest.TestCase):
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
-        # Inception is 1/1/2020
+        # Inception is 2020-01-01. 366 days for 2020 + 31 for Jan 2021
         self.assertEqual(397, len(scenario_df), "Expected the number of days between inception and end date")
         # The last 31 rows must be the same
         self.assertEqual(sum(MAX_NPIS), scenario_df.tail(31)[NPI_COLUMNS].mean().sum(),
@@ -107,7 +107,7 @@ class TestScenarioGenerator(unittest.TestCase):
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
-        # Inception is 1/1/2020
+        # Inception is 2020-01-01. 366 days for 2020 + 31 for Jan 2021
         self.assertEqual(397, len(scenario_df), "Expected the number of days between inception and end date")
         # The last 31 rows must be the same
         self.assertEqual(1, scenario_df.tail(31)[NPI_COLUMNS].mean().mean(),
@@ -119,5 +119,5 @@ class TestScenarioGenerator(unittest.TestCase):
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
-        # Inception is 1/1/2020
+        # Inception is 2020-01-01. 366 days for 2020 + 31 for Jan 2021
         self.assertEqual(397*2, len(scenario_df), "Expected the number of days between inception and end date")
