@@ -5,8 +5,9 @@ Welcome to the COVID X-Prize! This archive contains what you need to get started
 contest.
 
 Within this archive you will find:
-* Sample predictors provided by Cognizant, in the form of Jupyter notebooks
-* Sample implementations of the "predict" API, which you will be required to implement as part of your submission
+* Sample predictors and prescriptors provided by Cognizant, in the form of Jupyter notebooks and python scripts
+* Sample implementations of the "predict" API and the "prescribe" API, which you will be required to implement 
+as part of your submission
 * Sample IP (intervention plan) data to test your submission
 
 ## Pre-requisites
@@ -23,12 +24,15 @@ Having registered for the contest, you should also have:
 * A pre-initialized Sandbox within the X-Prize system
 
 ## Examples
-Under the `examples` directory you will find some examples of predictors that you can inspect to learn more about 
-what you need to do:
+Under the `examples` directory you will find some examples of predictors and prescriptors that you can 
+inspect to learn more about what you need to do:
 * `linear` contains a simple linear model, using the 
 [Lasso algorithm](https://en.wikipedia.org/wiki/Lasso_(statistics)).
 * `lstm` contains a more sophisticated [LSTM](https://en.wikipedia.org/wiki/Long_short-term_memory) 
 model for making predictions.
+* `prescriptors/zero` contains a trivial prescriptor that always prescribes no interventions; 
+`prescriptors/random` contains one that prescribes random interventions.
+* `prescriptors/neat` contains code for training prescriptors with [NEAT](https://en.wikipedia.org/wiki/Neuroevolution_of_augmenting_topologies)
  
 The instructions below assume that you are using a standard Python virtual environment, and `pip` for package 
 management. Installations using other environments (such as `conda`) are outside the scope of these steps.
