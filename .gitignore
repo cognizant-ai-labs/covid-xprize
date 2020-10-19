@@ -1,14 +1,18 @@
+# Copyright 2020 (c) Cognizant Digital Business, Evolutionary AI. All rights reserved. Issued under the Apache 2.0 License.
+
 venv/
 .ipynb_checkpoints/
 __pycache__
 *.pyc
 .idea/
-# Run the training scripts to generate the models
-examples/linear/data/OxCGRT_latest.csv
-examples/linear/model.pkl
-examples/lstm/data/OxCGRT_latest.csv
-examples/lstm/trained_model.h5
-examples/xgboost/models.pkl
-# Run the validation scripts to generate the predictions
+
+# Run the respective notebooks to download the data, train and persist the models and generate the predictions
+examples/linear/data/
+examples/linear/models/
 examples/linear/predictions/
+
+examples/lstm/data/OxCGRT_latest.csv
+examples/lstm/models/
 examples/lstm/predictions/
+
+validation/tests/fixtures/OxCGRT_latest.csv
