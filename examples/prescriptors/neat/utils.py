@@ -1,3 +1,5 @@
+# Copyright 2020 (c) Cognizant Digital Business, Evolutionary AI. All rights reserved. Issued under the Apache 2.0 License.
+
 import os
 import subprocess
 import pandas as pd
