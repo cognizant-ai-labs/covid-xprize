@@ -75,7 +75,7 @@ if __name__ == '__main__':
                         type=str,
                         required=True,
                         help="End date for the last prescription, included, as YYYY-MM-DD. For example 2020-08-31")
-    parser.add_argument("-p", "--prior_ips_and_cases",
+    parser.add_argument("-ip", "--interventions_past",
                         dest="prev_file",
                         type=str,
                         required=True,
