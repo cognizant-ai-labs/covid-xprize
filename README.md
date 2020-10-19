@@ -34,6 +34,13 @@ The instructions below assume that you are using a standard Python virtual envir
 management. Installations using other environments (such as `conda`) are outside the scope of these steps.
 
 In order to run the examples locally:
+1. Ensure your current working directory is the root folder of this repository (the same directory as this README 
+resides in). The examples assume your working directory is set to the project root and all paths are relative to 
+it.
+1. Ensure your `PYTHONPATH` includes your current directory:
+    ```shell script
+    export PYTHONPATH=.:$PYTHONPATH
+    ```
 1. Create a Python [virtual environment](https://docs.python.org/3/tutorial/venv.html)
 1. Activate the virtual environment
 1. Install the necessary requirements:
