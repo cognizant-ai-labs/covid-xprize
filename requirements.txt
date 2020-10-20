@@ -1,7 +1,7 @@
 # Copyright 2020 (c) Cognizant Digital Business, Evolutionary AI. All rights reserved. Issued under the Apache 2.0 License.
 # data science
 pandas==1.1.2
-numpy==1.19.2
+numpy==1.18.5
 notebook==6.1.4
 scikit-learn==0.23.2
 scipy==1.5.2
