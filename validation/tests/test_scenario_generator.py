@@ -4,6 +4,7 @@ import os
 import unittest
 import urllib.request
 
+import numpy as np
 import pandas as pd
 
 from validation.scenario_generator import generate_scenario, NPI_COLUMNS, MAX_NPIS
@@ -13,7 +14,8 @@ FIXTURES_PATH = os.path.join(ROOT_DIR, 'fixtures')
 DATA_FILE = os.path.join(FIXTURES_PATH, "OxCGRT_latest.csv")
 DATA_URL = "https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv"
 
-ONE_NPIS = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+# Sets each NPI to level 1
+ONE_NPIS = list(np.ones(len(NPI_COLUMNS)))
 
 
 def _get_dataset():
@@ -23,6 +25,8 @@ def _get_dataset():
     latest_df = pd.read_csv(DATA_FILE,
                             parse_dates=['Date'],
                             encoding="ISO-8859-1",
+                            dtype={"RegionName": str,
+                                   "RegionCode": str},
                             error_bad_lines=False)
     latest_df["RegionName"] = latest_df["RegionName"].fillna("")
     return latest_df
@@ -30,7 +34,7 @@ def _get_dataset():
 
 class TestScenarioGenerator(unittest.TestCase):
 
-    def test_generate_scenario_historical(self):
+    def test_generate_scenario_historical_1_country(self):
         latest_df = _get_dataset()
         start_date_str = "2020-08-01"
         end_date_str = "2020-08-4"
@@ -42,7 +46,11 @@ class TestScenarioGenerator(unittest.TestCase):
         # Inception is 2020-01-01, end date is 2020-08-4: that's 217 days of IP data
         self.assertEqual(217, len(scenario_df), "Expected the number of days between inception and end date")
 
+    def test_generate_scenario_historical_multi_countries(self):
         # Check multiple countries
+        latest_df = _get_dataset()
+        start_date_str = "2020-08-01"
+        end_date_str = "2020-08-4"
         countries = ["France", "Italy"]
         scenario_df = generate_scenario(start_date_str, end_date_str, latest_df, countries)
         self.assertIsNotNone(scenario_df)
@@ -51,7 +59,11 @@ class TestScenarioGenerator(unittest.TestCase):
         # Inception is 2020-01-01, end date is 2020-08-4: that's 217 days of IP data
         self.assertEqual(217*2, len(scenario_df), "Expected the number of days between inception and end date")
 
+    def test_generate_scenario_historical_no_specific_country(self):
         # All countries: do not pass a countries list
+        latest_df = _get_dataset()
+        start_date_str = "2020-08-01"
+        end_date_str = "2020-08-4"
         scenario_df = generate_scenario(start_date_str, end_date_str, latest_df)
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
@@ -64,7 +76,7 @@ class TestScenarioGenerator(unittest.TestCase):
                          len(scenario_df),
                          "Expected the number of days between inception and end date")
 
-    def test_generate_scenario_future(self):
+    def test_generate_scenario_future_freeze(self):
         # Scenario = Freeze
         latest_df = _get_dataset()
         start_date_str = "2021-01-01"
@@ -80,7 +92,12 @@ class TestScenarioGenerator(unittest.TestCase):
         self.assertEqual(0, scenario_df.tail(31)[NPI_COLUMNS].diff().sum().sum(),
                          "Expected the last 31 rows to have the same frozen IP")
 
+    def test_generate_scenario_future_min(self):
         # Scenario = MIN
+        latest_df = _get_dataset()
+        start_date_str = "2021-01-01"
+        end_date_str = "2021-01-31"
+        countries = ["Italy"]
         scenario_df = generate_scenario(start_date_str, end_date_str, latest_df, countries, scenario="MIN")
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
@@ -91,7 +108,12 @@ class TestScenarioGenerator(unittest.TestCase):
         self.assertEqual(0, scenario_df.tail(31)[NPI_COLUMNS].sum().sum(),
                          "Expected the last 31 rows to have NPIs set to 0")
 
+    def test_generate_scenario_future_max(self):
         # Scenario = MAX
+        latest_df = _get_dataset()
+        start_date_str = "2021-01-01"
+        end_date_str = "2021-01-31"
+        countries = ["Italy"]
         scenario_df = generate_scenario(start_date_str, end_date_str, latest_df, countries, scenario="MAX")
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
@@ -102,7 +124,12 @@ class TestScenarioGenerator(unittest.TestCase):
         self.assertEqual(sum(MAX_NPIS), scenario_df.tail(31)[NPI_COLUMNS].mean().sum(),
                          "Expected the last 31 rows to have NPIs set to their max value")
 
+    def test_generate_scenario_future_custom(self):
         # Scenario = Custom
+        latest_df = _get_dataset()
+        start_date_str = "2021-01-01"
+        end_date_str = "2021-01-31"
+        countries = ["Italy"]
         scenario_df = generate_scenario(start_date_str, end_date_str, latest_df, countries, scenario=ONE_NPIS)
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
@@ -113,7 +140,11 @@ class TestScenarioGenerator(unittest.TestCase):
         self.assertEqual(1, scenario_df.tail(31)[NPI_COLUMNS].mean().mean(),
                          "Expected the last 31 rows to have all NPIs set to 1")
 
+    def test_generate_scenario_future_freeze_2_countries(self):
         # Check 2 countries
+        latest_df = _get_dataset()
+        start_date_str = "2021-01-01"
+        end_date_str = "2021-01-31"
         countries = ["France", "Italy"]
         scenario_df = generate_scenario(start_date_str, end_date_str, latest_df, countries, scenario="Freeze")
         self.assertIsNotNone(scenario_df)
