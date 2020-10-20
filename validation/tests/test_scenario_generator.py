@@ -34,12 +34,16 @@ def _get_dataset():
 
 class TestScenarioGenerator(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        # Load the csv data only once
+        cls.latest_df = _get_dataset()
+
     def test_generate_scenario_historical_1_country(self):
-        latest_df = _get_dataset()
         start_date_str = "2020-08-01"
         end_date_str = "2020-08-4"
         countries = ["Italy"]
-        scenario_df = generate_scenario(start_date_str, end_date_str, latest_df, countries)
+        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries)
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
@@ -48,11 +52,10 @@ class TestScenarioGenerator(unittest.TestCase):
 
     def test_generate_scenario_historical_multi_countries(self):
         # Check multiple countries
-        latest_df = _get_dataset()
         start_date_str = "2020-08-01"
         end_date_str = "2020-08-4"
         countries = ["France", "Italy"]
-        scenario_df = generate_scenario(start_date_str, end_date_str, latest_df, countries)
+        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries)
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
@@ -61,28 +64,26 @@ class TestScenarioGenerator(unittest.TestCase):
 
     def test_generate_scenario_historical_no_specific_country(self):
         # All countries: do not pass a countries list
-        latest_df = _get_dataset()
         start_date_str = "2020-08-01"
         end_date_str = "2020-08-4"
-        scenario_df = generate_scenario(start_date_str, end_date_str, latest_df)
+        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df)
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
-        self.assertCountEqual(latest_df.CountryName.unique(), scenario_df.CountryName.unique(),
+        self.assertCountEqual(self.latest_df.CountryName.unique(), scenario_df.CountryName.unique(),
                               "Not the requested countries")
         # Inception is 2020-01-01, end date is 2020-08-4: that's 217 days of IP data
         # Contains the regions too. -1 to remove the NaN region, already counted as a country
-        nb_geos = len(latest_df.CountryName.unique()) + len(latest_df.RegionName.unique()) - 1
+        nb_geos = len(self.latest_df.CountryName.unique()) + len(self.latest_df.RegionName.unique()) - 1
         self.assertEqual(217*nb_geos,
                          len(scenario_df),
                          "Expected the number of days between inception and end date")
 
     def test_generate_scenario_future_freeze(self):
         # Scenario = Freeze
-        latest_df = _get_dataset()
         start_date_str = "2021-01-01"
         end_date_str = "2021-01-31"
         countries = ["Italy"]
-        scenario_df = generate_scenario(start_date_str, end_date_str, latest_df, countries, scenario="Freeze")
+        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario="Freeze")
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
@@ -94,11 +95,10 @@ class TestScenarioGenerator(unittest.TestCase):
 
     def test_generate_scenario_future_min(self):
         # Scenario = MIN
-        latest_df = _get_dataset()
         start_date_str = "2021-01-01"
         end_date_str = "2021-01-31"
         countries = ["Italy"]
-        scenario_df = generate_scenario(start_date_str, end_date_str, latest_df, countries, scenario="MIN")
+        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario="MIN")
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
@@ -110,11 +110,10 @@ class TestScenarioGenerator(unittest.TestCase):
 
     def test_generate_scenario_future_max(self):
         # Scenario = MAX
-        latest_df = _get_dataset()
         start_date_str = "2021-01-01"
         end_date_str = "2021-01-31"
         countries = ["Italy"]
-        scenario_df = generate_scenario(start_date_str, end_date_str, latest_df, countries, scenario="MAX")
+        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario="MAX")
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
@@ -126,11 +125,10 @@ class TestScenarioGenerator(unittest.TestCase):
 
     def test_generate_scenario_future_custom(self):
         # Scenario = Custom
-        latest_df = _get_dataset()
         start_date_str = "2021-01-01"
         end_date_str = "2021-01-31"
         countries = ["Italy"]
-        scenario_df = generate_scenario(start_date_str, end_date_str, latest_df, countries, scenario=ONE_NPIS)
+        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=ONE_NPIS)
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
@@ -142,11 +140,10 @@ class TestScenarioGenerator(unittest.TestCase):
 
     def test_generate_scenario_future_freeze_2_countries(self):
         # Check 2 countries
-        latest_df = _get_dataset()
         start_date_str = "2021-01-01"
         end_date_str = "2021-01-31"
         countries = ["France", "Italy"]
-        scenario_df = generate_scenario(start_date_str, end_date_str, latest_df, countries, scenario="Freeze")
+        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario="Freeze")
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
