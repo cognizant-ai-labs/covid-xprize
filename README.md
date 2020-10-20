@@ -119,6 +119,17 @@ Example prescriptors can be found under `examples/prescriptors/`.
 
 For more details on this API, consult the Competition Guidelines or the support Slack channel.
 
+
+#### Sample trained predictor
+
+The repo also provides a sample trained predictor to train prescriptors against.
+To use it, copy `examples/prescriptors/resources/sample-trained-lstm-predictor.h5` to `examples/lstm/trained_model.h5`,
+and call `examples/lstm/predict.py` to make predictions.
+See `get_predictions` in `examples/prescriptors/neat/utils.py` and
+`generate_cases_and_stringency_for_prescriptions` in `prescriptor_robojudge.ipynb` for
+examples of how to make this call.
+
+
 ## More information/Support
 For more information and support, refer to the competition guidelines which you should have received when registering
 for the contest, or post your questions in the support Slack channel, to which you should have also gained access 
