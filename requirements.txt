@@ -5,7 +5,7 @@ numpy==1.19.2
 notebook==6.1.4
 scikit-learn==0.23.2
 scipy==1.5.2
-tensorflow==2.2.0
+tensorflow==2.2.1
 keras==2.4.3
 xgboost==1.2.0
 neat-python==0.92
