@@ -207,8 +207,7 @@ class XPrizePredictor(object):
                                 parse_dates=['Date'],
                                 encoding="ISO-8859-1",
                                 error_bad_lines=False)
-        # Handle regions
-        latest_df["RegionName"].fillna('', inplace=True)
+        # Handle regions.
         # Replace CountryName by CountryName / RegionName
         # np.where usage: if A then B else C
         latest_df["CountryName"] = np.where(latest_df["RegionName"].isnull(),
