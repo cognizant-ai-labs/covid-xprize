@@ -7,7 +7,7 @@ import urllib.request
 import numpy as np
 import pandas as pd
 
-from validation.scenario_generator import generate_scenario, NPI_COLUMNS, MAX_NPIS
+from validation.scenario_generator import generate_scenario, NPI_COLUMNS, MIN_NPIS, MAX_NPIS
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 FIXTURES_PATH = os.path.join(ROOT_DIR, 'fixtures')
@@ -15,7 +15,7 @@ DATA_FILE = os.path.join(FIXTURES_PATH, "OxCGRT_latest.csv")
 DATA_URL = "https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv"
 
 # Sets each NPI to level 1
-ONE_NPIS = list(np.ones(len(NPI_COLUMNS)))
+ONE_NPIS = [1] * len(NPI_COLUMNS)
 
 
 def _get_dataset():
@@ -33,50 +33,125 @@ def _get_dataset():
 
 
 class TestScenarioGenerator(unittest.TestCase):
+    """
+    Tests generating different NPI scenarios.
+
+    Definitions:
+    I = inception date = 2020-01-01 (earliest available data)
+    LK = last known date (for each country) in the latest available data
+    S = start date of the scenario
+    E = end date of the scenario
+
+    Time wise, the following kind of scenarios can be applied:
+    1. Counterfactuals: I____S_____E____LK where E can equal LK
+    2. Future:          I____S_____LK___E where S can equal LK
+    3. Mind the gap:    I____LK    S____E
+
+    For each case, we check each type of scenario: freeze, MIN, MAX, custom
+
+    Scenarios can be applied to: 1 country, several countries, all countries
+    """
 
     @classmethod
     def setUpClass(cls):
         # Load the csv data only once
         cls.latest_df = _get_dataset()
 
-    def test_generate_scenario_historical_1_country(self):
-        start_date_str = "2020-08-01"
-        end_date_str = "2020-08-4"
+    def test_generate_scenario_counterfactual_freeze(self):
+        # Simulate Italy did not enter full lockdown on Mar 20, but instead waited 1 week before changing its NPIs
+        before_day = pd.to_datetime("2020-03-19", format='%Y-%m-%d')
+        frozen_npis_df = self.latest_df[(self.latest_df.CountryName == "Italy") &
+                                        (self.latest_df.Date == before_day)][NPI_COLUMNS].reset_index(drop=True)
+        frozen_npis = list(frozen_npis_df.values[0])
+        self._check_counterfactual("Freeze", frozen_npis)
+
+    def test_generate_scenario_counterfactual_min(self):
+        # Simulate Italy lifted all NPIs for a period
+        self._check_counterfactual("MIN", MIN_NPIS)
+
+    def test_generate_scenario_counterfactual_max(self):
+        # Simulate Italy maxed out all NPIs for a period
+        self._check_counterfactual("MAX", MAX_NPIS)
+
+    def test_generate_scenario_counterfactual_custom(self):
+        # Simulate Italy used custom NPIs for a period: each NPI set to 1 for 7 consecutive days
+        scenario = [ONE_NPIS] * 7
+        self._check_counterfactual(scenario, scenario[0])
+
+    def _check_counterfactual(self, scenario, scenario_npis):
+        # Simulate Italy lifted all NPI for this period
+        start_date_str = "2020-03-20"
+        end_date_str = "2020-03-26"
         countries = ["Italy"]
-        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries)
+        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=scenario)
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
-        # Inception is 2020-01-01, end date is 2020-08-4: that's 217 days of IP data
-        self.assertEqual(217, len(scenario_df), "Expected the number of days between inception and end date")
+        self.assertFalse(scenario_df["Date"].duplicated().any(), "Expected 1 row per date only")
+        start_date = pd.to_datetime(start_date_str, format='%Y-%m-%d')
+        end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
+        before_day = start_date - np.timedelta64(1, 'D')
+        before_day_npis = scenario_df[scenario_df.Date == before_day][NPI_COLUMNS].reset_index(drop=True)
+        before_day_npis_truth = self.latest_df[(self.latest_df.CountryName == "Italy") &
+                                               (self.latest_df.Date == before_day)][NPI_COLUMNS].reset_index(drop=True)
+        # Check the day before the scenario is correct
+        pd.testing.assert_frame_equal(before_day_npis_truth, before_day_npis, "Not the expected frozen NPIs")
+        # For the right period (+1 to include start and end date)
+        nb_days = (end_date - start_date).days + 1
+        for i in range(nb_days):
+            check_day = start_date + np.timedelta64(i, 'D')
+            check_day_npis_df = scenario_df[scenario_df.Date == check_day][NPI_COLUMNS].reset_index(drop=True)
+            check_day_npis = list(check_day_npis_df.values[0])
+            self.assertListEqual(scenario_npis, check_day_npis)
+        # Check Mar 27 is different from frozen day
+        after_day = end_date + np.timedelta64(1, 'D')
+        after_day_npis_df = scenario_df[scenario_df.Date == after_day][NPI_COLUMNS].reset_index(drop=True)
+        self.assertTrue((scenario_npis - after_day_npis_df.values[0]).any(),
+                        "Expected NPIs to be different")
+        # Check 27 is indeed equal to truth
+        after_day_npis_truth = self.latest_df[(self.latest_df.CountryName == "Italy") &
+                                                 (self.latest_df.Date == after_day)
+                                                 ][NPI_COLUMNS].reset_index(drop=True)
+        pd.testing.assert_frame_equal(after_day_npis_truth, after_day_npis_df, "Not the expected unfrozen NPIs")
 
-    def test_generate_scenario_historical_multi_countries(self):
-        # Check multiple countries
-        start_date_str = "2020-08-01"
-        end_date_str = "2020-08-4"
-        countries = ["France", "Italy"]
-        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries)
-        self.assertIsNotNone(scenario_df)
-        # Misleading name but checks the elements, regardless of order
-        self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
-        # Inception is 2020-01-01, end date is 2020-08-4: that's 217 days of IP data
-        self.assertEqual(217*2, len(scenario_df), "Expected the number of days between inception and end date")
-
-    def test_generate_scenario_historical_no_specific_country(self):
-        # All countries: do not pass a countries list
-        start_date_str = "2020-08-01"
-        end_date_str = "2020-08-4"
-        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df)
-        self.assertIsNotNone(scenario_df)
-        # Misleading name but checks the elements, regardless of order
-        self.assertCountEqual(self.latest_df.CountryName.unique(), scenario_df.CountryName.unique(),
-                              "Not the requested countries")
-        # Inception is 2020-01-01, end date is 2020-08-4: that's 217 days of IP data
-        # Contains the regions too. -1 to remove the NaN region, already counted as a country
-        nb_geos = len(self.latest_df.CountryName.unique()) + len(self.latest_df.RegionName.unique()) - 1
-        self.assertEqual(217*nb_geos,
-                         len(scenario_df),
-                         "Expected the number of days between inception and end date")
+    # def test_generate_scenario_historical_1_country(self):
+    #     start_date_str = "2020-08-01"
+    #     end_date_str = "2020-08-4"
+    #     countries = ["Italy"]
+    #     scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries)
+    #     self.assertIsNotNone(scenario_df)
+    #     # Misleading name but checks the elements, regardless of order
+    #     self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
+    #     # Inception is 2020-01-01, end date is 2020-08-4: that's 217 days of IP data
+    #     self.assertEqual(217, len(scenario_df), "Expected the number of days between inception and end date")
+    #
+    # def test_generate_scenario_historical_multi_countries(self):
+    #     # Check multiple countries
+    #     start_date_str = "2020-08-01"
+    #     end_date_str = "2020-08-4"
+    #     countries = ["France", "Italy"]
+    #     scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries)
+    #     self.assertIsNotNone(scenario_df)
+    #     # Misleading name but checks the elements, regardless of order
+    #     self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
+    #     # Inception is 2020-01-01, end date is 2020-08-4: that's 217 days of IP data
+    #     self.assertEqual(217*2, len(scenario_df), "Expected the number of days between inception and end date")
+    #
+    # def test_generate_scenario_historical_no_specific_country(self):
+    #     # All countries: do not pass a countries list
+    #     start_date_str = "2020-08-01"
+    #     end_date_str = "2020-08-4"
+    #     scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df)
+    #     self.assertIsNotNone(scenario_df)
+    #     # Misleading name but checks the elements, regardless of order
+    #     self.assertCountEqual(self.latest_df.CountryName.unique(), scenario_df.CountryName.unique(),
+    #                           "Not the requested countries")
+    #     # Inception is 2020-01-01, end date is 2020-08-4: that's 217 days of IP data
+    #     # Contains the regions too. -1 to remove the NaN region, already counted as a country
+    #     nb_geos = len(self.latest_df.CountryName.unique()) + len(self.latest_df.RegionName.unique()) - 1
+    #     self.assertEqual(217*nb_geos,
+    #                      len(scenario_df),
+    #                      "Expected the number of days between inception and end date")
 
     def test_generate_scenario_future_freeze(self):
         # Scenario = Freeze
@@ -128,7 +203,9 @@ class TestScenarioGenerator(unittest.TestCase):
         start_date_str = "2021-01-01"
         end_date_str = "2021-01-31"
         countries = ["Italy"]
-        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=ONE_NPIS)
+        # Set all the NPIs to one for each day between start data and end date.
+        scenario = [ONE_NPIS] * 31
+        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=scenario)
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
@@ -149,3 +226,20 @@ class TestScenarioGenerator(unittest.TestCase):
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
         # Inception is 2020-01-01. 366 days for 2020 + 31 for Jan 2021
         self.assertEqual(397*2, len(scenario_df), "Expected the number of days between inception and end date")
+
+    # def test_generate_scenario_counterfactual_min(self):
+    #     # Scenario = Custom
+    #     start_date_str = "2020-08-01"
+    #     end_date_str = "2020-01-31"
+    #     countries = ["Italy"]
+    #     # Set all the NPIs to one for each day between start data and end date.
+    #     scenario = [ONE_NPIS] * 31
+    #     scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=ONE_NPIS)
+    #     self.assertIsNotNone(scenario_df)
+    #     # Misleading name but checks the elements, regardless of order
+    #     self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
+    #     # Inception is 2020-01-01. 366 days for 2020 + 31 for Jan 2021
+    #     self.assertEqual(397, len(scenario_df), "Expected the number of days between inception and end date")
+    #     # The last 31 rows must be the same
+    #     self.assertEqual(1, scenario_df.tail(31)[NPI_COLUMNS].mean().mean(),
+    #                      "Expected the last 31 rows to have all NPIs set to 1")
