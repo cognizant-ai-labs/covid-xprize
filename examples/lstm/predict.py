@@ -8,7 +8,11 @@ import pandas as pd
 from examples.lstm.xprize_predictor import XPrizePredictor
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# If you'd like to use a model, copy it to "trained_model_weights.h5"
+# or change this MODEL_FILE path to point to your model.
 MODEL_WEIGHTS_FILE = os.path.join(ROOT_DIR, "trained_model_weights.h5")
+
 DATA_FILE = os.path.join(ROOT_DIR, 'data', "OxCGRT_latest.csv")
 
 # Consider the data after this date is not known yet
