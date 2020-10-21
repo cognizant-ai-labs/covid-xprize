@@ -128,7 +128,7 @@ An example dashboard using Cognizant-trained predictors and prescriptors can be 
 [here](https://evolution.ml/demos/npidashboard/). Using this dashboard you can select among different prescriptors
 from the Pareto Front to see the effect on prescriptions for intervention plans in various regions.
 
-For more background information please see also the whitepaper 
-[From Prediction to Prescription: Evolutionary Optimization of Non-Pharmaceutical Interventions in the COVID-19 Pandemic](https://arxiv.org/abs/2005.13766) 
+For more background information please see also the research paper 
+[From Prediction to Prescription: Evolutionary Optimization of Non-Pharmaceutical Interventions in the COVID-19 Pandemic](https://arxiv.org/abs/2005.13766). 
 
 Copyright 2020 (c) Cognizant Digital Business, Evolutionary AI. All rights reserved. Issued under the Apache 2.0 License.
