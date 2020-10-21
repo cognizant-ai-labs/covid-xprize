@@ -27,7 +27,7 @@ def generate_scenario(start_date_str, end_date_str, raw_df, countries=None, scen
     """
     Generates a scenario: a list of intervention plans, with history since 1/1/2020.
     Args:
-        start_date_str: start_date from which to apply the scenario
+        start_date_str: start_date from which to apply the scenario. None to apply from last known date
         end_date_str: end_date of the data
         raw_df: the original data frame containing the raw data
         countries: a list of CountryName, or None for all countries
@@ -45,11 +45,12 @@ def generate_scenario(start_date_str, end_date_str, raw_df, countries=None, scen
     start_date = pd.to_datetime(start_date_str, format='%Y-%m-%d')
     end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
 
-    if end_date <= start_date:
-        raise ValueError(f"end_date {end_date} must be after start_date {start_date}")
+    if start_date:
+        if end_date <= start_date:
+            raise ValueError(f"end_date {end_date} must be after start_date {start_date}")
 
-    if start_date < INCEPTION_DATE:
-        raise ValueError(f"start_date {start_date} must be on or after inception date {INCEPTION_DATE}")
+        if start_date < INCEPTION_DATE:
+            raise ValueError(f"start_date {start_date} must be on or after inception date {INCEPTION_DATE}")
 
     ips_df = raw_df[ID_COLS + NPI_COLUMNS]
 
@@ -70,6 +71,9 @@ def generate_scenario(start_date_str, end_date_str, raw_df, countries=None, scen
         country_name = ips_gdf.iloc[0].CountryName
         region_name = ips_gdf.iloc[0].RegionName
         last_known_date = ips_gdf.Date.max()
+        # If the start date is not specified, start from the day after the last known date
+        if not start_date_str:
+            start_date = last_known_date + np.timedelta64(1, 'D')
         # If the last known date is BEFORE the start date, we have to start applying the scenario at last_known date
         current_date = min(last_known_date + np.timedelta64(1, 'D'), start_date)
         scenario_to_apply = 0

@@ -29,6 +29,8 @@ def _get_dataset():
                                    "RegionCode": str},
                             error_bad_lines=False)
     latest_df["RegionName"] = latest_df["RegionName"].fillna("")
+    # Fill any missing NPIs by assuming they are the same as previous day, or 0 if none is available
+    latest_df.update(latest_df.groupby(['CountryName', 'RegionName'])[NPI_COLUMNS].ffill().fillna(0))
     return latest_df
 
 
@@ -154,6 +156,40 @@ class TestScenarioGenerator(unittest.TestCase):
         past_df = scenario_df[scenario_df.Date < start_date][NPI_COLUMNS].reset_index(drop=True)
         historical_df = self.latest_df[(self.latest_df.CountryName == "Italy") &
                                        (self.latest_df.Date < start_date)][NPI_COLUMNS].reset_index(drop=True)
+        pd.testing.assert_frame_equal(historical_df, past_df, "Not the expected past NPIs")
+
+        # Check the "future" period (+1 to include start and end date)
+        nb_days = (end_date - start_date).days + 1
+        for i in range(nb_days):
+            check_day = start_date + np.timedelta64(i, 'D')
+            check_day_npis_df = scenario_df[scenario_df.Date == check_day][NPI_COLUMNS].reset_index(drop=True)
+            check_day_npis = list(check_day_npis_df.values[0])
+            self.assertListEqual(scenario_npis, check_day_npis)
+
+        # Check last day is indeed end_date
+        self.assertEqual(end_date, scenario_df.tail(1).Date.values[0], "Not the expected end date")
+
+    def test_generate_scenario_future_from_last_known_date_min(self):
+        # Simulate Italy lifted all NPIs for a period
+        self._check_future_from_last_known_date("MIN", MIN_NPIS)
+
+    def _check_future_from_last_known_date(self, scenario, scenario_npis):
+        start_date_str = None
+        end_date_str = "2020-12-31"
+        countries = ["Italy"]
+        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=scenario)
+        self.assertIsNotNone(scenario_df)
+        # Misleading name but checks the elements, regardless of order
+        self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
+        self.assertFalse(scenario_df["Date"].duplicated().any(), "Expected 1 row per date only")
+        end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
+
+        # Check the "historical" period
+        historical_df = self.latest_df[self.latest_df.CountryName == "Italy"][NPI_COLUMNS].reset_index(drop=True)
+        last_known_date = self.latest_df[self.latest_df.CountryName == "Italy"].Date.max()
+        # If the start date is not specified, start from the day after the last known day
+        start_date = last_known_date + np.timedelta64(1, 'D')
+        past_df = scenario_df[scenario_df.Date < start_date][NPI_COLUMNS].reset_index(drop=True)
         pd.testing.assert_frame_equal(historical_df, past_df, "Not the expected past NPIs")
 
         # Check the "future" period (+1 to include start and end date)
