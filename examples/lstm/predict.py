@@ -9,9 +9,9 @@ from examples.lstm.xprize_predictor import XPrizePredictor
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# If you'd like to use a model, copy it to "trained_model.h5"
+# If you'd like to use a model, copy it to "trained_model_weights.h5"
 # or change this MODEL_FILE path to point to your model.
-MODEL_FILE = os.path.join(ROOT_DIR, "trained_model.h5")
+MODEL_WEIGHTS_FILE = os.path.join(ROOT_DIR, "trained_model_weights.h5")
 
 DATA_FILE = os.path.join(ROOT_DIR, 'data', "OxCGRT_latest.csv")
 
@@ -36,7 +36,7 @@ def predict(start_date: str,
     """
     # !!! YOUR CODE HERE !!!
     cutoff_date = pd.to_datetime(CUTOFF_DATE, format='%Y-%m-%d')
-    predictor = XPrizePredictor(MODEL_FILE, DATA_FILE, cutoff_date)
+    predictor = XPrizePredictor(MODEL_WEIGHTS_FILE, DATA_FILE, cutoff_date)
     # Generate the predictions
     preds_df = predictor.predict(start_date, end_date, path_to_ips_file)
     # Create the output path
