@@ -118,98 +118,198 @@ class TestScenarioGenerator(unittest.TestCase):
 
     def test_generate_scenario_future_freeze(self):
         # Simulate Italy froze it's NPIS for the second part of the year
+        countries = ["Italy"]
+        start_date_str = "2020-07-01"
+        end_date_str = "2020-12-31"
+        scenario = "Freeze"
+
         before_day = pd.to_datetime("2020-06-30", format='%Y-%m-%d')
         frozen_npis_df = self.latest_df[(self.latest_df.CountryName == "Italy") &
                                         (self.latest_df.Date == before_day)][NPI_COLUMNS].reset_index(drop=True)
-        frozen_npis = list(frozen_npis_df.values[0])
-        self._check_future(start_date_str="2020-07-01",
-                           end_date_str="2020-12-31",
-                           scenario="Freeze",
-                           scenario_npis=frozen_npis)
+        scenario_npis = list(frozen_npis_df.values[0])
+
+        # Generate the scenario
+        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=scenario)
+
+        # Check it
+        self._check_future(start_date_str=start_date_str,
+                           end_date_str=end_date_str,
+                           scenario_df=scenario_df[scenario_df.CountryName == countries[0]],
+                           scenario_npis=scenario_npis,
+                           country=countries[0])
 
     def test_generate_scenario_future_min(self):
         # Simulate Italy lifted all NPIs for a period
-        self._check_future(start_date_str="2020-07-01",
-                           end_date_str="2020-12-31",
-                           scenario="MIN",
-                           scenario_npis=MIN_NPIS)
+        countries = ["Italy"]
+        start_date_str = "2020-07-01"
+        end_date_str = "2020-12-31"
+        scenario = "MIN"
+        scenario_npis = MIN_NPIS
+
+        # Generate the scenario
+        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=scenario)
+
+        # Check it
+        self._check_future(start_date_str=start_date_str,
+                           end_date_str=end_date_str,
+                           scenario_df=scenario_df[scenario_df.CountryName == countries[0]],
+                           scenario_npis=scenario_npis,
+                           country=countries[0])
 
     def test_generate_scenario_future_max(self):
         # Simulate Italy maxed out all NPIs for a period
-        self._check_future(start_date_str="2020-07-01",
-                           end_date_str="2020-12-31",
-                           scenario="MAX",
-                           scenario_npis=MAX_NPIS)
+        countries = ["Italy"]
+        start_date_str = "2020-07-01"
+        end_date_str = "2020-12-31"
+        scenario = "MAX"
+        scenario_npis = MAX_NPIS
+
+        # Generate the scenario
+        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=scenario)
+
+        # Check it
+        self._check_future(start_date_str=start_date_str,
+                           end_date_str=end_date_str,
+                           scenario_df=scenario_df[scenario_df.CountryName == countries[0]],
+                           scenario_npis=scenario_npis,
+                           country=countries[0])
 
     def test_generate_scenario_future_custom(self):
         # Simulate Italy used custom NPIs for a period: each NPI set to 1 for 7 consecutive days
+        countries = ["Italy"]
         start_date_str = "2020-07-01"
         end_date_str = "2020-12-31"
         start_date = pd.to_datetime(start_date_str, format='%Y-%m-%d')
         end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
         nb_days = (end_date - start_date).days + 1  # +1 to include start date
         scenario = [ONE_NPIS] * nb_days
+
+        # Generate the scenario
+        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=scenario)
+        # Check it
         self._check_future(start_date_str=start_date_str,
                            end_date_str=end_date_str,
-                           scenario=scenario,
-                           scenario_npis=scenario[0])
+                           scenario_df=scenario_df[scenario_df.CountryName == countries[0]],
+                           scenario_npis=scenario[0],
+                           country=countries[0])
 
     def test_generate_scenario_future_from_last_known_date_freeze(self):
         # Simulate Italy freezes NPIS for the rest of the year
+        countries = ["Italy"]
+        start_date_str = None
+        end_date_str = "2020-12-31"
+        scenario = "Freeze"
         last_known_date = self.latest_df[self.latest_df.CountryName == "Italy"].Date.max()
         frozen_npis_df = self.latest_df[(self.latest_df.CountryName == "Italy") &
                                         (self.latest_df.Date == last_known_date)][NPI_COLUMNS].reset_index(drop=True)
-        frozen_npis = list(frozen_npis_df.values[0])
-        self._check_future(start_date_str=None,
-                           end_date_str="2020-12-31",
-                           scenario="Freeze",
-                           scenario_npis=frozen_npis)
+        scenario_npis = list(frozen_npis_df.values[0])
+
+        # Generate the scenario
+        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=scenario)
+
+        # Check it
+        self._check_future(start_date_str=start_date_str,
+                           end_date_str=end_date_str,
+                           scenario_df=scenario_df[scenario_df.CountryName == countries[0]],
+                           scenario_npis=scenario_npis,
+                           country=countries[0])
 
     def test_generate_scenario_future_from_last_known_date_min(self):
         # Simulate Italy lifts all NPIs for the rest of the year
-        self._check_future(start_date_str=None,
-                           end_date_str="2020-12-31",
-                           scenario="MIN",
-                           scenario_npis=MIN_NPIS)
+        countries = ["Italy"]
+        start_date_str = None
+        end_date_str = "2020-12-31"
+        scenario = "MIN"
+        scenario_npis = MIN_NPIS
+
+        # Generate the scenario
+        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=scenario)
+
+        # Check it
+        self._check_future(start_date_str=start_date_str,
+                           end_date_str=end_date_str,
+                           scenario_df=scenario_df[scenario_df.CountryName == countries[0]],
+                           scenario_npis=scenario_npis,
+                           country=countries[0])
 
     def test_generate_scenario_future_from_last_known_date_max(self):
         # Simulate Italy maxes out NPIs for the rest of the year
-        self._check_future(start_date_str=None,
-                           end_date_str="2020-12-31",
-                           scenario="MAX",
-                           scenario_npis=MAX_NPIS)
+        countries = ["Italy"]
+        start_date_str = None
+        end_date_str = "2020-12-31"
+        scenario = "MAX"
+        scenario_npis = MAX_NPIS
+
+        # Generate the scenario
+        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=scenario)
+
+        # Check it
+        self._check_future(start_date_str=start_date_str,
+                           end_date_str=end_date_str,
+                           scenario_df=scenario_df[scenario_df.CountryName == countries[0]],
+                           scenario_npis=scenario_npis,
+                           country=countries[0])
 
     def test_generate_scenario_future_from_last_known_date_custom(self):
         # Simulate Italy uses custom NPIs for the rest of the year
+        countries = ["Italy"]
         last_known_date = self.latest_df[self.latest_df.CountryName == "Italy"].Date.max()
         start_date = last_known_date + np.timedelta64(1, 'D')
         end_date_str = "2020-12-31"
         end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
         nb_days = (end_date - start_date).days + 1  # +1 to include start date
         scenario = [ONE_NPIS] * nb_days
+
+        # Generate the scenario
+        scenario_df = generate_scenario(None, end_date_str, self.latest_df, countries, scenario=scenario)
+
+        # Check it
         self._check_future(start_date_str=None,
                            end_date_str=end_date_str,
-                           scenario=scenario,
-                           scenario_npis=scenario[0])
+                           scenario_df=scenario_df,
+                           scenario_npis=scenario[0],
+                           country=countries[0])
 
-    def _check_future(self, start_date_str, end_date_str, scenario, scenario_npis):
-        countries = ["Italy"]
-        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=scenario)
+    def test_generate_scenario_all_countries_future_from_last_known_date_freeze(self):
+        # Simulate ALL countries uses custom NPIs for the rest of the year
+        countries = None
+        end_date_str = "2020-12-31"
+        # Make sure we generate scenarios for enough days
+        nb_days = 180
+        scenario = [ONE_NPIS] * nb_days
+
+        # Generate the scenarios
+        scenario_df = generate_scenario(None, end_date_str, self.latest_df, countries, scenario=scenario)
+
+        # Check them
+        all_countries = self.latest_df.CountryName.unique()
+        for country in all_countries:
+            # TODO: Handle RegionName in scenario generator and tests
+            if country not in ["United States", "United Kingdom"]:
+                self._check_future(start_date_str=None,
+                                   end_date_str=end_date_str,
+                                   scenario_df=scenario_df[scenario_df.CountryName == country],
+                                   scenario_npis=scenario[0],
+                                   country=country)
+
+    def _check_future(self, start_date_str, end_date_str, scenario_df, scenario_npis, country):
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
-        self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
+        self.assertCountEqual([country], scenario_df.CountryName.unique(), "Not the requested countries")
+        if scenario_df["Date"].duplicated().any():
+            print("wait...")
         self.assertFalse(scenario_df["Date"].duplicated().any(), "Expected 1 row per date only")
         end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
 
         # Check the "historical" period
-        last_known_date = self.latest_df[self.latest_df.CountryName == "Italy"].Date.max()
+        last_known_date = self.latest_df[self.latest_df.CountryName == country].Date.max()
         # If the start date is not specified, start from the day after the last known day
         if not start_date_str:
             start_date = last_known_date + np.timedelta64(1, 'D')
         else:
             start_date = pd.to_datetime(start_date_str, format='%Y-%m-%d')
         past_df = scenario_df[scenario_df.Date < start_date][NPI_COLUMNS].reset_index(drop=True)
-        historical_df = self.latest_df[(self.latest_df.CountryName == "Italy") &
+        historical_df = self.latest_df[(self.latest_df.CountryName == country) &
                                        (self.latest_df.Date < start_date)][NPI_COLUMNS].reset_index(drop=True)
         pd.testing.assert_frame_equal(historical_df, past_df, "Not the expected past NPIs")
 
@@ -223,45 +323,6 @@ class TestScenarioGenerator(unittest.TestCase):
 
         # Check last day is indeed end_date
         self.assertEqual(end_date, scenario_df.tail(1).Date.values[0], "Not the expected end date")
-
-    # def test_generate_scenario_historical_1_country(self):
-    #     start_date_str = "2020-08-01"
-    #     end_date_str = "2020-08-4"
-    #     countries = ["Italy"]
-    #     scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries)
-    #     self.assertIsNotNone(scenario_df)
-    #     # Misleading name but checks the elements, regardless of order
-    #     self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
-    #     # Inception is 2020-01-01, end date is 2020-08-4: that's 217 days of IP data
-    #     self.assertEqual(217, len(scenario_df), "Expected the number of days between inception and end date")
-    #
-    # def test_generate_scenario_historical_multi_countries(self):
-    #     # Check multiple countries
-    #     start_date_str = "2020-08-01"
-    #     end_date_str = "2020-08-4"
-    #     countries = ["France", "Italy"]
-    #     scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries)
-    #     self.assertIsNotNone(scenario_df)
-    #     # Misleading name but checks the elements, regardless of order
-    #     self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
-    #     # Inception is 2020-01-01, end date is 2020-08-4: that's 217 days of IP data
-    #     self.assertEqual(217*2, len(scenario_df), "Expected the number of days between inception and end date")
-    #
-    # def test_generate_scenario_historical_no_specific_country(self):
-    #     # All countries: do not pass a countries list
-    #     start_date_str = "2020-08-01"
-    #     end_date_str = "2020-08-4"
-    #     scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df)
-    #     self.assertIsNotNone(scenario_df)
-    #     # Misleading name but checks the elements, regardless of order
-    #     self.assertCountEqual(self.latest_df.CountryName.unique(), scenario_df.CountryName.unique(),
-    #                           "Not the requested countries")
-    #     # Inception is 2020-01-01, end date is 2020-08-4: that's 217 days of IP data
-    #     # Contains the regions too. -1 to remove the NaN region, already counted as a country
-    #     nb_geos = len(self.latest_df.CountryName.unique()) + len(self.latest_df.RegionName.unique()) - 1
-    #     self.assertEqual(217*nb_geos,
-    #                      len(scenario_df),
-    #                      "Expected the number of days between inception and end date")
 
     def test_generate_scenario_mind_the_gap_freeze(self):
         # Scenario = Freeze
@@ -336,3 +397,4 @@ class TestScenarioGenerator(unittest.TestCase):
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
         # Inception is 2020-01-01. 366 days for 2020 + 31 for Jan 2021
         self.assertEqual(397 * 2, len(scenario_df), "Expected the number of days between inception and end date")
+
