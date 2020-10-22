@@ -131,7 +131,7 @@ examples of how to make this call.
 
 
 ## More information/Support
-For more information and support, refer to the competition guidelines or post your questions in the support Slack channel; you should have have gained access to both of them when you created a login in the competition platform.
+For more information and support, refer to the competition guidelines or post your questions in the support Slack channel; you should have gained access to both of these when you created a login in the competition platform.
 
 For a concrete visualization of what the competition is about, see Cognizant's [COVID-19 intervention optimization demo](https://evolution.ml/demos/npidashboard/). Using this dashboard you can select among different prescriptors from the Pareto Front to see the effect on prescriptions for intervention plans in various regions.
 
