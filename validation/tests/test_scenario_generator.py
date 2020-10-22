@@ -284,25 +284,28 @@ class TestScenarioGenerator(unittest.TestCase):
         # Check them
         all_countries = self.latest_df.CountryName.unique()
         for country in all_countries:
-            # TODO: Handle RegionName in scenario generator and tests
-            if country not in ["United States", "United Kingdom"]:
+            all_regions = self.latest_df[self.latest_df.CountryName == country].RegionName.unique()
+            for region in all_regions:
                 self._check_future(start_date_str=None,
                                    end_date_str=end_date_str,
-                                   scenario_df=scenario_df[scenario_df.CountryName == country],
+                                   scenario_df=scenario_df[(scenario_df.CountryName == country) &
+                                                           (scenario_df.RegionName == region)],
                                    scenario_npis=scenario[0],
-                                   country=country)
+                                   country=country,
+                                   region=region)
 
-    def _check_future(self, start_date_str, end_date_str, scenario_df, scenario_npis, country):
+    def _check_future(self, start_date_str, end_date_str, scenario_df, scenario_npis, country, region=""):
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
-        self.assertCountEqual([country], scenario_df.CountryName.unique(), "Not the requested countries")
-        if scenario_df["Date"].duplicated().any():
-            print("wait...")
+        self.assertCountEqual([country], scenario_df.CountryName.unique(), "Not the expected country")
+        self.assertCountEqual([region], scenario_df.RegionName.unique(), "Not the requested region")
+        self.assertFalse(scenario_df["Date"].duplicated().any(), "Did not expect duplicated days")
         self.assertFalse(scenario_df["Date"].duplicated().any(), "Expected 1 row per date only")
         end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
 
         # Check the "historical" period
-        last_known_date = self.latest_df[self.latest_df.CountryName == country].Date.max()
+        last_known_date = self.latest_df[(self.latest_df.CountryName == country) &
+                                         (self.latest_df.RegionName == region)].Date.max()
         # If the start date is not specified, start from the day after the last known day
         if not start_date_str:
             start_date = last_known_date + np.timedelta64(1, 'D')
@@ -310,6 +313,7 @@ class TestScenarioGenerator(unittest.TestCase):
             start_date = pd.to_datetime(start_date_str, format='%Y-%m-%d')
         past_df = scenario_df[scenario_df.Date < start_date][NPI_COLUMNS].reset_index(drop=True)
         historical_df = self.latest_df[(self.latest_df.CountryName == country) &
+                                       (self.latest_df.RegionName == region) &
                                        (self.latest_df.Date < start_date)][NPI_COLUMNS].reset_index(drop=True)
         pd.testing.assert_frame_equal(historical_df, past_df, "Not the expected past NPIs")
 
@@ -317,6 +321,8 @@ class TestScenarioGenerator(unittest.TestCase):
         nb_days = (end_date - start_date).days + 1
         for i in range(nb_days):
             check_day = start_date + np.timedelta64(i, 'D')
+            self.assertFalse(scenario_df[scenario_df.Date == check_day].empty,
+                             f"Expected npis for country {country}, region {region}, day {check_day}")
             check_day_npis_df = scenario_df[scenario_df.Date == check_day][NPI_COLUMNS].reset_index(drop=True)
             check_day_npis = list(check_day_npis_df.values[0])
             self.assertListEqual(scenario_npis, check_day_npis)

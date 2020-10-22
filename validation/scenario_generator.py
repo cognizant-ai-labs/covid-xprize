@@ -58,49 +58,49 @@ def generate_scenario(start_date_str, end_date_str, raw_df, countries=None, scen
     if countries:
         ips_df = ips_df[ips_df.CountryName.isin(countries)]
 
-    # # Remove any date that is after the requested end_date
-    # ips_df = ips_df[ips_df.Date <= end_date]
-
     # Fill any missing "supposedly known" NPIs by assuming they are the same as previous day, or 0 if none is available
     for npi_col in NPI_COLUMNS:
         ips_df.update(ips_df.groupby(['CountryName', 'RegionName'])[npi_col].ffill().fillna(0))
 
     new_rows = []
-    for g in ips_df.CountryName.unique():
-        ips_gdf = ips_df[ips_df.CountryName == g]
-        country_name = ips_gdf.iloc[0].CountryName
-        region_name = ips_gdf.iloc[0].RegionName
-        last_known_date = ips_gdf.Date.max()
-        # If the start date is not specified, start from the day after the last known date
-        if not start_date_str:
-            start_date = last_known_date + np.timedelta64(1, 'D')
-        # If the last known date is BEFORE the start date, we have to start applying the scenario at last_known date
-        current_date = min(last_known_date + np.timedelta64(1, 'D'), start_date)
-        scenario_to_apply = 0
-        while current_date <= end_date:
-            new_row = [country_name, region_name, current_date]
-            if current_date < start_date:
-                # We're before the scenario start date. Carry over last known NPIs
-                npis = list(ips_gdf[ips_gdf.Date == last_known_date][NPI_COLUMNS].values[0])
-            else:
-                # We are between start_date and end_date: apply the scenario
-                if scenario == "MIN":
-                    npis = MIN_NPIS
-                elif scenario == "MAX":
-                    npis = MAX_NPIS
-                elif scenario == "Freeze":
-                    if start_date <= last_known_date:
-                        day_before_start = max(INCEPTION_DATE, start_date - np.timedelta64(1, 'D'))
-                        npis = list(ips_gdf[ips_gdf.Date == day_before_start][NPI_COLUMNS].values[0])
-                    else:
-                        npis = list(ips_gdf[ips_gdf.Date == last_known_date][NPI_COLUMNS].values[0])
+    for country in ips_df.CountryName.unique():
+        all_regions = ips_df[ips_df.CountryName == country].RegionName.unique()
+        for region in all_regions:
+            ips_gdf = ips_df[(ips_df.CountryName == country) &
+                             (ips_df.RegionName == region)]
+            country_name = ips_gdf.iloc[0].CountryName
+            region_name = ips_gdf.iloc[0].RegionName
+            last_known_date = ips_gdf.Date.max()
+            # If the start date is not specified, start from the day after the last known date
+            if not start_date_str:
+                start_date = last_known_date + np.timedelta64(1, 'D')
+            # If the last known date is BEFORE the start date, start applying the scenario at last_known date
+            current_date = min(last_known_date + np.timedelta64(1, 'D'), start_date)
+            scenario_to_apply = 0
+            while current_date <= end_date:
+                new_row = [country_name, region_name, current_date]
+                if current_date < start_date:
+                    # We're before the scenario start date. Carry over last known NPIs
+                    npis = list(ips_gdf[ips_gdf.Date == last_known_date][NPI_COLUMNS].values[0])
                 else:
-                    npis = scenario[scenario_to_apply]
-                    scenario_to_apply = scenario_to_apply + 1
-            new_row = new_row + npis
-            new_rows.append(new_row)
-            # Move to next day
-            current_date = current_date + np.timedelta64(1, 'D')
+                    # We are between start_date and end_date: apply the scenario
+                    if scenario == "MIN":
+                        npis = MIN_NPIS
+                    elif scenario == "MAX":
+                        npis = MAX_NPIS
+                    elif scenario == "Freeze":
+                        if start_date <= last_known_date:
+                            day_before_start = max(INCEPTION_DATE, start_date - np.timedelta64(1, 'D'))
+                            npis = list(ips_gdf[ips_gdf.Date == day_before_start][NPI_COLUMNS].values[0])
+                        else:
+                            npis = list(ips_gdf[ips_gdf.Date == last_known_date][NPI_COLUMNS].values[0])
+                    else:
+                        npis = scenario[scenario_to_apply]
+                        scenario_to_apply = scenario_to_apply + 1
+                new_row = new_row + npis
+                new_rows.append(new_row)
+                # Move to next day
+                current_date = current_date + np.timedelta64(1, 'D')
     if new_rows:
         future_rows_df = pd.DataFrame(new_rows, columns=ips_df.columns)
         # Delete any old row that might have been replaced by a scenario one
