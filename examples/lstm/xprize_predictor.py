@@ -65,9 +65,15 @@ class XPrizePredictor(object):
     A class that computes a fitness for Prescriptor candidates.
     """
 
-    def __init__(self, path_to_model, data_url, cutoff_date_str):
-        if path_to_model:
-            self.predictor = load_model(path_to_model, custom_objects={"Positive": Positive})
+    def __init__(self, path_to_model_weights, data_url, cutoff_date_str):
+        if path_to_model_weights:
+            nb_context = 1 # Only time series of new cases rate is used as context
+            nb_action = len(NPI_COLUMNS)
+            self.predictor, _ = self._construct_model(nb_context=nb_context,
+                                                      nb_action=nb_action,
+                                                      lstm_size=LSTM_SIZE,
+                                                      nb_lookback_days=NB_LOOKBACK_DAYS)
+            self.predictor.load_weights(path_to_model_weights)
         cutoff_date = pd.to_datetime(cutoff_date_str, format='%Y-%m-%d')
         self.df = self._prepare_dataframe(data_url, cutoff_date)
         self.countries = self.df.CountryName.unique()
@@ -404,8 +410,8 @@ class XPrizePredictor(object):
         for t in range(NUM_TRIALS):
             print('Trial', t)
             X_context, X_action, y = self._permute_data(X_context, X_action, y, seed=t)
-            model, training_model = self._construct_model(X_context=X_context,
-                                                          X_action=X_action,
+            model, training_model = self._construct_model(nb_context=X_context.shape[-1],
+                                                          nb_action=X_action.shape[-1],
                                                           lstm_size=LSTM_SIZE,
                                                           nb_lookback_days=NB_LOOKBACK_DAYS)
             history = self._train_model(training_model, X_context, X_action, y, epochs=1000, verbose=0)
@@ -475,9 +481,7 @@ class XPrizePredictor(object):
         return X_context, X_action, y
 
     # Construct model
-    def _construct_model(self, X_context, X_action, lstm_size=32, nb_lookback_days=21):
-        nb_context = X_context.shape[-1]
-        nb_action = X_action.shape[-1]
+    def _construct_model(self, nb_context, nb_action, lstm_size=32, nb_lookback_days=21):
 
         # Create context encoder
         context_input = Input(shape=(nb_lookback_days, nb_context),

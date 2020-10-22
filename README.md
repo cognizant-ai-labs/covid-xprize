@@ -12,8 +12,8 @@ as part of your submission
 
 ## Pre-requisites
 To run the examples, you will need:
-* A computer or cloud image running a recent version of OS X or Ubuntu (Microsoft Windows™, while it may be possible 
-for you to use, the X-Prize team and Cognizant will be unable to support you.) 
+* A computer or cloud image running a recent version of OS X or Ubuntu (Using Microsoft Windows™ may be possible but
+the X-Prize team and Cognizant will be unable to support you.) 
 * Your machine must have sufficient resources in terms of memory, CPU, and disk space to train machine learning models 
 and run Python programs.
 * An installed version of Python, version ≥ 3.6
@@ -119,9 +119,27 @@ Example prescriptors can be found under `examples/prescriptors/`.
 
 For more details on this API, consult the Competition Guidelines or the support Slack channel.
 
+
+#### Sample trained predictor
+
+The repo also provides a sample trained predictor to train prescriptors against.
+To use it, copy `examples/prescriptors/resources/sample-trained-lstm-predictor-weights.h5` to `examples/lstm/trained_model_weights.h5`,
+and call `examples/lstm/predict.py` to make predictions.
+See `get_predictions` in `examples/prescriptors/neat/utils.py` and
+`generate_cases_and_stringency_for_prescriptions` in `prescriptor_robojudge.ipynb` for
+examples of how to make this call.
+
+
 ## More information/Support
 For more information and support, refer to the competition guidelines which you should have received when registering
 for the contest, or post your questions in the support Slack channel, to which you should have also gained access 
 upon registering.
+
+An example dashboard using Cognizant-trained predictors and prescriptors can be found 
+[here](https://evolution.ml/demos/npidashboard/). Using this dashboard you can select among different prescriptors
+from the Pareto Front to see the effect on prescriptions for intervention plans in various regions.
+
+For more background information please see also the research paper 
+[From Prediction to Prescription: Evolutionary Optimization of Non-Pharmaceutical Interventions in the COVID-19 Pandemic](https://arxiv.org/abs/2005.13766). 
 
 Copyright 2020 (c) Cognizant Digital Business, Evolutionary AI. All rights reserved. Issued under the Apache 2.0 License.
