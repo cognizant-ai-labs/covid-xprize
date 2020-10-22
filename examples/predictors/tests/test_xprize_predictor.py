@@ -6,7 +6,7 @@ import urllib.request
 
 import pandas as pd
 
-from ..xprize_predictor import XPrizePredictor
+from examples.predictors.lstm.xprize_predictor import XPrizePredictor
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 FIXTURES_PATH = os.path.join(ROOT_DIR, 'fixtures')

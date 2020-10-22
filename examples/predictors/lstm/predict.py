@@ -5,7 +5,7 @@ import os
 
 import pandas as pd
 
-from examples.lstm.xprize_predictor import XPrizePredictor
+from examples.predictors.lstm.xprize_predictor import XPrizePredictor
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
