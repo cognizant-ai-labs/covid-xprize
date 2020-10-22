@@ -131,13 +131,9 @@ examples of how to make this call.
 
 
 ## More information/Support
-For more information and support, refer to the competition guidelines which you should have received when registering
-for the contest, or post your questions in the support Slack channel, to which you should have also gained access 
-upon registering.
+For more information and support, refer to the competition guidelines or post your questions in the support Slack channel, both of which you should have gained access when you create a login in the competition platform.
 
-An example dashboard using Cognizant-trained predictors and prescriptors can be found 
-[here](https://evolution.ml/demos/npidashboard/). Using this dashboard you can select among different prescriptors
-from the Pareto Front to see the effect on prescriptions for intervention plans in various regions.
+For a concrete visualization of what the competition is about, see Cognizant's [COVID-19 intervention optimization demo](https://evolution.ml/demos/npidashboard/). Using this dashboard you can select among different prescriptors from the Pareto Front to see the effect on prescriptions for intervention plans in various regions.
 
 For more background information please see also the research paper 
 [From Prediction to Prescription: Evolutionary Optimization of Non-Pharmaceutical Interventions in the COVID-19 Pandemic](https://arxiv.org/abs/2005.13766). 
