@@ -26,7 +26,8 @@ NPI_COLS = ['C1_School closing',
             'C8_International travel controls',
             'H1_Public information campaigns',
             'H2_Testing policy',
-            'H3_Contact tracing']
+            'H3_Contact tracing',
+            'H6_Facial Coverings']
 NB_LOOKBACK_DAYS = 30
 # For testing, restrict training data to that before a hypothetical predictor submission date
 HYPOTHETICAL_SUBMISSION_DATE = np.datetime64("2020-07-31")
@@ -73,6 +74,7 @@ def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str, ve
     hist_ips_df = pd.read_csv(path_to_ips_file,
                               parse_dates=['Date'],
                               encoding="ISO-8859-1",
+                              dtype={"RegionName": str},
                               error_bad_lines=True)
 
     # Add GeoID column that combines CountryName and RegionName for easier manipulation of data",
@@ -90,6 +92,8 @@ def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str, ve
     hist_cases_df = pd.read_csv(DATA_FILE,
                                 parse_dates=['Date'],
                                 encoding="ISO-8859-1",
+                                dtype={"RegionName": str,
+                                       "RegionCode": str},
                                 error_bad_lines=False)
     # Add RegionID column that combines CountryName and RegionName for easier manipulation of data
     hist_cases_df['GeoID'] = hist_cases_df['CountryName'] + '__' + hist_cases_df['RegionName'].astype(str)
