@@ -14,5 +14,6 @@ examples/linear/predictions/
 examples/lstm/data/OxCGRT_latest.csv
 examples/lstm/models/
 examples/lstm/predictions/
+examples/lstm/tests/fixtures/OxCGRT_latest.csv
 
 validation/tests/fixtures/OxCGRT_latest.csv
