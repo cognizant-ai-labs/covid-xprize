@@ -25,7 +25,7 @@ class TestMultiplicativeEvaluator(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Download and cache the raw data
-        latest = False
+        latest = True
         if not os.path.exists(DATA_FILE) or latest:
             urllib.request.urlretrieve(DATA_URL, DATA_FILE)
 
