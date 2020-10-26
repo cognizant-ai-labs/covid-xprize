@@ -34,7 +34,7 @@ IP_MAX_VALUES = {
     'H3_Contact tracing': 2
 }
 
-PREDICT_MODULE = 'examples/predictor/lstm/predict.py'
+PREDICT_MODULE = 'examples/predictors/lstm/predict.py'
 HIST_DATA_FILE_PATH = 'data/OxCGRT_latest.csv'
 TMP_PRED_FILE_NAME = 'tmp_predictions_for_prescriptions/preds.csv'
 TMP_PRESCRIPTION_FILE = 'tmp_prescription.csv'
