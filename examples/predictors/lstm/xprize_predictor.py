@@ -2,6 +2,9 @@
 
 import os
 
+# Suppress noisy Tensorflow debug logging
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 # noinspection PyPep8Naming
 import keras.backend as K
 import numpy as np
