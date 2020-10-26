@@ -26,6 +26,7 @@ class TestValidation(unittest.TestCase):
         self.assertTrue(not errors)
 
     def test_nan_submission(self):
+        self.fail('Expected')
         errors = validate_submission("2020-08-01", "2020-08-04", NAN_SUBMISSION)
         self.assertIsNotNone(errors)
         self.assertTrue("NaN" in errors[0])
