@@ -2,6 +2,9 @@
 
 import os
 
+# Suppress noisy Tensorflow debug logging
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 # noinspection PyPep8Naming
 import keras.backend as K
 import numpy as np
@@ -212,7 +215,8 @@ class XPrizePredictor(object):
         latest_df = pd.read_csv(data_url,
                                 parse_dates=['Date'],
                                 encoding="ISO-8859-1",
-                                error_bad_lines=False)
+                                error_bad_lines=False,
+                                low_memory=False)
         # Handle regions.
         # Replace CountryName by CountryName / RegionName
         # np.where usage: if A then B else C

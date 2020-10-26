@@ -52,7 +52,7 @@ def generate_scenario(start_date_str, end_date_str, raw_df, countries=None, scen
         if start_date < INCEPTION_DATE:
             raise ValueError(f"start_date {start_date} must be on or after inception date {INCEPTION_DATE}")
 
-    ips_df = raw_df[ID_COLS + NPI_COLUMNS]
+    ips_df = raw_df[ID_COLS + NPI_COLUMNS].copy()
 
     # Filter on countries
     if countries:
