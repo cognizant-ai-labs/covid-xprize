@@ -2,36 +2,18 @@
 
 import os
 import unittest
-import urllib.request
 
 import numpy as np
 import pandas as pd
 
-from validation.scenario_generator import generate_scenario, NPI_COLUMNS, MIN_NPIS, MAX_NPIS
+from validation.scenario_generator import generate_scenario, get_raw_data, NPI_COLUMNS, MIN_NPIS, MAX_NPIS
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 FIXTURES_PATH = os.path.join(ROOT_DIR, 'fixtures')
 DATA_FILE = os.path.join(FIXTURES_PATH, "OxCGRT_latest.csv")
-DATA_URL = "https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv"
 
 # Sets each NPI to level 1
 ONE_NPIS = [1] * len(NPI_COLUMNS)
-
-
-def _get_dataset():
-    # Download and cache the raw data file if it doesn't exist
-    if not os.path.exists(DATA_FILE):
-        urllib.request.urlretrieve(DATA_URL, DATA_FILE)
-    latest_df = pd.read_csv(DATA_FILE,
-                            parse_dates=['Date'],
-                            encoding="ISO-8859-1",
-                            dtype={"RegionName": str,
-                                   "RegionCode": str},
-                            error_bad_lines=False)
-    latest_df["RegionName"] = latest_df["RegionName"].fillna("")
-    # Fill any missing NPIs by assuming they are the same as previous day, or 0 if none is available
-    latest_df.update(latest_df.groupby(['CountryName', 'RegionName'])[NPI_COLUMNS].ffill().fillna(0))
-    return latest_df
 
 
 class TestScenarioGenerator(unittest.TestCase):
@@ -57,7 +39,7 @@ class TestScenarioGenerator(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Load the csv data only once
-        cls.latest_df = _get_dataset()
+        cls.latest_df = get_raw_data(DATA_FILE, latest=True)
 
     def test_generate_scenario_counterfactual_freeze(self):
         # Simulate Italy did not enter full lockdown on Mar 20, but instead waited 1 week before changing its NPIs
