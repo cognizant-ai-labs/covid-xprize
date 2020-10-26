@@ -103,8 +103,8 @@ def prescribe(start_date_str: str,
 
                 # Prepare input data. Here we use log to place cases
                 # on a reasonable scale; many other approaches are possible.
-                X_cases = np.log(past_cases[geo][-NB_LOOKBACK_DAYS:] + 1)
-                X_ips = past_ips[geo][-NB_LOOKBACK_DAYS:]
+                X_cases = np.log(eval_past_cases[geo][-NB_LOOKBACK_DAYS:] + 1)
+                X_ips = eval_past_ips[geo][-NB_LOOKBACK_DAYS:]
                 X = np.concatenate([X_cases.flatten(),
                                     X_ips.flatten()])
 
