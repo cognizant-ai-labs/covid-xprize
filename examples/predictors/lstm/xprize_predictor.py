@@ -215,8 +215,7 @@ class XPrizePredictor(object):
         latest_df = pd.read_csv(data_url,
                                 parse_dates=['Date'],
                                 encoding="ISO-8859-1",
-                                error_bad_lines=False,
-                                low_memory=False)
+                                error_bad_lines=False)
         # Handle regions.
         # Replace CountryName by CountryName / RegionName
         # np.where usage: if A then B else C
