@@ -18,7 +18,8 @@ IP_COLS = ['C1_School closing',
             'C8_International travel controls',
             'H1_Public information campaigns',
             'H2_Testing policy',
-            'H3_Contact tracing']
+            'H3_Contact tracing',
+            'H6_Facial Coverings']
 
 IP_MAX_VALUES = {
     'C1_School closing': 3,
@@ -31,7 +32,8 @@ IP_MAX_VALUES = {
     'C8_International travel controls': 4,
     'H1_Public information campaigns': 2,
     'H2_Testing policy': 3,
-    'H3_Contact tracing': 2
+    'H3_Contact tracing': 2,
+    'H6_Facial Coverings': 4
 }
 
 PREDICT_MODULE = 'examples/predictors/lstm/predict.py'

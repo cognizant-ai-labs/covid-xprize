@@ -7,7 +7,7 @@ import pandas as pd
 
 NUM_PRESCRIPTIONS = 10
 
-NPI_MAX_VALUES = {
+IP_MAX_VALUES = {
     'C1_School closing': 3,
     'C2_Workplace closing': 3,
     'C3_Cancel public events': 2,
@@ -18,7 +18,8 @@ NPI_MAX_VALUES = {
     'C8_International travel controls': 4,
     'H1_Public information campaigns': 2,
     'H2_Testing policy': 3,
-    'H3_Contact tracing': 2
+    'H3_Contact tracing': 2,
+    'H6_Facial Coverings': 4
 }
 
 
@@ -58,7 +59,7 @@ def prescribe(start_date_str: str,
 
     # Fill df with random values
     num_rows = len(prescription_df)
-    for npi_col, max_value in sorted(NPI_MAX_VALUES.items()):
+    for npi_col, max_value in sorted(IP_MAX_VALUES.items()):
         prescription_df[npi_col] = np.random.randint(0, max_value,
                                                      size=num_rows)
 
