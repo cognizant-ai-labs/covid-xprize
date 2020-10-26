@@ -1,6 +1,7 @@
 # Copyright 2020 (c) Cognizant Digital Business, Evolutionary AI. All rights reserved. Issued under the Apache 2.0 License.
 
 import os
+import urllib.request
 
 # noinspection PyPep8Naming
 import keras.backend as K
@@ -13,6 +14,9 @@ from keras.layers import Input
 from keras.layers import LSTM
 from keras.layers import Lambda
 from keras.models import Model
+
+# See https://github.com/OxCGRT/covid-policy-tracker
+DATA_URL = "https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv"
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(ROOT_DIR, 'data')
@@ -212,6 +216,8 @@ class XPrizePredictor(object):
         return df
 
     def _load_original_data(self, data_url, cutoff_date=None):
+        if not os.path.exists(data_url):
+            urllib.request.urlretrieve(DATA_URL, data_url)
         latest_df = pd.read_csv(data_url,
                                 parse_dates=['Date'],
                                 encoding="ISO-8859-1",
