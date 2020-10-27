@@ -70,3 +70,13 @@ Currently, the `-ip` argument is required but ignored, so can be set to anything
 In general, it will be more useful to assemble a set of prescriptors for submission
 in a more discerning way, and store and load them in a different way as well.
 
+
+### Evaluating prescription performance
+
+Once prescriptions are generated, different prescriptions for the same sets of geos and days
+can be compared using the notebook `<workspace>/covid-xprize/prescriptor_robojudge.ipynb`:
+```
+cd <workspace>/covid-xprize/
+jupyter notebook prescriptor_robojudge.ipynb
+```
+
