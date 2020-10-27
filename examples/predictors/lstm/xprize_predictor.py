@@ -16,7 +16,6 @@ from keras.layers import Input
 from keras.layers import LSTM
 from keras.layers import Lambda
 from keras.models import Model
-from keras.models import load_model
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(ROOT_DIR, 'data')
@@ -34,7 +33,8 @@ NPI_COLUMNS = ['C1_School closing',
                'C8_International travel controls',
                'H1_Public information campaigns',
                'H2_Testing policy',
-               'H3_Contact tracing']
+               'H3_Contact tracing',
+               'H6_Facial Coverings']
 
 CONTEXT_COLUMNS = ['CountryName',
                    'RegionName',
@@ -70,7 +70,7 @@ class XPrizePredictor(object):
 
     def __init__(self, path_to_model_weights, data_url, cutoff_date_str):
         if path_to_model_weights:
-            nb_context = 1 # Only time series of new cases rate is used as context
+            nb_context = 1  # Only time series of new cases rate is used as context
             nb_action = len(NPI_COLUMNS)
             self.predictor, _ = self._construct_model(nb_context=nb_context,
                                                       nb_action=nb_action,
@@ -87,10 +87,13 @@ class XPrizePredictor(object):
                 end_date_str: str,
                 npis_csv: str) -> pd.DataFrame:
         start_date = pd.to_datetime(start_date_str, format='%Y-%m-%d')
-        # end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
+        end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
 
         # Load the npis into a DataFrame, handling regions
         npis_df = self._load_original_data(npis_csv)
+        # TODO: Current logic forecasts for each day in this npis_df. Shrink it to the requested period until
+        # we fix the logic forecast logic for the period
+        npis_df = npis_df[(npis_df.Date >= start_date) & (npis_df.Date <= end_date)]
 
         # Prepare the output
         forecast = {"CountryName": [],
@@ -215,6 +218,8 @@ class XPrizePredictor(object):
         latest_df = pd.read_csv(data_url,
                                 parse_dates=['Date'],
                                 encoding="ISO-8859-1",
+                                dtype={"RegionName": str,
+                                       "RegionCode": str},
                                 error_bad_lines=False)
         # Handle regions.
         # Replace CountryName by CountryName / RegionName

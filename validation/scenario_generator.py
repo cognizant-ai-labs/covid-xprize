@@ -1,8 +1,12 @@
 # Copyright 2020 (c) Cognizant Digital Business, Evolutionary AI. All rights reserved. Issued under the Apache 2.0 License.
+import os
+import urllib.request
 
 import numpy as np
 import pandas as pd
 
+# See https://github.com/OxCGRT/covid-policy-tracker
+DATA_URL = "https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv"
 ID_COLS = ['CountryName',
            'RegionName',
            'Date']
@@ -16,11 +20,38 @@ NPI_COLUMNS = ['C1_School closing',
                'C8_International travel controls',
                'H1_Public information campaigns',
                'H2_Testing policy',
-               'H3_Contact tracing']
+               'H3_Contact tracing',
+               'H6_Facial Coverings']
 # From https://github.com/OxCGRT/covid-policy-tracker/blob/master/documentation/codebook.md
 MIN_NPIS = [0] * len(NPI_COLUMNS)
-MAX_NPIS = [3, 3, 2, 4, 2, 3, 2, 4, 2, 3, 2]  # Sum is 30
+MAX_NPIS = [3, 3, 2, 4, 2, 3, 2, 4, 2, 3, 2, 4]  # Sum is 34
 INCEPTION_DATE = pd.to_datetime("2020-01-01", format='%Y-%m-%d')
+
+
+def get_raw_data(cache_file, latest=True):
+    """
+    Returns the raw data from which to generate scenarios.
+    Args:
+        cache_file: the file to use to cache the data
+        latest: True to force a download of the latest data and update cache_file,
+                False to get the data from cache_file
+
+    Returns: a Pandas DataFrame
+
+    """
+    # Download and cache the raw data file if it doesn't exist
+    if not os.path.exists(cache_file) or latest:
+        urllib.request.urlretrieve(DATA_URL, cache_file)
+    latest_df = pd.read_csv(cache_file,
+                            parse_dates=['Date'],
+                            encoding="ISO-8859-1",
+                            dtype={"RegionName": str,
+                                   "RegionCode": str},
+                            error_bad_lines=False)
+    latest_df["RegionName"] = latest_df["RegionName"].fillna("")
+    # Fill any missing NPIs by assuming they are the same as previous day, or 0 if none is available
+    latest_df.update(latest_df.groupby(['CountryName', 'RegionName'])[NPI_COLUMNS].ffill().fillna(0))
+    return latest_df
 
 
 def generate_scenario(start_date_str, end_date_str, raw_df, countries=None, scenario="Freeze"):
@@ -32,6 +63,7 @@ def generate_scenario(start_date_str, end_date_str, raw_df, countries=None, scen
         raw_df: the original data frame containing the raw data
         countries: a list of CountryName, or None for all countries
         scenario:
+            - "Historical" to keep historical NPIs.
             - "Freeze" to apply the last available NPIs to every day between start_date and end_date, included
             - "MIN" to set all NPIs to 0 (i.e. plan is to take no measures)
             - "MAX" to set all NPIs to maximum values (i.e. plan is to do everything possible)
@@ -61,6 +93,9 @@ def generate_scenario(start_date_str, end_date_str, raw_df, countries=None, scen
     # Fill any missing "supposedly known" NPIs by assuming they are the same as previous day, or 0 if none is available
     for npi_col in NPI_COLUMNS:
         ips_df.update(ips_df.groupby(['CountryName', 'RegionName'])[npi_col].ffill().fillna(0))
+
+    if scenario == "Historical":
+        return ips_df
 
     new_rows = []
     for country in ips_df.CountryName.unique():

@@ -11,7 +11,7 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # If you'd like to use a model, copy it to "trained_model_weights.h5"
 # or change this MODEL_FILE path to point to your model.
-MODEL_WEIGHTS_FILE = os.path.join(ROOT_DIR, "trained_model_weights.h5")
+MODEL_WEIGHTS_FILE = os.path.join(ROOT_DIR, "models", "trained_model_weights.h5")
 
 DATA_FILE = os.path.join(ROOT_DIR, 'data', "OxCGRT_latest.csv")
 
@@ -30,7 +30,7 @@ def predict(start_date: str,
     :param end_date: day on which to stop making predictions, as a string, format YYYY-MM-DDD
     :param path_to_ips_file: path to a csv file containing the intervention plans between inception date (Jan 1 2020)
      and end_date, for the countries and regions for which a prediction is needed
-    :param output_file_path: path to file to which to save the the predictions
+    :param output_file_path: path to file to save the predictions to
     :return: Nothing. Saves the generated predictions to an output_file_path CSV file
     with columns "CountryName,RegionName,Date,PredictedDailyNewCases"
     """
