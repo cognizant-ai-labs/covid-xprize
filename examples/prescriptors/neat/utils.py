@@ -55,6 +55,8 @@ def prepare_historical_df():
 
     # Download data if it we haven't done that yet.
     if not os.path.exists(HIST_DATA_FILE_PATH):
+        if not os.path.exists(DATA_PATH):
+            os.makedirs(DATA_PATH)
         urllib.request.urlretrieve(DATA_URL, HIST_DATA_FILE_PATH)
 
     # Load raw historical data
