@@ -78,8 +78,8 @@ def generate_scenario(start_date_str, end_date_str, raw_df, countries=None, scen
     end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
 
     if start_date:
-        if end_date <= start_date:
-            raise ValueError(f"end_date {end_date} must be after start_date {start_date}")
+        if end_date < start_date:
+            raise ValueError(f"end_date {end_date} cannot be before start_date {start_date}")
 
         if start_date < INCEPTION_DATE:
             raise ValueError(f"start_date {start_date} must be on or after inception date {INCEPTION_DATE}")
