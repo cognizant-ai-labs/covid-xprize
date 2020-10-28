@@ -20,14 +20,12 @@ START_DATE = "2020-08-01"
 END_DATE = "2020-08-04"
 
 
-class TestMultiplicativeEvaluator(unittest.TestCase):
+class TestXPrizePredictor(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
         # Download and cache the raw data
-        latest = True
-        if not os.path.exists(DATA_FILE) or latest:
-            urllib.request.urlretrieve(DATA_URL, DATA_FILE)
+        urllib.request.urlretrieve(DATA_URL, DATA_FILE)
 
     def test_predict(self):
         predictor = XPrizePredictor(PREDICTOR_WEIGHTS, DATA_FILE, CUTOFF_DATE)

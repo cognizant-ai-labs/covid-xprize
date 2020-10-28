@@ -1,6 +1,13 @@
 # Copyright 2020 (c) Cognizant Digital Business, Evolutionary AI. All rights reserved. Issued under the Apache 2.0 License.
 version: '1.0'
 steps:
+  start_clean:
+    title: Clean up CodeFresh volume
+    # Images come from hierarchy at: https://github.com/docker-library/python
+    image: python:3.6-slim
+    commands:
+      - rm -rf '${{CF_REPO_NAME}}'
+
   clone_main_repo:
     type: git-clone
     title: "Clone repo"
@@ -23,3 +30,9 @@ steps:
     working_directory: ${{CF_REPO_NAME}}
     commands:
       - nosetests -v
+
+  end_clean:
+    title: Clean up CodeFresh volume
+    image: python:3.6-slim
+    commands:
+      - rm -rf '${{CF_REPO_NAME}}'
