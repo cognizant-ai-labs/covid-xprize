@@ -63,9 +63,13 @@ For example, say we would like to generate predictions from August 1st to 5th,
 and store the results in `test_prescriptions.csv`:
 ```
 cd <workspace>/covid-xprize/examples/prescriptors/neat/
-python prescribe.py --start_date 2020-08-01 --end_date 2020-08-05 -ip none.txt -o test_prescriptions.csv
+python prescribe.py --start_date 2020-08-01 --end_date 2020-08-05 -ip ../../../validation/data/2020-09-30_historical_ip.csv -o test_prescriptions.csv
 ```
 Currently, the `-ip` argument is required but ignored, so can be set to anything.
+This is because the code currently loads historical IPs from the Oxford data directly.
+However, after submission to the real competition, there will not be internet access,
+so there may be a gap between the Oxford data and the start_date, in which case the IPs
+passed as `-ip` should be used.
 
 In general, it will be more useful to assemble a set of prescriptors for submission
 in a more discerning way, and store and load them in a different way as well.
