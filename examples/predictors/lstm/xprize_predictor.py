@@ -1,6 +1,7 @@
 # Copyright 2020 (c) Cognizant Digital Business, Evolutionary AI. All rights reserved. Issued under the Apache 2.0 License.
 
 import os
+import urllib.request
 
 # Suppress noisy Tensorflow debug logging
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -17,8 +18,12 @@ from keras.layers import LSTM
 from keras.layers import Lambda
 from keras.models import Model
 
+# See https://github.com/OxCGRT/covid-policy-tracker
+DATA_URL = "https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv"
+
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(ROOT_DIR, 'data')
+DATA_FILE_PATH = os.path.join(DATA_PATH, 'OxCGRT_latest.csv')
 ADDITIONAL_CONTEXT_FILE = os.path.join(DATA_PATH, "Additional_Context_Data_Global.csv")
 ADDITIONAL_US_STATES_CONTEXT = os.path.join(DATA_PATH, "US_states_populations.csv")
 ADDITIONAL_UK_CONTEXT = os.path.join(DATA_PATH, "uk_populations.csv")
@@ -70,6 +75,8 @@ class XPrizePredictor(object):
 
     def __init__(self, path_to_model_weights, data_url, cutoff_date_str):
         if path_to_model_weights:
+
+            # Load model weights
             nb_context = 1  # Only time series of new cases rate is used as context
             nb_action = len(NPI_COLUMNS)
             self.predictor, _ = self._construct_model(nb_context=nb_context,
@@ -77,6 +84,11 @@ class XPrizePredictor(object):
                                                       lstm_size=LSTM_SIZE,
                                                       nb_lookback_days=NB_LOOKBACK_DAYS)
             self.predictor.load_weights(path_to_model_weights)
+
+            # Make sure data is available to make predictions
+            if not os.path.exists(DATA_FILE_PATH):
+                urllib.request.urlretrieve(DATA_URL, DATA_FILE_PATH)
+
         cutoff_date = pd.to_datetime(cutoff_date_str, format='%Y-%m-%d')
         self.df = self._prepare_dataframe(data_url, cutoff_date)
         self.countries = self.df.CountryName.unique()

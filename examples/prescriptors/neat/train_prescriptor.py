@@ -11,16 +11,14 @@ import neat
 import numpy as np
 import pandas as pd
 
-from lstm.xprize_predictor import XPrizePredictor
+from examples.predictors.lstm.xprize_predictor import XPrizePredictor
 
 from utils import CASES_COL
 from utils import PRED_CASES_COL
-from utils import HIST_DATA_FILE_PATH
 from utils import IP_COLS
 from utils import IP_MAX_VALUES
-from utils import TMP_PRESCRIPTION_FILE
 from utils import get_predictions
-from utils import prepare_df
+from utils import prepare_historical_df
 
 
 # Cutoff date for training data
@@ -44,20 +42,13 @@ NB_LOOKBACK_DAYS = 14
 NB_EVAL_COUNTRIES = 10
 
 
-# Load historical data
-print("Reading historical data...")
-df = pd.read_csv(HIST_DATA_FILE_PATH,
-              parse_dates=['Date'],
-              encoding="ISO-8859-1",
-              error_bad_lines=False)
+# Load historical data with basic preprocessing
+print("Loading historical data...")
+df = prepare_historical_df()
 
 # Restrict it to dates before the training cutoff
 cutoff_date = pd.to_datetime(CUTOFF_DATE, format='%Y-%m-%d')
 df = df[df['Date'] <= cutoff_date]
-
-# Preprocess df, e.g., add NewCases and GeoID columns
-print("Processing historical data...")
-df = prepare_df(df)
 
 # As a heuristic, use the top NB_EVAL_COUNTRIES w.r.t. ConfirmedCases
 # so far as the geos for evaluation.
@@ -107,8 +98,8 @@ def eval_genomes(genomes, config):
 
                 # Prepare input data. Here we use log to place cases
                 # on a reasonable scale; many other approaches are possible.
-                X_cases = np.log(past_cases[geo][-NB_LOOKBACK_DAYS:] + 1)
-                X_ips = past_ips[geo][-NB_LOOKBACK_DAYS:]
+                X_cases = np.log(eval_past_cases[geo][-NB_LOOKBACK_DAYS:] + 1)
+                X_ips = eval_past_ips[geo][-NB_LOOKBACK_DAYS:]
                 X = np.concatenate([X_cases.flatten(),
                                     X_ips.flatten()])
 
@@ -128,12 +119,11 @@ def eval_genomes(genomes, config):
                 for ip_col, prescribed_ip in zip(IP_COLS, prescribed_ips):
                     df_dict[ip_col].append(prescribed_ip)
 
-            # Save prescriptions so far to file
+            # Create dataframe from prescriptions.
             pres_df = pd.DataFrame(df_dict)
-            pres_df.to_csv(TMP_PRESCRIPTION_FILE)
 
             # Make prediction given prescription for all countries
-            pred_df = get_predictions(EVAL_START_DATE, date_str, TMP_PRESCRIPTION_FILE)
+            pred_df = get_predictions(EVAL_START_DATE, date_str, pres_df)
 
             # Update past data with new day of prescriptions and predictions
             pres_df['GeoID'] = pres_df['CountryName'] + '__' + pres_df['RegionName'].astype(str)
@@ -143,9 +133,12 @@ def eval_genomes(genomes, config):
             for geo in eval_geos:
                 geo_pres = new_pres_df[new_pres_df['GeoID'] == geo]
                 geo_pred = new_pred_df[new_pred_df['GeoID'] == geo]
-                for ip_col in IP_COLS:
-                    eval_past_ips[geo] = np.append(eval_past_ips[geo],
-                                                   geo_pres[ip_col].values[0])
+
+                # Append array of prescriptions
+                pres_arr = np.array([geo_pres[ip_col].values[0] for ip_col in IP_COLS]).reshape(1,-1)
+                eval_past_ips[geo] = np.concatenate([eval_past_ips[geo], pres_arr])
+
+                # Append predicted cases
                 eval_past_cases[geo] = np.append(eval_past_cases[geo],
                                                  geo_pred[PRED_CASES_COL].values[0])
 

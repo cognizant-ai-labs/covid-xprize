@@ -2,7 +2,20 @@
 
 import os
 import subprocess
+import urllib.request
 import pandas as pd
+from validation.scenario_generator import generate_scenario
+from validation.scenario_generator import get_raw_data
+
+DATA_URL = "https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv"
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_PATH = os.path.join(ROOT_DIR, 'data')
+HIST_DATA_FILE_PATH = os.path.join(DATA_PATH, 'OxCGRT_latest.csv')
+
+PREDICT_MODULE = 'examples/predictors/lstm/predict.py'
+TMP_PRED_FILE_NAME = 'tmp_predictions_for_prescriptions/preds.csv'
+TMP_PRESCRIPTION_FILE = 'tmp_prescription.csv'
+
 
 CASES_COL = ['NewCases']
 
@@ -18,7 +31,8 @@ IP_COLS = ['C1_School closing',
             'C8_International travel controls',
             'H1_Public information campaigns',
             'H2_Testing policy',
-            'H3_Contact tracing']
+            'H3_Contact tracing',
+            'H6_Facial Coverings']
 
 IP_MAX_VALUES = {
     'C1_School closing': 3,
@@ -31,17 +45,25 @@ IP_MAX_VALUES = {
     'C8_International travel controls': 4,
     'H1_Public information campaigns': 2,
     'H2_Testing policy': 3,
-    'H3_Contact tracing': 2
+    'H3_Contact tracing': 2,
+    'H6_Facial Coverings': 4
 }
 
-PREDICT_MODULE = 'examples/lstm/predict.py'
-HIST_DATA_FILE_PATH = 'OxCGRT_latest.csv'
-TMP_PRED_FILE_NAME = 'tmp_predictions_for_prescriptions/preds.csv'
-TMP_PRESCRIPTION_FILE = 'tmp_prescription.csv'
 
+# Function that performs basic loading and preprocessing of historical df
+def prepare_historical_df():
 
-# Function that performs basic preprocessing of historical df
-def prepare_df(df):
+    # Download data if it we haven't done that yet.
+    if not os.path.exists(HIST_DATA_FILE_PATH):
+        if not os.path.exists(DATA_PATH):
+            os.makedirs(DATA_PATH)
+        urllib.request.urlretrieve(DATA_URL, HIST_DATA_FILE_PATH)
+
+    # Load raw historical data
+    df = pd.read_csv(HIST_DATA_FILE_PATH,
+                  parse_dates=['Date'],
+                  encoding="ISO-8859-1",
+                  error_bad_lines=False)
 
     # Add GeoID column for easier manipulation
     df['GeoID'] = df['CountryName'] + '__' + df['RegionName'].astype(str)
@@ -62,10 +84,21 @@ def prepare_df(df):
 
 # Function that wraps predictor in order to query
 # predictor when prescribing.
-def get_predictions(start_date, end_date, ip_file):
+def get_predictions(start_date_str, end_date_str, pres_df, countries=None):
+
+    # Concatenate prescriptions with historical data
+    raw_df = get_raw_data(HIST_DATA_FILE_PATH)
+    hist_df = generate_scenario(start_date_str, end_date_str, raw_df,
+                                countries=countries, scenario='Historical')
+    start_date = pd.to_datetime(start_date_str, format='%Y-%m-%d')
+    hist_df = hist_df[hist_df.Date < start_date]
+    ips_df = pd.concat([hist_df, pres_df])
+
+    # Write ips_df to file
+    ips_df.to_csv(TMP_PRESCRIPTION_FILE)
 
     # Use full path of the local file passed as ip_file
-    ip_file_full_path = os.path.abspath(ip_file)
+    ip_file_full_path = os.path.abspath(TMP_PRESCRIPTION_FILE)
 
     # Go to covid-xprize root dir to access predict script
     wd = os.getcwd()
@@ -75,8 +108,8 @@ def get_predictions(start_date, end_date, ip_file):
     output_str = subprocess.check_output(
         [
             'python', PREDICT_MODULE,
-            '--start_date', start_date,
-            '--end_date', end_date,
+            '--start_date', start_date_str,
+            '--end_date', end_date_str,
             '--interventions_plan', ip_file_full_path,
             '--output_file', TMP_PRED_FILE_NAME
         ],
