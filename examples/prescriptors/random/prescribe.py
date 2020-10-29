@@ -26,6 +26,7 @@ IP_MAX_VALUES = {
 def prescribe(start_date_str: str,
               end_date_str: str,
               path_to_hist_file: str,
+              path_to_cost_file: str,
               output_file_path) -> None:
 
     # Create skeleton df with one row for each prescription
@@ -78,17 +79,24 @@ if __name__ == '__main__':
                         dest="start_date",
                         type=str,
                         required=True,
-                        help="Start date from which to prescribe, included, as YYYY-MM-DD. For example 2020-08-01")
+                        help="Start date from which to prescribe, included, as YYYY-MM-DD."
+                             "For example 2020-08-01")
     parser.add_argument("-e", "--end_date",
                         dest="end_date",
                         type=str,
                         required=True,
-                        help="End date for the last prescription, included, as YYYY-MM-DD. For example 2020-08-31")
+                        help="End date for the last prescription, included, as YYYY-MM-DD."
+                             "For example 2020-08-31")
     parser.add_argument("-ip", "--interventions_past",
                         dest="prev_file",
                         type=str,
                         required=True,
                         help="The path to a .csv file of previous intervention plans")
+    parser.add_argument("-c", "--intervention_costs",
+                        dest="cost_file",
+                        type=str,
+                        required=True,
+                        help="Path to a .csv file containing the cost of each IP for each geo")
     parser.add_argument("-o", "--output_file",
                         dest="output_file",
                         type=str,
@@ -96,5 +104,5 @@ if __name__ == '__main__':
                         help="The path to an intervention plan .csv file")
     args = parser.parse_args()
     print(f"Generating prescriptions from {args.start_date} to {args.end_date}...")
-    prescribe(args.start_date, args.end_date, args.prev_file, args.output_file)
+    prescribe(args.start_date, args.end_date, args.prev_file, args.cost_file, args.output_file)
     print("Done!")
