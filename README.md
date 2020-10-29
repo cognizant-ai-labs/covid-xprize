@@ -123,7 +123,7 @@ For more details on this API, consult the Competition Guidelines or the support 
 #### Sample trained predictor
 
 The repo also provides a sample trained predictor to train prescriptors against.
-To use it, copy `examples/prescriptors/resources/sample-trained-lstm-predictor-weights.h5` to `examples/lstm/trained_model_weights.h5`,
+To use it, copy `examples/predictors/lstm/tests/fixtures/trained_model_weights_for_tests.h5` to `examples/lstm/models/trained_model_weights.h5`,
 and call `examples/lstm/predict.py` to make predictions.
 See `get_predictions` in `examples/prescriptors/neat/utils.py` and
 `generate_cases_and_stringency_for_prescriptions` in `prescriptor_robojudge.ipynb` for
