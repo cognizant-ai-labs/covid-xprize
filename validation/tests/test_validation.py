@@ -11,6 +11,7 @@ IP_FILE_ALL_COUNTRIES = os.path.join(FIXTURES_PATH, "ip_file_all_countries.csv")
 IP_FILE_FEW_COUNTRIES = os.path.join(FIXTURES_PATH, "ip_file_few_countries.csv")
 WRONG_COLUMNS = os.path.join(FIXTURES_PATH, "wrong_columns.csv")
 VALID_SUBMISSION = os.path.join(FIXTURES_PATH, "valid_submission.csv")
+VALID_WITH_ADD_COLS_SUBMISSION = os.path.join(FIXTURES_PATH, "valid_with_add_cols_submission.csv")
 NAN_SUBMISSION = os.path.join(FIXTURES_PATH, "nan_submission.csv")
 NEGATIVE_SUBMISSION = os.path.join(FIXTURES_PATH, "negative_submission.csv")
 MISSING_COUNTRY_SUBMISSION = os.path.join(FIXTURES_PATH, "missing_country_submission.csv")
@@ -26,6 +27,10 @@ class TestValidation(unittest.TestCase):
 
     def test_valid_submission(self):
         errors = validate_submission("2020-08-01", "2020-08-04", IP_FILE_ALL_COUNTRIES, VALID_SUBMISSION)
+        self.assertTrue(not errors, f"Unexpected errors: {errors}")
+
+    def test_valid_with_additional_columns_submission(self):
+        errors = validate_submission("2020-08-01", "2020-08-04", IP_FILE_FEW_COUNTRIES, VALID_WITH_ADD_COLS_SUBMISSION)
         self.assertTrue(not errors, f"Unexpected errors: {errors}")
 
     def test_nan_submission(self):

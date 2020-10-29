@@ -8,10 +8,10 @@ import pandas as pd
 
 PREDICTED_DAILY_NEW_CASES = "PredictedDailyNewCases"
 
-COLUMNS = ["CountryName",
+COLUMNS = {"CountryName",
            "RegionName",
            "Date",
-           PREDICTED_DAILY_NEW_CASES]
+           PREDICTED_DAILY_NEW_CASES}
 
 
 def validate_submission(start_date: str,
@@ -53,9 +53,11 @@ def validate_submission(start_date: str,
 
 
 def _check_columns(expected_columns, pred_df):
-    if not expected_columns == list(pred_df.columns):
-        return [f"Not the expected list of columns. Expected columns are: {expected_columns}"]
-    return []
+    errors = []
+    missing_columns = expected_columns - set(pred_df.columns)
+    if missing_columns:
+        errors.append(f"Missing columns: {missing_columns}")
+    return errors
 
 
 def _check_prediction_values(df):
