@@ -50,6 +50,10 @@ IP_MAX_VALUES = {
 }
 
 
+def add_geo_id(df):
+    df['GeoID'] = df['CountryName'] + '__' + df['RegionName'].astype(str)
+    return df
+
 # Function that performs basic loading and preprocessing of historical df
 def prepare_historical_df():
 
@@ -64,9 +68,10 @@ def prepare_historical_df():
                   parse_dates=['Date'],
                   encoding="ISO-8859-1",
                   error_bad_lines=False)
+    df['RegionName'] = df['RegionName'].fillna("")
 
     # Add GeoID column for easier manipulation
-    df['GeoID'] = df['CountryName'] + '__' + df['RegionName'].astype(str)
+    df = add_geo_id(df)
 
     # Add new cases column
     df['NewCases'] = df.groupby('GeoID').ConfirmedCases.diff().fillna(0)

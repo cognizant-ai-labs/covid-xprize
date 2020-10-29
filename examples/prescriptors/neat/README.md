@@ -63,7 +63,7 @@ For example, say we would like to generate predictions from August 1st to 5th,
 and store the results in `test_prescriptions.csv`:
 ```
 cd <workspace>/covid-xprize/examples/prescriptors/neat/
-python prescribe.py --start_date 2020-08-01 --end_date 2020-08-05 -ip ../../../validation/data/2020-09-30_historical_ip.csv -o test_prescriptions.csv
+python prescribe.py --start_date 2020-08-01 --end_date 2020-08-05 -ip ../../../validation/data/2020-09-30_historical_ip.csv -c ../../../validation/data/uniform_random_costs.csv -o test_prescriptions.csv
 ```
 Currently, the `-ip` argument is required but ignored, so can be set to anything.
 This is because the code currently loads historical IPs from the Oxford data directly.
