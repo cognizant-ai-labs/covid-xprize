@@ -7,6 +7,8 @@
 import os
 import argparse
 
+import numpy as np
+
 from scenario_generator import get_raw_data
 from scenario_generator import NPI_COLUMNS as IP_COLUMNS
 
