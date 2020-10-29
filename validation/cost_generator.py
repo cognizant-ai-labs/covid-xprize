@@ -9,8 +9,8 @@ import argparse
 
 import numpy as np
 
-from scenario_generator import get_raw_data
-from scenario_generator import NPI_COLUMNS as IP_COLUMNS
+from validation.scenario_generator import get_raw_data
+from validation.scenario_generator import NPI_COLUMNS as IP_COLUMNS
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 FIXTURES_PATH = os.path.join(ROOT_DIR, 'data')
