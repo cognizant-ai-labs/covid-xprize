@@ -6,37 +6,50 @@ import unittest
 from validation.validation import validate_submission, PREDICTED_DAILY_NEW_CASES
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-FIXTURES_PATH = os.path.join(ROOT_DIR, 'fixtures')
+FIXTURES_PATH = os.path.join(ROOT_DIR, "fixtures")
+IP_FILE_ALL_COUNTRIES = os.path.join(FIXTURES_PATH, "ip_file_all_countries.csv")
+IP_FILE_FEW_COUNTRIES = os.path.join(FIXTURES_PATH, "ip_file_few_countries.csv")
 WRONG_COLUMNS = os.path.join(FIXTURES_PATH, "wrong_columns.csv")
 VALID_SUBMISSION = os.path.join(FIXTURES_PATH, "valid_submission.csv")
+VALID_WITH_ADD_COLS_SUBMISSION = os.path.join(FIXTURES_PATH, "valid_with_add_cols_submission.csv")
 NAN_SUBMISSION = os.path.join(FIXTURES_PATH, "nan_submission.csv")
 NEGATIVE_SUBMISSION = os.path.join(FIXTURES_PATH, "negative_submission.csv")
+MISSING_COUNTRY_SUBMISSION = os.path.join(FIXTURES_PATH, "missing_country_submission.csv")
 BAD_DATES_SUBMISSION = os.path.join(FIXTURES_PATH, "bad_dates_submission.csv")
 
 
 class TestValidation(unittest.TestCase):
 
     def test_wrong_columns(self):
-        errors = validate_submission("2020-08-01", "2020-08-01", WRONG_COLUMNS)
+        errors = validate_submission("2020-08-01", "2020-08-01", IP_FILE_ALL_COUNTRIES, WRONG_COLUMNS)
         self.assertIsNotNone(errors)
         self.assertTrue(PREDICTED_DAILY_NEW_CASES in errors[0])
 
     def test_valid_submission(self):
-        errors = validate_submission("2020-08-01", "2020-08-04", VALID_SUBMISSION)
-        self.assertTrue(not errors)
+        errors = validate_submission("2020-08-01", "2020-08-04", IP_FILE_ALL_COUNTRIES, VALID_SUBMISSION)
+        self.assertTrue(not errors, f"Unexpected errors: {errors}")
+
+    def test_valid_with_additional_columns_submission(self):
+        errors = validate_submission("2020-08-01", "2020-08-04", IP_FILE_FEW_COUNTRIES, VALID_WITH_ADD_COLS_SUBMISSION)
+        self.assertTrue(not errors, f"Unexpected errors: {errors}")
 
     def test_nan_submission(self):
-        errors = validate_submission("2020-08-01", "2020-08-04", NAN_SUBMISSION)
+        errors = validate_submission("2020-08-01", "2020-08-04", IP_FILE_FEW_COUNTRIES, NAN_SUBMISSION)
         self.assertIsNotNone(errors)
-        self.assertTrue("NaN" in errors[0])
+        self.assertTrue("NaN" in errors[0], f"Expected 'NaN' in errors, but got {errors}")
 
     def test_negative_submission(self):
-        errors = validate_submission("2020-08-01", "2020-08-04", NEGATIVE_SUBMISSION)
+        errors = validate_submission("2020-08-01", "2020-08-04", IP_FILE_FEW_COUNTRIES, NEGATIVE_SUBMISSION)
         self.assertIsNotNone(errors)
-        self.assertTrue("negative" in errors[0])
+        self.assertTrue("negative" in errors[0], f"Expected 'negative' in errors, but got {errors}")
+
+    def test_missing_country_submission(self):
+        errors = validate_submission("2020-08-01", "2020-08-04", IP_FILE_FEW_COUNTRIES, MISSING_COUNTRY_SUBMISSION)
+        self.assertIsNotNone(errors)
+        self.assertTrue("Aruba" in errors[0], f"Expected 'Aruba' in errors, because it's missing, but got {errors}")
 
     def test_dates(self):
-        errors = validate_submission("2020-08-01", "2020-08-04", BAD_DATES_SUBMISSION)
+        errors = validate_submission("2020-08-01", "2020-08-04", IP_FILE_FEW_COUNTRIES, BAD_DATES_SUBMISSION)
         self.assertIsNotNone(errors)
         self.assertEqual(10, len(errors), "Not the expected number of errors")
         expected_errors = ['Afghanistan: Expected prediction for date 2020-08-01 but got 2020-07-01',
@@ -50,3 +63,4 @@ class TestValidation(unittest.TestCase):
                            'Aruba: Expected prediction for date 2020-08-03 but got 2020-08-04',
                            'Aruba: Expected prediction for date 2020-08-04 but got None']
         self.assertEqual(expected_errors, errors)
+

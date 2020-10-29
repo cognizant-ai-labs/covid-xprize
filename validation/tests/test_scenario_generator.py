@@ -1,6 +1,7 @@
 # Copyright 2020 (c) Cognizant Digital Business, Evolutionary AI. All rights reserved. Issued under the Apache 2.0 License.
 
 import os
+from datetime import datetime, timedelta
 import unittest
 
 import numpy as np
@@ -14,6 +15,9 @@ DATA_FILE = os.path.join(FIXTURES_PATH, "OxCGRT_latest.csv")
 
 # Sets each NPI to level 1
 ONE_NPIS = [1] * len(NPI_COLUMNS)
+
+DATE_FORMAT = "%Y-%m-%d"
+INCEPTION_DATE = "2020-01-01"
 
 
 class TestScenarioGenerator(unittest.TestCase):
@@ -43,7 +47,7 @@ class TestScenarioGenerator(unittest.TestCase):
 
     def test_generate_scenario_counterfactual_freeze(self):
         # Simulate Italy did not enter full lockdown on Mar 20, but instead waited 1 week before changing its NPIs
-        before_day = pd.to_datetime("2020-03-19", format='%Y-%m-%d')
+        before_day = pd.to_datetime("2020-03-19", format=DATE_FORMAT)
         frozen_npis_df = self.latest_df[(self.latest_df.CountryName == "Italy") &
                                         (self.latest_df.Date == before_day)][NPI_COLUMNS].reset_index(drop=True)
         frozen_npis = list(frozen_npis_df.values[0])
@@ -72,8 +76,8 @@ class TestScenarioGenerator(unittest.TestCase):
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
         self.assertFalse(scenario_df["Date"].duplicated().any(), "Expected 1 row per date only")
-        start_date = pd.to_datetime(start_date_str, format='%Y-%m-%d')
-        end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
+        start_date = pd.to_datetime(start_date_str, format=DATE_FORMAT)
+        end_date = pd.to_datetime(end_date_str, format=DATE_FORMAT)
         before_day = start_date - np.timedelta64(1, 'D')
         before_day_npis = scenario_df[scenario_df.Date == before_day][NPI_COLUMNS].reset_index(drop=True)
         before_day_npis_truth = self.latest_df[(self.latest_df.CountryName == "Italy") &
@@ -105,7 +109,7 @@ class TestScenarioGenerator(unittest.TestCase):
         end_date_str = "2020-12-31"
         scenario = "Freeze"
 
-        before_day = pd.to_datetime("2020-06-30", format='%Y-%m-%d')
+        before_day = pd.to_datetime("2020-06-30", format=DATE_FORMAT)
         frozen_npis_df = self.latest_df[(self.latest_df.CountryName == "Italy") &
                                         (self.latest_df.Date == before_day)][NPI_COLUMNS].reset_index(drop=True)
         scenario_npis = list(frozen_npis_df.values[0])
@@ -161,8 +165,8 @@ class TestScenarioGenerator(unittest.TestCase):
         countries = ["Italy"]
         start_date_str = "2020-07-01"
         end_date_str = "2020-12-31"
-        start_date = pd.to_datetime(start_date_str, format='%Y-%m-%d')
-        end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
+        start_date = pd.to_datetime(start_date_str, format=DATE_FORMAT)
+        end_date = pd.to_datetime(end_date_str, format=DATE_FORMAT)
         nb_days = (end_date - start_date).days + 1  # +1 to include start date
         scenario = [ONE_NPIS] * nb_days
 
@@ -238,7 +242,7 @@ class TestScenarioGenerator(unittest.TestCase):
         last_known_date = self.latest_df[self.latest_df.CountryName == "Italy"].Date.max()
         start_date = last_known_date + np.timedelta64(1, 'D')
         end_date_str = "2020-12-31"
-        end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
+        end_date = pd.to_datetime(end_date_str, format=DATE_FORMAT)
         nb_days = (end_date - start_date).days + 1  # +1 to include start date
         scenario = [ONE_NPIS] * nb_days
 
@@ -283,7 +287,7 @@ class TestScenarioGenerator(unittest.TestCase):
         self.assertCountEqual([region], scenario_df.RegionName.unique(), "Not the requested region")
         self.assertFalse(scenario_df["Date"].duplicated().any(), "Did not expect duplicated days")
         self.assertFalse(scenario_df["Date"].duplicated().any(), "Expected 1 row per date only")
-        end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
+        end_date = pd.to_datetime(end_date_str, format=DATE_FORMAT)
 
         # Check the "historical" period
         last_known_date = self.latest_df[(self.latest_df.CountryName == country) &
@@ -292,7 +296,7 @@ class TestScenarioGenerator(unittest.TestCase):
         if not start_date_str:
             start_date = last_known_date + np.timedelta64(1, 'D')
         else:
-            start_date = pd.to_datetime(start_date_str, format='%Y-%m-%d')
+            start_date = pd.to_datetime(start_date_str, format=DATE_FORMAT)
         past_df = scenario_df[scenario_df.Date < start_date][NPI_COLUMNS].reset_index(drop=True)
         historical_df = self.latest_df[(self.latest_df.CountryName == country) &
                                        (self.latest_df.RegionName == region) &
@@ -384,5 +388,21 @@ class TestScenarioGenerator(unittest.TestCase):
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
         # Inception is 2020-01-01. 366 days for 2020 + 31 for Jan 2021
-        self.assertEqual(397 * 2, len(scenario_df), "Expected the number of days between inception and end date")
+        self.assertEqual(397 * 2, len(scenario_df), "Not the expected number of days between inception and end date")
+
+    def test_generate_scenario_mind_the_gap_freeze_all_countries(self):
+        # Check all countries, with frozen npis for 180 days, 1 week from today
+        start_date = datetime.now() + timedelta(days=7)
+        start_date_str = start_date.strftime(DATE_FORMAT)
+        end_date = start_date + timedelta(days=180)
+        end_date_str = end_date.strftime(DATE_FORMAT)
+        inception_date = datetime.strptime(INCEPTION_DATE, DATE_FORMAT)
+        countries = None
+        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario="Freeze")
+        self.assertIsNotNone(scenario_df)
+        nb_unique_geo = len(self.latest_df.groupby(['CountryName', 'RegionName']))
+        nb_days_since_inception = (end_date - inception_date).days + 1
+        self.assertEqual(nb_days_since_inception * nb_unique_geo, len(scenario_df),
+                         f"Not the expected number of rows in the generated scenario:"
+                         f" {nb_unique_geo} geos times {nb_days_since_inception} days")
 
