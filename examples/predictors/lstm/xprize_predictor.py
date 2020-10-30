@@ -105,9 +105,6 @@ class XPrizePredictor(object):
 
         # Load the npis into a DataFrame, handling regions
         npis_df = self._load_original_data(path_to_ips_file)
-        # TODO: Current logic forecasts for each day in this npis_df. Shrink it to the requested period until
-        # we fix the forecast logic for the period
-        npis_df = npis_df[(npis_df.Date >= start_date) & (npis_df.Date <= end_date)]
 
         # Prepare the output
         forecast = {"CountryName": [],
@@ -122,8 +119,14 @@ class XPrizePredictor(object):
             if len(cdf) == 0:
                 # we don't have historical data for this geo: return zeroes
                 pred_new_cases = [0] * nb_days
+                geo_start_date = start_date
             else:
-                pred_new_cases = self._get_new_cases_preds(cdf, g, npis_df)
+                last_known_date = cdf.Date.max()
+                # Start predicting from start_date, unless there's a gap since last known date
+                geo_start_date = min(last_known_date + np.timedelta64(1, 'D'), start_date)
+                npis_gdf = npis_df[(npis_df.Date >= geo_start_date) & (npis_df.Date <= end_date)]
+
+                pred_new_cases = self._get_new_cases_preds(cdf, g, npis_gdf)
 
             # Append forecast data to results to return
             country = npis_df[npis_df.GeoID == g].iloc[0].CountryName
@@ -131,12 +134,13 @@ class XPrizePredictor(object):
             for i, pred in enumerate(pred_new_cases):
                 forecast["CountryName"].append(country)
                 forecast["RegionName"].append(region)
-                current_date = start_date + pd.offsets.Day(i)
+                current_date = geo_start_date + pd.offsets.Day(i)
                 forecast["Date"].append(current_date)
                 forecast["PredictedDailyNewCases"].append(pred)
 
         forecast_df = pd.DataFrame.from_dict(forecast)
-        return forecast_df
+        # Return only the requested predictions
+        return forecast_df[(forecast_df.Date >= start_date) & (forecast_df.Date <= end_date)]
 
     def _get_new_cases_preds(self, c_df, g, npis_df):
         cdf = c_df[c_df.ConfirmedCases.notnull()]
