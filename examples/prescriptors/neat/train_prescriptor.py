@@ -140,7 +140,9 @@ def eval_genomes(genomes, config):
                 for ip_col, prescribed_ip in zip(IP_COLS, prescribed_ips):
                     df_dict[ip_col].append(prescribed_ip)
 
-                # Update stringency
+                # Update stringency. This calculation could include division by
+                # the number of IPs and/or number of geos, but that would have
+                # no effect on the ordering of candidate solutions.
                 stringency += np.sum(geo_costs[geo] * prescribed_ips)
 
             # Create dataframe from prescriptions.
