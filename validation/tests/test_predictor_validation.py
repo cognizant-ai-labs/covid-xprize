@@ -3,7 +3,7 @@
 import os
 import unittest
 
-from validation.validation import validate_submission, PREDICTED_DAILY_NEW_CASES
+from validation.predictor_validation import validate_submission, PREDICTED_DAILY_NEW_CASES
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 FIXTURES_PATH = os.path.join(ROOT_DIR, "fixtures")

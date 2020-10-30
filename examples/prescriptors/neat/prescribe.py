@@ -14,6 +14,7 @@ from keras.models import load_model
 from utils import CASES_COL
 from utils import PRED_CASES_COL
 from utils import IP_COLS
+from utils import add_geo_id
 from utils import get_predictions
 from utils import prepare_historical_df
 from utils import IP_MAX_VALUES
@@ -33,6 +34,7 @@ NB_LOOKBACK_DAYS = 14
 def prescribe(start_date_str: str,
               end_date_str: str,
               path_to_prior_ips_file: str,
+              path_to_cost_file: str,
               output_file_path) -> None:
 
     start_date = pd.to_datetime(start_date_str, format='%Y-%m-%d')
@@ -67,6 +69,16 @@ def prescribe(start_date_str: str,
                          neat.DefaultSpeciesSet, neat.DefaultStagnation,
                          'config-prescriptor')
 
+    # Load IP costs to condition prescriptions
+    cost_df = pd.read_csv(path_to_cost_file)
+    cost_df['RegionName'] = cost_df['RegionName'].fillna("")
+    cost_df = add_geo_id(cost_df)
+    geo_costs = {}
+    for geo in cost_df['GeoID'].unique():
+        costs = cost_df[cost_df['GeoID'] == geo]
+        cost_arr = np.array(costs[IP_COLS])[0]
+        geo_costs[geo] = cost_arr
+
     # Generate prescriptions
     prescription_dfs = []
     for prescription_idx, prescriptor in enumerate(prescriptors):
@@ -96,8 +108,10 @@ def prescribe(start_date_str: str,
                 # on a reasonable scale; many other approaches are possible.
                 X_cases = np.log(eval_past_cases[geo][-NB_LOOKBACK_DAYS:] + 1)
                 X_ips = eval_past_ips[geo][-NB_LOOKBACK_DAYS:]
+                X_costs = geo_costs[geo]
                 X = np.concatenate([X_cases.flatten(),
-                                    X_ips.flatten()])
+                                    X_ips.flatten(),
+                                    X_costs])
 
                 # Get prescription
                 prescribed_ips = net.activate(X)
@@ -123,6 +137,7 @@ def prescribe(start_date_str: str,
 
             # Update past data with new day of prescriptions and predictions
             pres_df['GeoID'] = pres_df['CountryName'] + '__' + pres_df['RegionName'].astype(str)
+            pred_df['RegionName'] = pred_df['RegionName'].fillna("")
             pred_df['GeoID'] = pred_df['CountryName'] + '__' + pred_df['RegionName'].astype(str)
             new_pres_df = pres_df[pres_df['Date'] == date_str]
             new_pred_df = pred_df[pred_df['Date'] == date_str]
@@ -165,17 +180,24 @@ if __name__ == '__main__':
                         dest="start_date",
                         type=str,
                         required=True,
-                        help="Start date from which to prescribe, included, as YYYY-MM-DD. For example 2020-08-01")
+                        help="Start date from which to prescribe, included, as YYYY-MM-DD."
+                             "For example 2020-08-01")
     parser.add_argument("-e", "--end_date",
                         dest="end_date",
                         type=str,
                         required=True,
-                        help="End date for the last prescription, included, as YYYY-MM-DD. For example 2020-08-31")
+                        help="End date for the last prescription, included, as YYYY-MM-DD."
+                             "For example 2020-08-31")
     parser.add_argument("-ip", "--interventions_past",
                         dest="prior_ips_file",
                         type=str,
                         required=True,
                         help="The path to a .csv file of previous intervention plans")
+    parser.add_argument("-c", "--intervention_costs",
+                        dest="cost_file",
+                        type=str,
+                        required=True,
+                        help="Path to a .csv file containing the cost of each IP for each geo")
     parser.add_argument("-o", "--output_file",
                         dest="output_file",
                         type=str,
@@ -183,5 +205,5 @@ if __name__ == '__main__':
                         help="The path to an intervention plan .csv file")
     args = parser.parse_args()
     print(f"Generating prescriptions from {args.start_date} to {args.end_date}...")
-    prescribe(args.start_date, args.end_date, args.prior_ips_file, args.output_file)
+    prescribe(args.start_date, args.end_date, args.prior_ips_file, args.cost_file, args.output_file)
     print("Done!")
