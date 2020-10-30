@@ -92,8 +92,8 @@ class XPrizePredictor(object):
 
         cutoff_date = pd.to_datetime(cutoff_date_str, format='%Y-%m-%d')
         self.df = self._prepare_dataframe(data_url, cutoff_date)
-        self.geos = self.df.GeoID.unique()
-        self.country_samples = self._create_country_samples(self.df, self.geos)
+        geos = self.df.GeoID.unique()
+        self.country_samples = self._create_country_samples(self.df, geos)
 
     def predict(self,
                 start_date_str: str,
@@ -101,11 +101,12 @@ class XPrizePredictor(object):
                 path_to_ips_file: str) -> pd.DataFrame:
         start_date = pd.to_datetime(start_date_str, format='%Y-%m-%d')
         end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
+        nb_days = (end_date - start_date).days + 1
 
         # Load the npis into a DataFrame, handling regions
         npis_df = self._load_original_data(path_to_ips_file)
         # TODO: Current logic forecasts for each day in this npis_df. Shrink it to the requested period until
-        # we fix the logic forecast logic for the period
+        # we fix the forecast logic for the period
         npis_df = npis_df[(npis_df.Date >= start_date) & (npis_df.Date <= end_date)]
 
         # Prepare the output
@@ -114,58 +115,55 @@ class XPrizePredictor(object):
                     "Date": [],
                     "PredictedDailyNewCases": []}
 
-        # For each country, each region
-        for g in self.geos:
+        # For each requested geo
+        geos = npis_df.GeoID.unique()
+        for g in geos:
             cdf = self.df[self.df.GeoID == g]
-            cdf = cdf[cdf.ConfirmedCases.notnull()]
-            initial_context_input = self.country_samples[g]['X_test_context'][-1]
-            initial_action_input = self.country_samples[g]['X_test_action'][-1]
-
-            # Predictions with passed npis
-            cnpis_df = npis_df[npis_df.GeoID == g]
-            npis_sequence = np.array(cnpis_df[NPI_COLUMNS])
-
-            # Get the predictions with the passed NPIs
-            preds = self._roll_out_predictions(self.predictor,
-                                               initial_context_input,
-                                               initial_action_input,
-                                               npis_sequence)
-
-            # Gather info to convert to total cases
-            prev_confirmed_cases = np.array(cdf.ConfirmedCases)
-            prev_new_cases = np.array(cdf.NewCases)
-            initial_total_cases = prev_confirmed_cases[-1]
-            pop_size = np.array(cdf.Population)[-1]  # Population size doesn't change over time
-
-            # Compute predictor's forecast
-            pred_total_cases, pred_new_cases = self._convert_ratios_to_total_cases(
-                preds,
-                WINDOW_SIZE,
-                prev_new_cases,
-                initial_total_cases,
-                pop_size)
-            # OPTIONAL: Smooth out pred_new_cases
-            # # If window size is 7, take the previous 6 new cases so we start doing a 7 day moving average for
-            # # the first pred new cases
-            # temp_pred_new_cases = list(prev_new_cases[-(WINDOW_SIZE-1):]) + pred_new_cases
-            # smooth_pred_new_cases = self._smooth_case_list(temp_pred_new_cases, WINDOW_SIZE)
-            # # Get rid of the first window_size - 1 NaN values where
-            # # there was not enough data to compute a moving average
-            # pred_new_cases = smooth_pred_new_cases[WINDOW_SIZE-1:]
+            if len(cdf) == 0:
+                # we don't have historical data for this geo: return zeroes
+                pred_new_cases = [0] * nb_days
+            else:
+                pred_new_cases = self._get_new_cases_preds(cdf, g, npis_df)
 
             # Append forecast data to results to return
-            country = cdf.CountryName.unique()[0]
-            region = cdf.RegionName.unique()[0]
+            country = npis_df[npis_df.GeoID == g].iloc[0].CountryName
+            region = npis_df[npis_df.GeoID == g].iloc[0].RegionName
             for i, pred in enumerate(pred_new_cases):
                 forecast["CountryName"].append(country)
                 forecast["RegionName"].append(region)
                 current_date = start_date + pd.offsets.Day(i)
                 forecast["Date"].append(current_date)
-                # forecast["ConfirmedCases"].append(pred_total_cases[i])
                 forecast["PredictedDailyNewCases"].append(pred)
 
         forecast_df = pd.DataFrame.from_dict(forecast)
         return forecast_df
+
+    def _get_new_cases_preds(self, c_df, g, npis_df):
+        cdf = c_df[c_df.ConfirmedCases.notnull()]
+        initial_context_input = self.country_samples[g]['X_test_context'][-1]
+        initial_action_input = self.country_samples[g]['X_test_action'][-1]
+        # Predictions with passed npis
+        cnpis_df = npis_df[npis_df.GeoID == g]
+        npis_sequence = np.array(cnpis_df[NPI_COLUMNS])
+        # Get the predictions with the passed NPIs
+        preds = self._roll_out_predictions(self.predictor,
+                                           initial_context_input,
+                                           initial_action_input,
+                                           npis_sequence)
+        # Gather info to convert to total cases
+        prev_confirmed_cases = np.array(cdf.ConfirmedCases)
+        prev_new_cases = np.array(cdf.NewCases)
+        initial_total_cases = prev_confirmed_cases[-1]
+        pop_size = np.array(cdf.Population)[-1]  # Population size doesn't change over time
+        # Compute predictor's forecast
+        pred_new_cases = self._convert_ratios_to_total_cases(
+            preds,
+            WINDOW_SIZE,
+            prev_new_cases,
+            initial_total_cases,
+            pop_size)
+
+        return pred_new_cases
 
     def _prepare_dataframe(self, data_url: str, cutoff_date: pd.Timestamp) -> (pd.DataFrame, pd.DataFrame):
         """
@@ -361,7 +359,6 @@ class XPrizePredictor(object):
                                        prev_new_cases,
                                        initial_total_cases,
                                        pop_size):
-        new_total_cases = []
         new_new_cases = []
         prev_new_cases_list = list(prev_new_cases)
         curr_total_cases = initial_total_cases
@@ -377,8 +374,7 @@ class XPrizePredictor(object):
             # Update prev_new_cases_list for next iteration of the loop
             prev_new_cases_list.append(new_cases)
             new_new_cases.append(new_cases)
-            new_total_cases.append(curr_total_cases)
-        return new_total_cases, new_new_cases
+        return new_new_cases
 
     @staticmethod
     def _smooth_case_list(case_list, window):
