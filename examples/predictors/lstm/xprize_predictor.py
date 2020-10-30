@@ -599,7 +599,7 @@ class XPrizePredictor(object):
             initial_total_cases = prev_confirmed_cases[-1]
             pop_size = np.array(df[df.GeoID == g].Population)[0]
 
-            _, pred_new_cases = self._convert_ratios_to_total_cases(
+            pred_new_cases = self._convert_ratios_to_total_cases(
                 preds, WINDOW_SIZE, prev_new_cases, initial_total_cases, pop_size)
             country_cases[g] = pred_new_cases
 
