@@ -11,7 +11,6 @@ import neat
 import numpy as np
 import pandas as pd
 
-from examples.predictors.lstm.xprize_predictor import XPrizePredictor
 from validation.cost_generator import generate_costs
 
 from utils import CASES_COL
