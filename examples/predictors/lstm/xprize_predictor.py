@@ -74,7 +74,7 @@ class XPrizePredictor(object):
     A class that computes a fitness for Prescriptor candidates.
     """
 
-    def __init__(self, path_to_model_weights, data_url, cutoff_date_str):
+    def __init__(self, path_to_model_weights, data_url):
         if path_to_model_weights:
 
             # Load model weights
@@ -90,8 +90,7 @@ class XPrizePredictor(object):
             if not os.path.exists(DATA_FILE_PATH):
                 urllib.request.urlretrieve(DATA_URL, DATA_FILE_PATH)
 
-        cutoff_date = pd.to_datetime(cutoff_date_str, format='%Y-%m-%d')
-        self.df = self._prepare_dataframe(data_url, cutoff_date)
+        self.df = self._prepare_dataframe(data_url)
         geos = self.df.GeoID.unique()
         self.country_samples = self._create_country_samples(self.df, geos)
 
@@ -169,16 +168,15 @@ class XPrizePredictor(object):
 
         return pred_new_cases
 
-    def _prepare_dataframe(self, data_url: str, cutoff_date: pd.Timestamp) -> (pd.DataFrame, pd.DataFrame):
+    def _prepare_dataframe(self, data_url: str) -> (pd.DataFrame, pd.DataFrame):
         """
         Loads the Oxford dataset, cleans it up and prepares the necessary columns. Depending on options, also
         loads the Johns Hopkins dataset and merges that in.
         :param data_url: the url containing the original data
-        :param cutoff_date: last date to use when loading the data
         :return: a Pandas DataFrame with the historical data
         """
         # Original df from Oxford
-        df1 = self._load_original_data(data_url, cutoff_date)
+        df1 = self._load_original_data(data_url)
 
         # Additional context df (e.g Population for each country)
         df2 = self._load_additional_context_df()
@@ -225,7 +223,7 @@ class XPrizePredictor(object):
         return df
 
     @staticmethod
-    def _load_original_data(data_url, cutoff_date=None):
+    def _load_original_data(data_url):
         latest_df = pd.read_csv(data_url,
                                 parse_dates=['Date'],
                                 encoding="ISO-8859-1",
@@ -237,11 +235,7 @@ class XPrizePredictor(object):
         latest_df["GeoID"] = np.where(latest_df["RegionName"].isnull(),
                                       latest_df["CountryName"],
                                       latest_df["CountryName"] + ' / ' + latest_df["RegionName"])
-        # Take a snapshot on cutoff_date
-        if cutoff_date:
-            return latest_df[latest_df.Date <= cutoff_date]
-        else:
-            return latest_df
+        return latest_df
 
     @staticmethod
     def _fill_missing_values(df):

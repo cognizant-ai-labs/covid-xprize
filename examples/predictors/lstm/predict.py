@@ -3,8 +3,6 @@
 import argparse
 import os
 
-import pandas as pd
-
 from examples.predictors.lstm.xprize_predictor import XPrizePredictor
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -14,9 +12,6 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_WEIGHTS_FILE = os.path.join(ROOT_DIR, "models", "trained_model_weights.h5")
 
 DATA_FILE = os.path.join(ROOT_DIR, 'data', "OxCGRT_latest.csv")
-
-# Consider the data after this date is not known yet
-CUTOFF_DATE = pd.to_datetime("2020-07-31", format='%Y-%m-%d')
 
 
 def predict(start_date: str,
@@ -35,8 +30,7 @@ def predict(start_date: str,
     with columns "CountryName,RegionName,Date,PredictedDailyNewCases"
     """
     # !!! YOUR CODE HERE !!!
-    cutoff_date = pd.to_datetime(CUTOFF_DATE, format='%Y-%m-%d')
-    predictor = XPrizePredictor(MODEL_WEIGHTS_FILE, DATA_FILE, cutoff_date)
+    predictor = XPrizePredictor(MODEL_WEIGHTS_FILE, DATA_FILE)
     # Generate the predictions
     preds_df = predictor.predict(start_date, end_date, path_to_ips_file)
     # Create the output path
