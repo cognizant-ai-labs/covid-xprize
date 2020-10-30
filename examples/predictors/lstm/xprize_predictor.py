@@ -43,6 +43,7 @@ NPI_COLUMNS = ['C1_School closing',
 
 CONTEXT_COLUMNS = ['CountryName',
                    'RegionName',
+                   'GeoID',
                    'Date',
                    'ConfirmedCases',
                    'ConfirmedDeaths',
@@ -91,21 +92,19 @@ class XPrizePredictor(object):
 
         cutoff_date = pd.to_datetime(cutoff_date_str, format='%Y-%m-%d')
         self.df = self._prepare_dataframe(data_url, cutoff_date)
-        self.countries = self.df.CountryName.unique()
-        self.country_samples = self._create_country_samples(self.df, self.countries)
+        geos = self.df.GeoID.unique()
+        self.country_samples = self._create_country_samples(self.df, geos)
 
     def predict(self,
                 start_date_str: str,
                 end_date_str: str,
-                npis_csv: str) -> pd.DataFrame:
+                path_to_ips_file: str) -> pd.DataFrame:
         start_date = pd.to_datetime(start_date_str, format='%Y-%m-%d')
         end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
+        nb_days = (end_date - start_date).days + 1
 
         # Load the npis into a DataFrame, handling regions
-        npis_df = self._load_original_data(npis_csv)
-        # TODO: Current logic forecasts for each day in this npis_df. Shrink it to the requested period until
-        # we fix the logic forecast logic for the period
-        npis_df = npis_df[(npis_df.Date >= start_date) & (npis_df.Date <= end_date)]
+        npis_df = self._load_original_data(path_to_ips_file)
 
         # Prepare the output
         forecast = {"CountryName": [],
@@ -113,60 +112,62 @@ class XPrizePredictor(object):
                     "Date": [],
                     "PredictedDailyNewCases": []}
 
-        # For each country, each region
-        for c in self.countries:
-            cdf = self.df[self.df.CountryName == c]
-            cdf = cdf[cdf.ConfirmedCases.notnull()]
-            initial_context_input = self.country_samples[c]['X_test_context'][-1]
-            initial_action_input = self.country_samples[c]['X_test_action'][-1]
+        # For each requested geo
+        geos = npis_df.GeoID.unique()
+        for g in geos:
+            cdf = self.df[self.df.GeoID == g]
+            if len(cdf) == 0:
+                # we don't have historical data for this geo: return zeroes
+                pred_new_cases = [0] * nb_days
+                geo_start_date = start_date
+            else:
+                last_known_date = cdf.Date.max()
+                # Start predicting from start_date, unless there's a gap since last known date
+                geo_start_date = min(last_known_date + np.timedelta64(1, 'D'), start_date)
+                npis_gdf = npis_df[(npis_df.Date >= geo_start_date) & (npis_df.Date <= end_date)]
 
-            # Predictions with passed npis
-            cnpis_df = npis_df[npis_df.CountryName == c]
-            npis_sequence = np.array(cnpis_df[NPI_COLUMNS])
-
-            # Get the predictions with the passed NPIs
-            preds = self._roll_out_predictions(self.predictor,
-                                               initial_context_input,
-                                               initial_action_input,
-                                               npis_sequence)
-
-            # Gather info to convert to total cases
-            prev_confirmed_cases = np.array(cdf.ConfirmedCases)
-            prev_new_cases = np.array(cdf.NewCases)
-            initial_total_cases = prev_confirmed_cases[-1]
-            pop_size = np.array(cdf.Population)[-1]  # Population size doesn't change over time
-
-            # Compute predictor's forecast
-            pred_total_cases, pred_new_cases = self._convert_ratios_to_total_cases(
-                preds,
-                WINDOW_SIZE,
-                prev_new_cases,
-                initial_total_cases,
-                pop_size)
-            # OPTIONAL: Smooth out pred_new_cases
-            # # If window size is 7, take the previous 6 new cases so we start doing a 7 day moving average for
-            # # the first pred new cases
-            # temp_pred_new_cases = list(prev_new_cases[-(WINDOW_SIZE-1):]) + pred_new_cases
-            # smooth_pred_new_cases = self._smooth_case_list(temp_pred_new_cases, WINDOW_SIZE)
-            # # Get rid of the first window_size - 1 NaN values where
-            # # there was not enough data to compute a moving average
-            # pred_new_cases = smooth_pred_new_cases[WINDOW_SIZE-1:]
+                pred_new_cases = self._get_new_cases_preds(cdf, g, npis_gdf)
 
             # Append forecast data to results to return
+            country = npis_df[npis_df.GeoID == g].iloc[0].CountryName
+            region = npis_df[npis_df.GeoID == g].iloc[0].RegionName
             for i, pred in enumerate(pred_new_cases):
-                # Split CountryName back into CountryName and RegionName
-                c_split = c.split(" / ")
-                country = c_split[0]
-                region = c_split[1] if len(c_split) > 1 else np.NaN
                 forecast["CountryName"].append(country)
                 forecast["RegionName"].append(region)
-                current_date = start_date + pd.offsets.Day(i)
+                current_date = geo_start_date + pd.offsets.Day(i)
                 forecast["Date"].append(current_date)
-                # forecast["ConfirmedCases"].append(pred_total_cases[i])
                 forecast["PredictedDailyNewCases"].append(pred)
 
         forecast_df = pd.DataFrame.from_dict(forecast)
-        return forecast_df
+        # Return only the requested predictions
+        return forecast_df[(forecast_df.Date >= start_date) & (forecast_df.Date <= end_date)]
+
+    def _get_new_cases_preds(self, c_df, g, npis_df):
+        cdf = c_df[c_df.ConfirmedCases.notnull()]
+        initial_context_input = self.country_samples[g]['X_test_context'][-1]
+        initial_action_input = self.country_samples[g]['X_test_action'][-1]
+        # Predictions with passed npis
+        cnpis_df = npis_df[npis_df.GeoID == g]
+        npis_sequence = np.array(cnpis_df[NPI_COLUMNS])
+        # Get the predictions with the passed NPIs
+        preds = self._roll_out_predictions(self.predictor,
+                                           initial_context_input,
+                                           initial_action_input,
+                                           npis_sequence)
+        # Gather info to convert to total cases
+        prev_confirmed_cases = np.array(cdf.ConfirmedCases)
+        prev_new_cases = np.array(cdf.NewCases)
+        initial_total_cases = prev_confirmed_cases[-1]
+        pop_size = np.array(cdf.Population)[-1]  # Population size doesn't change over time
+        # Compute predictor's forecast
+        pred_new_cases = self._convert_ratios_to_total_cases(
+            preds,
+            WINDOW_SIZE,
+            prev_new_cases,
+            initial_total_cases,
+            pop_size)
+
+        return pred_new_cases
 
     def _prepare_dataframe(self, data_url: str, cutoff_date: pd.Timestamp) -> (pd.DataFrame, pd.DataFrame):
         """
@@ -183,7 +184,7 @@ class XPrizePredictor(object):
         df2 = self._load_additional_context_df()
 
         # Merge the 2 DataFrames
-        df = df1.merge(df2, on=['CountryName'], how='left', suffixes=('', '_y'))
+        df = df1.merge(df2, on=['GeoID'], how='left', suffixes=('', '_y'))
 
         # Drop countries with no population data
         df.dropna(subset=['Population'], inplace=True)
@@ -196,27 +197,24 @@ class XPrizePredictor(object):
         self._fill_missing_values(df)
 
         # Compute number of new cases and deaths each day
-        df['NewCases'] = df.groupby('CountryName').ConfirmedCases.diff().fillna(0)
-        df['NewDeaths'] = df.groupby('CountryName').ConfirmedDeaths.diff().fillna(0)
+        df['NewCases'] = df.groupby('GeoID').ConfirmedCases.diff().fillna(0)
+        df['NewDeaths'] = df.groupby('GeoID').ConfirmedDeaths.diff().fillna(0)
 
         # Replace negative values (which do not make sense for these columns) with 0
         df['NewCases'] = df['NewCases'].clip(lower=0)
         df['NewDeaths'] = df['NewDeaths'].clip(lower=0)
 
         # Compute smoothed versions of new cases and deaths each day
-        df['SmoothNewCases'] = df.groupby('CountryName')['NewCases'].rolling(
+        df['SmoothNewCases'] = df.groupby('GeoID')['NewCases'].rolling(
             WINDOW_SIZE, center=False).mean().fillna(0).reset_index(0, drop=True)
-        df['SmoothNewDeaths'] = df.groupby('CountryName')['NewDeaths'].rolling(
+        df['SmoothNewDeaths'] = df.groupby('GeoID')['NewDeaths'].rolling(
             WINDOW_SIZE, center=False).mean().fillna(0).reset_index(0, drop=True)
 
         # Compute percent change in new cases and deaths each day
-        df['CaseRatio'] = df.groupby('CountryName').SmoothNewCases.pct_change(
+        df['CaseRatio'] = df.groupby('GeoID').SmoothNewCases.pct_change(
         ).fillna(0).replace(np.inf, 0) + 1
-        df['DeathRatio'] = df.groupby('CountryName').SmoothNewDeaths.pct_change(
+        df['DeathRatio'] = df.groupby('GeoID').SmoothNewDeaths.pct_change(
         ).fillna(0).replace(np.inf, 0) + 1
-
-        # # Remove all rows with too few cases
-        # df.drop(df[df.ConfirmedCases < MIN_CASES].index, inplace=True)
 
         # Add column for proportion of population infected
         df['ProportionInfected'] = df['ConfirmedCases'] / df['Population']
@@ -226,54 +224,57 @@ class XPrizePredictor(object):
 
         return df
 
-    def _load_original_data(self, data_url, cutoff_date=None):
+    @staticmethod
+    def _load_original_data(data_url, cutoff_date=None):
         latest_df = pd.read_csv(data_url,
                                 parse_dates=['Date'],
                                 encoding="ISO-8859-1",
                                 dtype={"RegionName": str,
                                        "RegionCode": str},
                                 error_bad_lines=False)
-        # Handle regions.
-        # Replace CountryName by CountryName / RegionName
+        # GeoID is CountryName / RegionName
         # np.where usage: if A then B else C
-        latest_df["CountryName"] = np.where(latest_df["RegionName"].isnull(),
-                                            latest_df["CountryName"],
-                                            latest_df["CountryName"] + ' / ' + latest_df["RegionName"])
+        latest_df["GeoID"] = np.where(latest_df["RegionName"].isnull(),
+                                      latest_df["CountryName"],
+                                      latest_df["CountryName"] + ' / ' + latest_df["RegionName"])
         # Take a snapshot on cutoff_date
         if cutoff_date:
             return latest_df[latest_df.Date <= cutoff_date]
         else:
             return latest_df
 
-    def _fill_missing_values(self, df):
+    @staticmethod
+    def _fill_missing_values(df):
         """
         # Fill missing values by interpolation, ffill, and filling NaNs
         :param df: Dataframe to be filled
         """
-        df.update(df.groupby('CountryName').ConfirmedCases.apply(
+        df.update(df.groupby('GeoID').ConfirmedCases.apply(
             lambda group: group.interpolate(limit_area='inside')))
+        # Drop country / regions for which no number of cases is available
         df.dropna(subset=['ConfirmedCases'], inplace=True)
-        df.update(df.groupby('CountryName').ConfirmedDeaths.apply(
+        df.update(df.groupby('GeoID').ConfirmedDeaths.apply(
             lambda group: group.interpolate(limit_area='inside')))
+        # Drop country / regions for which no number of deaths is available
         df.dropna(subset=['ConfirmedDeaths'], inplace=True)
         for npi_column in NPI_COLUMNS:
-            df.update(df.groupby('CountryName')[npi_column].ffill().fillna(0))
+            df.update(df.groupby('GeoID')[npi_column].ffill().fillna(0))
 
     @staticmethod
     def _load_additional_context_df():
         # File containing the population for each country
+        # Note: this file contains only countries population, not regions
         additional_context_df = pd.read_csv(ADDITIONAL_CONTEXT_FILE,
                                             usecols=['CountryName', 'Population'])
+        additional_context_df['GeoID'] = additional_context_df['CountryName']
 
         # US states population
         additional_us_states_df = pd.read_csv(ADDITIONAL_US_STATES_CONTEXT,
                                               usecols=['NAME', 'POPESTIMATE2019'])
         # Rename the columns to match measures_df ones
-        additional_us_states_df.rename(columns={'NAME': 'CountryName',
-                                                'POPESTIMATE2019': 'Population'},
-                                       inplace=True)
+        additional_us_states_df.rename(columns={'POPESTIMATE2019': 'Population'}, inplace=True)
         # Prefix with country name to match measures_df
-        additional_us_states_df['CountryName'] = US_PREFIX + additional_us_states_df['CountryName']
+        additional_us_states_df['GeoID'] = US_PREFIX + additional_us_states_df['NAME']
 
         # Append the new data to additional_df
         additional_context_df = additional_context_df.append(additional_us_states_df)
@@ -285,19 +286,20 @@ class XPrizePredictor(object):
 
         return additional_context_df
 
-    def _create_country_samples(self, df: pd.DataFrame, countries: list) -> dict:
+    @staticmethod
+    def _create_country_samples(df: pd.DataFrame, geos: list) -> dict:
         """
         For each country, creates numpy arrays for Keras
         :param df: a Pandas DataFrame with historical data for countries (the "Oxford" dataset)
-        :param countries: a list of country names
+        :param geos: a list of geo names
         :return: a dictionary of train and test sets, for each specified country
         """
         context_column = 'PredictionRatio'
         action_columns = NPI_COLUMNS
         outcome_column = 'PredictionRatio'
         country_samples = {}
-        for c in countries:
-            cdf = df[df.CountryName == c]
+        for g in geos:
+            cdf = df[df.GeoID == g]
             cdf = cdf[cdf.ConfirmedCases.notnull()]
             context_data = np.array(cdf[context_column])
             action_data = np.array(cdf[action_columns])
@@ -314,7 +316,7 @@ class XPrizePredictor(object):
                 X_context = np.expand_dims(np.stack(context_samples, axis=0), axis=2)
                 X_action = np.stack(action_samples, axis=0)
                 y = np.stack(outcome_samples, axis=0)
-                country_samples[c] = {
+                country_samples[g] = {
                     'X_context': X_context,
                     'X_action': X_action,
                     'y': y,
@@ -361,7 +363,6 @@ class XPrizePredictor(object):
                                        prev_new_cases,
                                        initial_total_cases,
                                        pop_size):
-        new_total_cases = []
         new_new_cases = []
         prev_new_cases_list = list(prev_new_cases)
         curr_total_cases = initial_total_cases
@@ -377,8 +378,7 @@ class XPrizePredictor(object):
             # Update prev_new_cases_list for next iteration of the loop
             prev_new_cases_list.append(new_cases)
             new_new_cases.append(new_cases)
-            new_total_cases.append(curr_total_cases)
-        return new_total_cases, new_new_cases
+        return new_new_cases
 
     @staticmethod
     def _smooth_case_list(case_list, window):
@@ -386,8 +386,8 @@ class XPrizePredictor(object):
 
     def train(self):
         print("Creating numpy arrays for Keras for each country...")
-        countries = self._most_affected_countries(self.df, MAX_NB_COUNTRIES, NB_LOOKBACK_DAYS)
-        country_samples = self._create_country_samples(self.df, countries)
+        geos = self._most_affected_geos(self.df, MAX_NB_COUNTRIES, NB_LOOKBACK_DAYS)
+        country_samples = self._create_country_samples(self.df, geos)
         print("Numpy arrays created")
 
         # Aggregate data for training
@@ -408,12 +408,12 @@ class XPrizePredictor(object):
         y = np.clip(y, MIN_VALUE, MAX_VALUE)
 
         # Aggregate data for testing only on top countries
-        test_all_X_context_list = [country_samples[c]['X_train_context']
-                                   for c in countries]
-        test_all_X_action_list = [country_samples[c]['X_train_action']
-                                  for c in countries]
-        test_all_y_list = [country_samples[c]['y_train']
-                           for c in countries]
+        test_all_X_context_list = [country_samples[g]['X_train_context']
+                                   for g in geos]
+        test_all_X_action_list = [country_samples[g]['X_train_action']
+                                  for g in geos]
+        test_all_y_list = [country_samples[g]['y_train']
+                           for g in geos]
         test_X_context = np.concatenate(test_all_X_context_list)
         test_X_action = np.concatenate(test_all_X_action_list)
         test_y = np.concatenate(test_all_y_list)
@@ -454,7 +454,7 @@ class XPrizePredictor(object):
         for model in models:
             country_indep, country_preds, country_cases = self._lstm_get_test_rollouts(model,
                                                                                        self.df,
-                                                                                       countries,
+                                                                                       geos,
                                                                                        country_samples)
             country_indeps.append(country_indep)
             country_predss.append(country_preds)
@@ -464,9 +464,9 @@ class XPrizePredictor(object):
         test_case_maes = []
         for m in range(len(models)):
             total_loss = 0
-            for c in countries:
-                true_cases = np.sum(np.array(self.df[self.df.CountryName == c].NewCases)[-NB_TEST_DAYS:])
-                pred_cases = np.sum(country_casess[m][c][-NB_TEST_DAYS:])
+            for g in geos:
+                true_cases = np.sum(np.array(self.df[self.df.GeoID == g].NewCases)[-NB_TEST_DAYS:])
+                pred_cases = np.sum(country_casess[m][g][-NB_TEST_DAYS:])
                 total_loss += np.abs(true_cases - pred_cases)
             test_case_maes.append(total_loss)
 
@@ -476,20 +476,21 @@ class XPrizePredictor(object):
         print("Done")
         return best_model
 
-    def _most_affected_countries(self, df, nb_countries, min_historical_days):
+    @staticmethod
+    def _most_affected_geos(df, nb_geos, min_historical_days):
         """
         Returns the list of most affected countries, in terms of confirmed deaths.
         :param df: the data frame containing the historical data
-        :param nb_countries: the number of countries to return
+        :param nb_geos: the number of geos to return
         :param min_historical_days: the minimum days of historical data the countries must have
         :return: a list of country names of size nb_countries if there were enough, and otherwise a list of all the
         country names that have at least min_look_back_days data points.
         """
-        # By default use most affected countries with enough history
-        gdf = df.groupby('CountryName')['ConfirmedDeaths'].agg(['max', 'count']).sort_values(by='max', ascending=False)
+        # By default use most affected geos with enough history
+        gdf = df.groupby('GeoID')['ConfirmedDeaths'].agg(['max', 'count']).sort_values(by='max', ascending=False)
         filtered_gdf = gdf[gdf["count"] > min_historical_days]
-        countries = list(filtered_gdf.head(nb_countries).index)
-        return countries
+        geos = list(filtered_gdf.head(nb_geos).index)
+        return geos
 
     # Shuffling data prior to train/val split
     def _permute_data(self, X_context, X_action, y, seed=301):
@@ -569,41 +570,41 @@ class XPrizePredictor(object):
             context_input[:, -1] = pred
         return pred_output
 
-    def _lstm_get_test_rollouts(self, model, df, top_countries, country_samples):
+    def _lstm_get_test_rollouts(self, model, df, top_geos, country_samples):
         country_indep = {}
         country_preds = {}
         country_cases = {}
-        for c in top_countries:
-            X_test_context = country_samples[c]['X_test_context']
-            X_test_action = country_samples[c]['X_test_action']
-            country_indep[c] = model.predict([X_test_context, X_test_action])
+        for g in top_geos:
+            X_test_context = country_samples[g]['X_test_context']
+            X_test_action = country_samples[g]['X_test_action']
+            country_indep[g] = model.predict([X_test_context, X_test_action])
 
-            initial_context_input = country_samples[c]['X_test_context'][0]
-            initial_action_input = country_samples[c]['X_test_action'][0]
-            y_test = country_samples[c]['y_test']
+            initial_context_input = country_samples[g]['X_test_context'][0]
+            initial_action_input = country_samples[g]['X_test_action'][0]
+            y_test = country_samples[g]['y_test']
 
             nb_test_days = y_test.shape[0]
             nb_actions = initial_action_input.shape[-1]
 
             future_action_sequence = np.zeros((nb_test_days, nb_actions))
-            future_action_sequence[:nb_test_days] = country_samples[c]['X_test_action'][:, -1, :]
-            current_action = country_samples[c]['X_test_action'][:, -1, :][-1]
+            future_action_sequence[:nb_test_days] = country_samples[g]['X_test_action'][:, -1, :]
+            current_action = country_samples[g]['X_test_action'][:, -1, :][-1]
             future_action_sequence[14:] = current_action
             preds = self._lstm_roll_out_predictions(model,
                                                     initial_context_input,
                                                     initial_action_input,
                                                     future_action_sequence)
-            country_preds[c] = preds
+            country_preds[g] = preds
 
             prev_confirmed_cases = np.array(
-                df[df.CountryName == c].ConfirmedCases)[:-nb_test_days]
+                df[df.GeoID == g].ConfirmedCases)[:-nb_test_days]
             prev_new_cases = np.array(
-                df[df.CountryName == c].NewCases)[:-nb_test_days]
+                df[df.GeoID == g].NewCases)[:-nb_test_days]
             initial_total_cases = prev_confirmed_cases[-1]
-            pop_size = np.array(df[df.CountryName == c].Population)[0]
+            pop_size = np.array(df[df.GeoID == g].Population)[0]
 
-            _, pred_new_cases = self._convert_ratios_to_total_cases(
+            pred_new_cases = self._convert_ratios_to_total_cases(
                 preds, WINDOW_SIZE, prev_new_cases, initial_total_cases, pop_size)
-            country_cases[c] = pred_new_cases
+            country_cases[g] = pred_new_cases
 
         return country_indep, country_preds, country_cases
