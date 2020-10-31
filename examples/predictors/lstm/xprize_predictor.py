@@ -168,7 +168,7 @@ class XPrizePredictor(object):
 
         return pred_new_cases
 
-    def _prepare_dataframe(self, data_url: str) -> (pd.DataFrame, pd.DataFrame):
+    def _prepare_dataframe(self, data_url: str) -> pd.DataFrame:
         """
         Loads the Oxford dataset, cleans it up and prepares the necessary columns. Depending on options, also
         loads the Johns Hopkins dataset and merges that in.
