@@ -1,7 +1,7 @@
-# Pandemic Response Challenge
+# XPRIZE Pandemic Response Challenge
 
 ## Introduction
-Welcome to the [Pandemic Response Challenge](https://xprize.org/pandemicresponse)! This repository contains what you need to get started in creating your submission for the
+Welcome to the [XPRIZE Pandemic Response Challenge](https://xprize.org/pandemicresponse)! This repository contains what you need to get started in creating your submission for the
 contest.
 
 Within this repository you will find:
