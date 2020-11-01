@@ -107,7 +107,7 @@ def get_predictions(start_date_str, end_date_str, pres_df, countries=None):
 
     # Go to covid-xprize root dir to access predict script
     wd = os.getcwd()
-    os.chdir("../../..")
+    os.chdir("../../../..")
 
     # Run script to generate predictions
     output_str = subprocess.check_output(
