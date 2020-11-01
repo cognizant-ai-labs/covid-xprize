@@ -4,15 +4,15 @@ import os
 import subprocess
 import urllib.request
 import pandas as pd
-from validation.scenario_generator import generate_scenario
-from validation.scenario_generator import get_raw_data
+
+from covid_xprize.validation.scenario_generator import get_raw_data, generate_scenario
 
 DATA_URL = "https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv"
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(ROOT_DIR, 'data')
 HIST_DATA_FILE_PATH = os.path.join(DATA_PATH, 'OxCGRT_latest.csv')
 
-PREDICT_MODULE = 'examples/predictors/lstm/predict.py'
+PREDICT_MODULE = 'covid_xprize.examples/predictors/lstm/predict.py'
 TMP_PRED_FILE_NAME = 'tmp_predictions_for_prescriptions/preds.csv'
 TMP_PRESCRIPTION_FILE = 'tmp_prescription.csv'
 

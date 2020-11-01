@@ -7,13 +7,13 @@ __pycache__
 .idea/
 
 # Run the respective notebooks to download the data, train and persist the models and generate the predictions
-examples/predictors/linear/data/
-examples/predictors/linear/models/
-examples/predictors/linear/predictions/
+covid_xprize/examples/predictors/linear/data/
+covid_xprize/examples/predictors/linear/models/
+covid_xprize/examples/predictors/linear/predictions/
 
-examples/predictors/lstm/data/OxCGRT_latest.csv
-examples/predictors/lstm/models/
-examples/predictors/lstm/predictions/
-examples/predictors/lstm/tests/fixtures/OxCGRT_latest.csv
+covid_xprize/examples/predictors/lstm/data/OxCGRT_latest.csv
+covid_xprize/examples/predictors/lstm/models/
+covid_xprize/examples/predictors/lstm/predictions/
+covid_xprize/examples/predictors/lstm/tests/fixtures/OxCGRT_latest.csv
 
-validation/tests/fixtures/OxCGRT_latest.csv
+covid_xprize/validation/tests/fixtures/OxCGRT_latest.csv

@@ -7,7 +7,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from validation.scenario_generator import generate_scenario, get_raw_data, NPI_COLUMNS, MIN_NPIS, MAX_NPIS
+from covid_xprize.validation.scenario_generator import NPI_COLUMNS, get_raw_data, MIN_NPIS, MAX_NPIS, generate_scenario
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 FIXTURES_PATH = os.path.join(ROOT_DIR, 'fixtures')

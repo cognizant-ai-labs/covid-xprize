@@ -9,22 +9,14 @@ from copy import deepcopy
 
 import neat
 
-from keras.models import load_model
-
-from utils import CASES_COL
-from utils import PRED_CASES_COL
-from utils import IP_COLS
-from utils import add_geo_id
-from utils import get_predictions
-from utils import prepare_historical_df
-from utils import IP_MAX_VALUES
-
-
 # Path to file containing neat prescriptors. Here we simply use a
 # recent checkpoint of the population from train_prescriptor.py,
 # but this is likely not the most complementary set of prescriptors.
 # Many approaches can be taken to generate/collect more diverse sets.
 # Note: this set can contain up to 10 prescriptors for evaluation.
+from covid_xprize.examples.prescriptors.neat.utils import prepare_historical_df, CASES_COL, IP_COLS, IP_MAX_VALUES, \
+    add_geo_id, get_predictions, PRED_CASES_COL
+
 PRESCRIPTORS_FILE = 'neat-checkpoint-0'
 
 # Number of days the prescriptors look at in the past.
