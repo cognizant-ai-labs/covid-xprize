@@ -36,8 +36,6 @@ def read(fname):
         return file.read()
 
 
-# Note: we use a direct URL for leaf-common rather than dependency-links, because the pip team has deprecated
-# the latter. See: https://github.com/pypa/pip/issues/4187#issuecomment-415067034
 setup(
     name=LIB_NAME,
     version=LIBRARY_VERSION,
