@@ -16,4 +16,6 @@ examples/predictors/lstm/models/
 examples/predictors/lstm/predictions/
 examples/predictors/lstm/tests/fixtures/OxCGRT_latest.csv
 
+examples/prescriptors/zero/prescriptions/
+
 validation/tests/fixtures/OxCGRT_latest.csv

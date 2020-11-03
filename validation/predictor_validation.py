@@ -19,7 +19,7 @@ def validate_submission(start_date: str,
                         ip_file: str,
                         submission_file: str) -> List[str]:
     """
-    Checks a submission file is valid.
+    Checks a prediction submission file is valid.
     Args:
         start_date: the submission start date as a string, format YYYY-MM-DDD
         end_date: the submission end date as a string, format YYYY-MM-DDD
@@ -39,7 +39,7 @@ def validate_submission(start_date: str,
                         error_bad_lines=True)
 
     all_errors = []
-    # Check we go the expected columns
+    # Check we got the expected columns
     all_errors += _check_columns(COLUMNS, pred_df)
     if not all_errors:
         # Columns are good, check we got prediction for each requested country / region
