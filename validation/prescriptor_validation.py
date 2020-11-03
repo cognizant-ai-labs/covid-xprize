@@ -5,7 +5,7 @@ from typing import List
 import pandas as pd
 
 from validation.scenario_generator import ID_COLS, NPI_COLUMNS
-from validation.predictor_validation import _check_columns, _check_geos
+from validation.predictor_validation import _check_columns, _check_geos, _check_days
 
 PRESCRIPTION_INDEX_COL = "PrescriptionIndex"
 COLUMNS = ID_COLS + NPI_COLUMNS + ["PrescriptionIndex"]
@@ -59,7 +59,7 @@ def validate_submission(start_date: str,
         # Check the IP values
         all_errors += _check_prescription_values(presc_df)
     #     # Check the prediction dates are correct
-    #     all_errors += _check_days(start_date, end_date, pred_df)
+        all_errors += _check_days(start_date, end_date, presc_df)
 
     return all_errors
 
