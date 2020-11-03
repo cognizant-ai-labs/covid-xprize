@@ -3,11 +3,11 @@ Code to allow this package to be pip-installed
 """
 
 import os
+
 import sys
+from setuptools import setup, find_packages
 
-from setuptools import setup
-
-LIBRARY_VERSION = '0.0.5'
+LIBRARY_VERSION = '1.0.0'
 
 CURRENT_PYTHON = sys.version_info[:2]
 REQUIRED_PYTHON = (3, 6)
@@ -23,6 +23,9 @@ install it on Python {}.{}.
     sys.exit(1)
 
 CUR_DIRECTORY_PATH = os.path.abspath(os.path.dirname(__file__))
+
+# Python doesn't allow hyphens in package names so use underscore instead
+PACKAGE_NAME = 'covid_xprize'
 LIB_NAME = 'covid-xprize'
 
 
@@ -40,10 +43,18 @@ setup(
     name=LIB_NAME,
     version=LIBRARY_VERSION,
     python_requires='>={}.{}'.format(*REQUIRED_PYTHON),
-    packages=[
-        'covid_xprize/examples',
-        'covid_xprize/validation'
-    ],
+    packages=find_packages(),
+    package_dir={PACKAGE_NAME: PACKAGE_NAME}, # the one line where all the magic happens
+    package_data={
+        PACKAGE_NAME: [
+            'covid_xprize/examples/predictors/lstm/tests/fixtures/*',
+            'covid_xprize/validation/data',
+            'examples/predictors/lstm/data/*',
+        ],
+        '.': [
+            'LICENSE.md'
+        ]
+    },
     install_requires=[
         'keras==2.4.3',
         'neat-python==0.92',
