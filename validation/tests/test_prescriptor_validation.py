@@ -14,6 +14,8 @@ IP_FILE_ALL_COUNTRIES = os.path.join(FIXTURES_PATH, "ip_file_all_countries.csv")
 IP_FILE_FEW_COUNTRIES = os.path.join(FIXTURES_PATH, "ip_file_few_countries.csv")
 WRONG_COLUMNS = os.path.join(PRESCRIPTIONS_PATH, "wrong_columns.csv")
 VALID_SUBMISSION = os.path.join(PRESCRIPTIONS_PATH, "valid_submission.csv")
+VALID_WITH_ADD_COLS_SUBMISSION = os.path.join(PRESCRIPTIONS_PATH, "valid_with_add_cols_submission.csv")
+INVALID_RANGE_SUBMISSION = os.path.join(PRESCRIPTIONS_PATH, "invalid_range_submission.csv")
 
 MISSING_COLUMNS = ["C1_School closing", "PrescriptionIndex"]
 
@@ -29,3 +31,17 @@ class TestPrescriptionValidation(unittest.TestCase):
     def test_valid_submission(self):
         errors = validate_submission("2020-08-01", "2020-08-04", IP_FILE_ALL_COUNTRIES, VALID_SUBMISSION)
         self.assertTrue(not errors, f"Unexpected errors: {errors}")
+
+    def test_valid_with_additional_columns_submission(self):
+        errors = validate_submission("2020-08-01", "2020-08-04", IP_FILE_FEW_COUNTRIES, VALID_WITH_ADD_COLS_SUBMISSION)
+        self.assertTrue(not errors, f"Unexpected errors: {errors}")
+
+    def test_nan_submission(self):
+        errors = validate_submission("2020-08-01", "2020-08-04", IP_FILE_FEW_COUNTRIES, INVALID_RANGE_SUBMISSION)
+        self.assertIsNotNone(errors)
+        self.assertTrue("Column C1" in errors[0], f"Expected Column C1 in errors, but got {errors}")
+        self.assertTrue("NaN" in errors[0], f"Expected 'NaN' in errors, but got {errors}")
+        self.assertTrue("Column C2" in errors[1], f"Expected Column C2 in errors, but got {errors}")
+        self.assertTrue("negative" in errors[1], f"Expected 'negative' in errors, but got {errors}")
+        self.assertTrue("Column C3" in errors[2], f"Expected Column C3 in errors, but got {errors}")
+        self.assertTrue("higher than max" in errors[2], f"Expected 'higher than max' in errors, but got {errors}")
