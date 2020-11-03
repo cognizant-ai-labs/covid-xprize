@@ -3,29 +3,32 @@
 import os
 import unittest
 
-from covid_xprize.validation.predictor_validation import validate_submission, PREDICTED_DAILY_NEW_CASES
+from validation.prescriptor_validation import validate_submission
+
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 FIXTURES_PATH = os.path.join(ROOT_DIR, "fixtures")
-PREDS_PATH = os.path.join(FIXTURES_PATH, "predictor")
+PRESCRIPTIONS_PATH = os.path.join(FIXTURES_PATH, "prescriptor")
 
 IP_FILE_ALL_COUNTRIES = os.path.join(FIXTURES_PATH, "ip_file_all_countries.csv")
 IP_FILE_FEW_COUNTRIES = os.path.join(FIXTURES_PATH, "ip_file_few_countries.csv")
-WRONG_COLUMNS = os.path.join(PREDS_PATH, "wrong_columns.csv")
-VALID_SUBMISSION = os.path.join(PREDS_PATH, "valid_submission.csv")
-VALID_WITH_ADD_COLS_SUBMISSION = os.path.join(PREDS_PATH, "valid_with_add_cols_submission.csv")
-NAN_SUBMISSION = os.path.join(PREDS_PATH, "nan_submission.csv")
-NEGATIVE_SUBMISSION = os.path.join(PREDS_PATH, "negative_submission.csv")
-MISSING_COUNTRY_SUBMISSION = os.path.join(PREDS_PATH, "missing_country_submission.csv")
-BAD_DATES_SUBMISSION = os.path.join(PREDS_PATH, "bad_dates_submission.csv")
+WRONG_COLUMNS = os.path.join(PRESCRIPTIONS_PATH, "wrong_columns.csv")
+VALID_SUBMISSION = os.path.join(PRESCRIPTIONS_PATH, "valid_submission.csv")
+VALID_WITH_ADD_COLS_SUBMISSION = os.path.join(PRESCRIPTIONS_PATH, "valid_with_add_cols_submission.csv")
+INVALID_RANGE_SUBMISSION = os.path.join(PRESCRIPTIONS_PATH, "invalid_range_submission.csv")
+MISSING_COUNTRY_SUBMISSION = os.path.join(PRESCRIPTIONS_PATH, "missing_country_submission.csv")
+BAD_DATES_SUBMISSION = os.path.join(PRESCRIPTIONS_PATH, "bad_dates_submission.csv")
+
+MISSING_COLUMNS = ["C1_School closing", "PrescriptionIndex"]
 
 
-class TestPredictionValidation(unittest.TestCase):
+class TestPrescriptionValidation(unittest.TestCase):
 
     def test_wrong_columns(self):
         errors = validate_submission("2020-08-01", "2020-08-01", IP_FILE_ALL_COUNTRIES, WRONG_COLUMNS)
         self.assertIsNotNone(errors)
-        self.assertTrue(PREDICTED_DAILY_NEW_CASES in errors[0])
+        self.assertTrue(MISSING_COLUMNS[0] in errors[0])
+        self.assertTrue(MISSING_COLUMNS[1] in errors[0])
 
     def test_valid_submission(self):
         errors = validate_submission("2020-08-01", "2020-08-04", IP_FILE_ALL_COUNTRIES, VALID_SUBMISSION)
@@ -36,14 +39,14 @@ class TestPredictionValidation(unittest.TestCase):
         self.assertTrue(not errors, f"Unexpected errors: {errors}")
 
     def test_nan_submission(self):
-        errors = validate_submission("2020-08-01", "2020-08-04", IP_FILE_FEW_COUNTRIES, NAN_SUBMISSION)
+        errors = validate_submission("2020-08-01", "2020-08-04", IP_FILE_FEW_COUNTRIES, INVALID_RANGE_SUBMISSION)
         self.assertIsNotNone(errors)
+        self.assertTrue("Column C1" in errors[0], f"Expected Column C1 in errors, but got {errors}")
         self.assertTrue("NaN" in errors[0], f"Expected 'NaN' in errors, but got {errors}")
-
-    def test_negative_submission(self):
-        errors = validate_submission("2020-08-01", "2020-08-04", IP_FILE_FEW_COUNTRIES, NEGATIVE_SUBMISSION)
-        self.assertIsNotNone(errors)
-        self.assertTrue("negative" in errors[0], f"Expected 'negative' in errors, but got {errors}")
+        self.assertTrue("Column C2" in errors[1], f"Expected Column C2 in errors, but got {errors}")
+        self.assertTrue("negative" in errors[1], f"Expected 'negative' in errors, but got {errors}")
+        self.assertTrue("Column C3" in errors[2], f"Expected Column C3 in errors, but got {errors}")
+        self.assertTrue("higher than max" in errors[2], f"Expected 'higher than max' in errors, but got {errors}")
 
     def test_missing_country_submission(self):
         errors = validate_submission("2020-08-01", "2020-08-04", IP_FILE_FEW_COUNTRIES, MISSING_COUNTRY_SUBMISSION)
@@ -65,4 +68,3 @@ class TestPredictionValidation(unittest.TestCase):
                            'Aruba: Expected prediction for date 2020-08-03 but got 2020-08-04',
                            'Aruba: Expected prediction for date 2020-08-04 but got None']
         self.assertEqual(expected_errors, errors)
-

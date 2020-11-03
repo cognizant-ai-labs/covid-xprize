@@ -16,4 +16,7 @@ covid_xprize/examples/predictors/lstm/models/
 covid_xprize/examples/predictors/lstm/predictions/
 covid_xprize/examples/predictors/lstm/tests/fixtures/OxCGRT_latest.csv
 
+covid_xprize/examples/prescriptors/zero/prescriptions/
+
 covid_xprize/validation/tests/fixtures/OxCGRT_latest.csv
+
