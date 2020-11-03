@@ -19,7 +19,7 @@ def validate_submission(start_date: str,
                         ip_file: str,
                         submission_file: str) -> List[str]:
     """
-    Checks a submission file is valid.
+    Checks a prediction submission file is valid.
     Args:
         start_date: the submission start date as a string, format YYYY-MM-DDD
         end_date: the submission end date as a string, format YYYY-MM-DDD

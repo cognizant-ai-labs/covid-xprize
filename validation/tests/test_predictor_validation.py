@@ -7,18 +7,20 @@ from validation.predictor_validation import validate_submission, PREDICTED_DAILY
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 FIXTURES_PATH = os.path.join(ROOT_DIR, "fixtures")
+PREDS_PATH = os.path.join(FIXTURES_PATH, "predictor")
+
 IP_FILE_ALL_COUNTRIES = os.path.join(FIXTURES_PATH, "ip_file_all_countries.csv")
 IP_FILE_FEW_COUNTRIES = os.path.join(FIXTURES_PATH, "ip_file_few_countries.csv")
-WRONG_COLUMNS = os.path.join(FIXTURES_PATH, "wrong_columns.csv")
-VALID_SUBMISSION = os.path.join(FIXTURES_PATH, "valid_submission.csv")
-VALID_WITH_ADD_COLS_SUBMISSION = os.path.join(FIXTURES_PATH, "valid_with_add_cols_submission.csv")
-NAN_SUBMISSION = os.path.join(FIXTURES_PATH, "nan_submission.csv")
-NEGATIVE_SUBMISSION = os.path.join(FIXTURES_PATH, "negative_submission.csv")
-MISSING_COUNTRY_SUBMISSION = os.path.join(FIXTURES_PATH, "missing_country_submission.csv")
-BAD_DATES_SUBMISSION = os.path.join(FIXTURES_PATH, "bad_dates_submission.csv")
+WRONG_COLUMNS = os.path.join(PREDS_PATH, "wrong_columns.csv")
+VALID_SUBMISSION = os.path.join(PREDS_PATH, "valid_submission.csv")
+VALID_WITH_ADD_COLS_SUBMISSION = os.path.join(PREDS_PATH, "valid_with_add_cols_submission.csv")
+NAN_SUBMISSION = os.path.join(PREDS_PATH, "nan_submission.csv")
+NEGATIVE_SUBMISSION = os.path.join(PREDS_PATH, "negative_submission.csv")
+MISSING_COUNTRY_SUBMISSION = os.path.join(PREDS_PATH, "missing_country_submission.csv")
+BAD_DATES_SUBMISSION = os.path.join(PREDS_PATH, "bad_dates_submission.csv")
 
 
-class TestValidation(unittest.TestCase):
+class TestPredictionValidation(unittest.TestCase):
 
     def test_wrong_columns(self):
         errors = validate_submission("2020-08-01", "2020-08-01", IP_FILE_ALL_COUNTRIES, WRONG_COLUMNS)
