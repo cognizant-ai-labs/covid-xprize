@@ -39,7 +39,7 @@ def validate_submission(start_date: str,
                         error_bad_lines=True)
 
     all_errors = []
-    # Check we go the expected columns
+    # Check we got the expected columns
     all_errors += _check_columns(COLUMNS, pred_df)
     if not all_errors:
         # Columns are good, check we got prediction for each requested country / region

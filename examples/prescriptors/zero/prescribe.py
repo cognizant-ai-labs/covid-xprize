@@ -15,7 +15,8 @@ NPI_COLS = ['C1_School closing',
             'C8_International travel controls',
             'H1_Public information campaigns',
             'H2_Testing policy',
-            'H3_Contact tracing']
+            'H3_Contact tracing',
+            'H6_Facial Coverings']
 
 
 def prescribe(start_date_str: str,
@@ -28,6 +29,7 @@ def prescribe(start_date_str: str,
     hdf = pd.read_csv(path_to_hist_file,
                       parse_dates=['Date'],
                       encoding="ISO-8859-1",
+                      dtype={"RegionName": str},
                       error_bad_lines=True)
     start_date = pd.to_datetime(start_date_str, format='%Y-%m-%d')
     end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
