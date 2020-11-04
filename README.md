@@ -124,8 +124,8 @@ For more details on this API, consult the Competition Guidelines or the support 
 
 The repo also provides a sample trained predictor to train prescriptors against.
 To use it, copy `covid_xprize/examples/predictors/lstm/tests/fixtures/trained_model_weights_for_tests.h5` 
-to `covid_xprize/examples/lstm/models/trained_model_weights.h5`,
-and call `covid_xprize/examples/lstm/predict.py` to make predictions.
+to `covid_xprize/examples/predictors/lstm/models/trained_model_weights.h5`,
+and call `covid_xprize/examples/predictors/lstm/predict.py` to make predictions.
 See `get_predictions` in `covid_xprize/examples/prescriptors/neat/utils.py` and
 `generate_cases_and_stringency_for_prescriptions` in `prescriptor_robojudge.ipynb` for examples of how to make 
 this call.
