@@ -4,8 +4,8 @@ from typing import List
 
 import pandas as pd
 
-from validation.scenario_generator import ID_COLS, NPI_COLUMNS
-from validation.predictor_validation import _check_columns, _check_geos, _check_days
+from covid_xprize.validation.scenario_generator import ID_COLS, NPI_COLUMNS
+from covid_xprize.validation.predictor_validation import _check_columns, _check_geos, _check_days
 
 PRESCRIPTION_INDEX_COL = "PrescriptionIndex"
 COLUMNS = ID_COLS + NPI_COLUMNS + ["PrescriptionIndex"]

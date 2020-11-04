@@ -11,18 +11,14 @@ import neat
 import numpy as np
 import pandas as pd
 
-from validation.cost_generator import generate_costs
 
-from utils import CASES_COL
-from utils import PRED_CASES_COL
-from utils import IP_COLS
-from utils import IP_MAX_VALUES
-from utils import add_geo_id
-from utils import get_predictions
-from utils import prepare_historical_df
 
+from covid_xprize.examples.prescriptors.neat.utils import PRED_CASES_COL, prepare_historical_df, CASES_COL, IP_COLS, \
+    IP_MAX_VALUES, add_geo_id, get_predictions
 
 # Cutoff date for training data
+from covid_xprize.validation.cost_generator import generate_costs
+
 CUTOFF_DATE = '2020-07-31'
 
 # Range of days the prescriptors will be evaluated on.

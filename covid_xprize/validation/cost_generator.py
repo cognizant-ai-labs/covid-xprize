@@ -9,14 +9,12 @@ import argparse
 
 import numpy as np
 
-from validation.scenario_generator import get_raw_data
-from validation.scenario_generator import NPI_COLUMNS as IP_COLUMNS
+from covid_xprize.validation.scenario_generator import get_raw_data
+from covid_xprize.validation.scenario_generator import NPI_COLUMNS as IP_COLUMNS
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 FIXTURES_PATH = os.path.join(ROOT_DIR, 'data')
 DATA_FILE = os.path.join(FIXTURES_PATH, "OxCGRT_latest.csv")
-
-
 
 
 def generate_costs(distribution='ones'):

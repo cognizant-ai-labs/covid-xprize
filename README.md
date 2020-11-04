@@ -24,7 +24,7 @@ Having registered for the contest, you should also have:
 * A pre-initialized sandbox within the XPRIZE system
 
 ## Examples
-Under the `examples` directory you will find some examples of predictors and prescriptors that you can 
+Under the `covid_xprize/examples` directory you will find some examples of predictors and prescriptors that you can 
 inspect to learn more about what you need to do:
 * `predictors/linear` contains a simple linear model, using the 
 [Lasso algorithm](https://en.wikipedia.org/wiki/Lasso_(statistics)).
@@ -43,7 +43,7 @@ resides in). The examples assume your working directory is set to the project ro
 it.
 1. Ensure your `PYTHONPATH` includes your current directory:
     ```shell script
-    export PYTHONPATH=.:$PYTHONPATH
+    export PYTHONPATH="$(pwd):$PYTHONPATH"
     ```
 1. Create a Python [virtual environment](https://docs.python.org/3/tutorial/venv.html)
 1. Activate the virtual environment
@@ -62,8 +62,8 @@ notebook -- in the case of `linear`, `Example-Train-Linear-Rollout-Model.ipynb`.
 Details are in the notebooks.
 
 ## XPRIZE sandbox
-Upon [registering for the contest](https://xprize.org/pandemicresponse), you will have been given access to a "sandbox", a virtual area within the XPRIZE
-cloud within which you can submit your work. 
+Upon [registering for the contest](https://xprize.org/pandemicresponse), you will have been given access to a "sandbox", 
+a virtual area within the XPRIZE cloud within which you can submit your work. 
 
 ### Submitting a predictor
 
@@ -115,7 +115,7 @@ references to other modules and resource files should be relative to that.
 `output_file`. Take careful note of the performance and timing requirements 
 in the Competition Guidelines for running your prescriptor. 
 
-Example prescriptors can be found under `examples/prescriptors/`.
+Example prescriptors can be found under `covid_xprize/examples/prescriptors/`.
 
 For more details on this API, consult the Competition Guidelines or the support Slack channel.
 
@@ -123,17 +123,23 @@ For more details on this API, consult the Competition Guidelines or the support 
 #### Sample trained predictor
 
 The repo also provides a sample trained predictor to train prescriptors against.
-To use it, copy `examples/predictors/lstm/tests/fixtures/trained_model_weights_for_tests.h5` to `examples/lstm/models/trained_model_weights.h5`,
-and call `examples/lstm/predict.py` to make predictions.
-See `get_predictions` in `examples/prescriptors/neat/utils.py` and
-`generate_cases_and_stringency_for_prescriptions` in `prescriptor_robojudge.ipynb` for
-examples of how to make this call.
+To use it, copy `covid_xprize/examples/predictors/lstm/tests/fixtures/trained_model_weights_for_tests.h5` 
+to `covid_xprize/examples/predictors/lstm/models/trained_model_weights.h5`,
+and call `covid_xprize/examples/predictors/lstm/predict.py` to make predictions.
+See `get_predictions` in `covid_xprize/examples/prescriptors/neat/utils.py` and
+`generate_cases_and_stringency_for_prescriptions` in `prescriptor_robojudge.ipynb` for examples of how to make 
+this call.
 
 
 ## More information/Support
-For more information and support, refer to the [competition guidelines](](https://xprize.org/pandemicresponse)) or post your questions in the support Slack channel; you should have gained access to both of these when you created a login in the competition platform.
+For more information and support, refer to the [competition guidelines](](https://xprize.org/pandemicresponse)) 
+or post your questions in the support Slack channel; you should have gained access to both of these when you created a 
+login in the competition platform.
 
-For a concrete visualization of what the competition is about, see Cognizant's [COVID-19 intervention optimization demo](https://evolution.ml/demos/npidashboard/). Using this dashboard you can select among different prescriptors from the Pareto Front to see the effect on prescriptions for intervention plans in various regions.
+For a concrete visualization of what the competition is about, see Cognizant's 
+[COVID-19 intervention optimization demo](https://evolution.ml/demos/npidashboard/). Using this dashboard you can 
+select among different prescriptors from the Pareto Front to see the effect on prescriptions for intervention plans 
+in various regions.
 
 For more background information please see also the research paper 
 [From Prediction to Prescription: Evolutionary Optimization of Non-Pharmaceutical Interventions in the COVID-19 Pandemic](https://arxiv.org/abs/2005.13766). 

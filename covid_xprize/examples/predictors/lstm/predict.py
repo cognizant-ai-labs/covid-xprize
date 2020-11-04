@@ -3,7 +3,7 @@
 import argparse
 import os
 
-from examples.predictors.lstm.xprize_predictor import XPrizePredictor
+from covid_xprize.examples.predictors.lstm.xprize_predictor import XPrizePredictor
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
