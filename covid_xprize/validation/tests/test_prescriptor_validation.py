@@ -3,7 +3,7 @@
 import os
 import unittest
 
-from validation.prescriptor_validation import validate_submission
+from covid_xprize.validation.prescriptor_validation import validate_submission
 
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
