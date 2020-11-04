@@ -32,10 +32,12 @@ def validate_submission(start_date: str,
     pred_df = pd.read_csv(submission_file,
                           parse_dates=['Date'],
                           encoding="ISO-8859-1",
+                          dtype={"RegionName": str},
                           error_bad_lines=True)
     ip_df = pd.read_csv(ip_file,
                         parse_dates=['Date'],
                         encoding="ISO-8859-1",
+                        dtype={"RegionName": str},
                         error_bad_lines=True)
 
     all_errors = []
