@@ -12,6 +12,7 @@ from validation.scenario_generator import generate_scenario, get_raw_data, NPI_C
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 FIXTURES_PATH = os.path.join(ROOT_DIR, 'fixtures')
 DATA_FILE = os.path.join(FIXTURES_PATH, "OxCGRT_latest.csv")
+DATES_MISMATCH_DATA_FILE = os.path.join(FIXTURES_PATH, "OxCGRT_dates_mismatch.csv")
 
 # Sets each NPI to level 1
 ONE_NPIS = [1] * len(NPI_COLUMNS)
@@ -400,9 +401,36 @@ class TestScenarioGenerator(unittest.TestCase):
         countries = None
         scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario="Freeze")
         self.assertIsNotNone(scenario_df)
-        nb_unique_geo = len(self.latest_df.groupby(['CountryName', 'RegionName']))
         nb_days_since_inception = (end_date - inception_date).days + 1
-        self.assertEqual(nb_days_since_inception * nb_unique_geo, len(scenario_df),
-                         f"Not the expected number of rows in the generated scenario:"
-                         f" {nb_unique_geo} geos times {nb_days_since_inception} days")
+        # For each country, assert the scenario contains the expected number of days
+        for country in self.latest_df.CountryName.unique():
+            all_regions = self.latest_df[self.latest_df.CountryName == country].RegionName.unique()
+            for region in all_regions:
+                ips_gdf = scenario_df[(scenario_df.CountryName == country) &
+                                      (scenario_df.RegionName == region)]
+                self.assertEqual(nb_days_since_inception, len(ips_gdf), f"Not the expected number of days"
+                                                                        f" for {country} / {region}")
 
+    def test_generate_scenario_mind_the_gap_freeze_different_last_known_dates(self):
+        # Check scenario contains all days, for 2 countries with different last known dates
+        # Last known date:
+        # - Belgium: 20201103
+        # - Brazil:  20201104
+        # Make sure we don't skip a day
+        start_date_str = "2021-01-01"
+        end_date_str = "2021-01-31"
+        countries = ["Belgium", "Brazil"]
+        incomplete_df = get_raw_data(DATES_MISMATCH_DATA_FILE, latest=False)
+        scenario_df = generate_scenario(start_date_str, end_date_str, incomplete_df, countries, scenario="Freeze")
+        self.assertIsNotNone(scenario_df)
+        # Misleading name but checks the elements, regardless of order
+        self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
+        # Inception is 2020-01-01. 366 days for 2020 + 31 for Jan 2021
+        nb_days_since_inception = 397
+        # For each country, assert the scenario contains the expected number of days
+        for country in countries:
+            all_regions = self.latest_df[self.latest_df.CountryName == country].RegionName.unique()
+            for region in all_regions:
+                ips_gdf = scenario_df[(scenario_df.CountryName == country) & (scenario_df.RegionName == region)]
+                self.assertEqual(nb_days_since_inception, len(ips_gdf), f"Not the expected number of days"
+                                                                        f" for {country} / {region}")
