@@ -97,10 +97,10 @@ def generate_scenario(start_date_str, end_date_str, raw_df, countries=None, scen
     if scenario == "Historical":
         return ips_df
 
-    new_rows = []
     for country in ips_df.CountryName.unique():
         all_regions = ips_df[ips_df.CountryName == country].RegionName.unique()
         for region in all_regions:
+            new_rows = []
             ips_gdf = ips_df[(ips_df.CountryName == country) &
                              (ips_df.RegionName == region)]
             country_name = ips_gdf.iloc[0].CountryName
@@ -136,14 +136,18 @@ def generate_scenario(start_date_str, end_date_str, raw_df, countries=None, scen
                 new_rows.append(new_row)
                 # Move to next day
                 current_date = current_date + np.timedelta64(1, 'D')
-    if new_rows:
-        future_rows_df = pd.DataFrame(new_rows, columns=ips_df.columns)
-        # Delete any old row that might have been replaced by a scenario one
-        replaced_dates = list(future_rows_df["Date"].unique())
-        ips_df = ips_df[ips_df["Date"].isin(replaced_dates) == False]
-        # Append the new rows
-        ips_df = ips_df.append(future_rows_df)
-        # Sort
-        ips_df.sort_values(by=ID_COLS, inplace=True)
+            # Add the new rows
+            if new_rows:
+                new_rows_df = pd.DataFrame(new_rows, columns=ips_df.columns)
+                # Delete any old row that might have been replaced by a scenario one for this country / region
+                replaced_dates = list(new_rows_df["Date"].unique())
+                rows_to_drop = ips_df[(ips_df.CountryName == country) &
+                                      (ips_df.RegionName == region) &
+                                      (ips_df.Date.isin(replaced_dates)) == True]
+                ips_df.drop(rows_to_drop.index, axis=0, inplace=True)
+                # Append the new rows
+                ips_df = ips_df.append(new_rows_df)
+                # Sort
+                ips_df.sort_values(by=ID_COLS, inplace=True)
 
     return ips_df
