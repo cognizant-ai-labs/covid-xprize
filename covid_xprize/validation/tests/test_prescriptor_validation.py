@@ -18,6 +18,7 @@ VALID_WITH_ADD_COLS_SUBMISSION = os.path.join(PRESCRIPTIONS_PATH, "valid_with_ad
 INVALID_RANGE_SUBMISSION = os.path.join(PRESCRIPTIONS_PATH, "invalid_range_submission.csv")
 MISSING_COUNTRY_SUBMISSION = os.path.join(PRESCRIPTIONS_PATH, "missing_country_submission.csv")
 BAD_DATES_SUBMISSION = os.path.join(PRESCRIPTIONS_PATH, "bad_dates_submission.csv")
+MULTI_PRESC_INDEX = os.path.join(PRESCRIPTIONS_PATH, "multi_presc_index_submission.csv")
 
 MISSING_COLUMNS = ["C1_School closing", "PrescriptionIndex"]
 
@@ -68,3 +69,7 @@ class TestPrescriptionValidation(unittest.TestCase):
                            'Aruba: Expected prediction for date 2020-08-03 but got 2020-08-04',
                            'Aruba: Expected prediction for date 2020-08-04 but got None']
         self.assertEqual(expected_errors, errors)
+
+    def test_multi_prescription_index(self):
+        errors = validate_submission("2020-08-01", "2020-08-05", IP_FILE_FEW_COUNTRIES, MULTI_PRESC_INDEX)
+        self.assertTrue(not errors, f"Unexpected errors: {errors}")

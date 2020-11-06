@@ -44,22 +44,28 @@ def validate_submission(start_date: str,
     presc_df = pd.read_csv(submission_file,
                            parse_dates=['Date'],
                            encoding="ISO-8859-1",
+                           dtype={"RegionName": str},
                            error_bad_lines=True)
     ip_df = pd.read_csv(ip_file,
                         parse_dates=['Date'],
                         encoding="ISO-8859-1",
+                        dtype={"RegionName": str},
                         error_bad_lines=True)
 
     all_errors = []
     # Check we got the expected columns
     all_errors += _check_columns(set(COLUMNS), presc_df)
     if not all_errors:
-        # Columns are good, check we got prescriptions for each requested country / region
-        all_errors += _check_geos(ip_df, presc_df)
-        # Check the IP values
-        all_errors += _check_prescription_values(presc_df)
-    #     # Check the prediction dates are correct
-        all_errors += _check_days(start_date, end_date, presc_df)
+        # For each individual prescription in the prescriptions file
+        prescription_indexes = presc_df.PrescriptionIndex.unique()
+        for i in prescription_indexes:
+            i_presc_df = presc_df[presc_df.PrescriptionIndex == i].copy()
+            # Columns are good, check we got prescriptions for each requested country / region
+            all_errors += _check_geos(ip_df, i_presc_df)
+            # Check the IP values
+            all_errors += _check_prescription_values(i_presc_df)
+            # Check the prediction dates are correct
+            all_errors += _check_days(start_date, end_date, i_presc_df)
 
     return all_errors
 
