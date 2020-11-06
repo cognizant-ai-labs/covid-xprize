@@ -49,7 +49,7 @@ it.
 1. Activate the virtual environment
 1. Install the necessary requirements:
     ```shell script
-    pip install -r requirements-txt --upgrade
+    pip install -r requirements.txt --upgrade
     ```    
 1. Start Jupyter services:
     ```shell script
