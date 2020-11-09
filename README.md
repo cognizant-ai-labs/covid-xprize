@@ -16,7 +16,7 @@ To run the examples, you will need:
 the XPRIZE team and Cognizant will be unable to support you.) 
 * Your machine must have sufficient resources in terms of memory, CPU, and disk space to train machine learning models 
 and run Python programs.
-* An installed version of Python, version ≥ 3.6
+* An installed version of Python, version ≥ 3.6. To avoid dependency issues, we strongly recommend using a standard Python [virtual environment](https://docs.python.org/3/tutorial/venv.html) with `pip` for package management. The examples in this repo assume you are using such an environment.
 
 Having registered for the contest, you should also have:
 * A copy of the Competition Guidelines
