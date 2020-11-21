@@ -24,10 +24,11 @@ Variation in government responses to covid-19
 1. Neil M Ferguson, Daniel Laydon, Gemma Nedjati-Gilani et al.  
 Impact of non-pharmaceutical interventions (NPIs)
 to reduce COVID-19 mortality and healthcare demand. Imperial College London (16-03-2020)  
-doi: https://doi.org/10.25561/77482.
+https://doi.org/10.25561/77482.
 1. Flaxman, S., Mishra, S., Gandy, A. et al.  
 Estimating the effects of non-pharmaceutical interventions on COVID-19 in Europe.  
-Nature 584, 257–261 (2020). https://doi.org/10.1038/s41586-020-2405-7
+Nature 584, 257–261 (2020).  
+https://doi.org/10.1038/s41586-020-2405-7
 1. Cédric Colas, Boris Hejblum, Sébastien Rouillon, Rodolphe Thiébaut, Pierre-Yves Oudeyer, Clément Moulin-Frier, Mélanie Prague  
-EpidemiOptim: A Toolbox for the Optimization of Control Policies in Epidemiological Models
+EpidemiOptim: A Toolbox for the Optimization of Control Policies in Epidemiological Models  
 [arXiv:2010.04452](https://arxiv.org/abs/2010.04452)
