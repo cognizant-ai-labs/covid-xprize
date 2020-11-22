@@ -1,3 +1,18 @@
+# Team Metis Milestone
+
+## Week 1
+Research: XPRIZE github, Kaggle notebooks, epidemiological models
+
+## Week 2
+Data gathering: Covid APIs on cases, death, testing and other datasets such as census, demographics, mobility, public policies, etc.
+
+## Week 3
+MVP: After Dec.8,2020, data cleaning, base models. Expected to work together on the weekend of Dec. 12 - 13, 2020.
+
+## Week 4
+Finalizing: More iterations. Expected to work together everyday in Week 4 and finalize the prediction by Dec.20, 2020.
+
+***
 # XPRIZE Pandemic Response Challenge
 
 ## Introduction
