@@ -1,4 +1,3 @@
-Anguilla__nan
 Azerbaijan__nan
 Benin__nan
 Belarus__nan
@@ -8,16 +7,13 @@ Cote d'Ivoire__nan
 Congo__nan
 Comoros__nan
 Cape Verde__nan
-Cayman Islands__nan
 Cyprus__nan
 Dominica__nan
 Eritrea__nan
 Ethiopia__nan
 Fiji__nan
-Falkland Islands__nan
 Gabon__nan
 Georgia__nan
-Gibraltar__nan
 Guinea__nan
 Greenland__nan
 Haiti__nan
@@ -28,16 +24,13 @@ Libya__nan
 Lithuania__nan
 Latvia__nan
 Moldova__nan
-Montserrat__nan
 Nepal__nan
-Pitcairn Islands__nan
 Palestine__nan
 Senegal__nan
 Solomon Islands__nan
 San Marino__nan
 Somalia__nan
 Suriname__nan
-Turks and Caicos Islands__nan
 Togo__nan
 Tajikistan__nan
 Turkmenistan__nan
@@ -45,7 +38,6 @@ Timor-Leste__nan
 Taiwan__nan
 United States__Washington DC
 United States__Virgin Islands
-British Virgin Islands__nan
 United States Virgin Islands__nan
 Vanuatu__nan
 Yemen__nan
