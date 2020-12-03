@@ -25,3 +25,6 @@ covid_xprize/examples/prescriptors/zero/prescriptions/
 
 covid_xprize/validation/tests/fixtures/OxCGRT_latest.csv
 
+# MacOS Desktop Services Store Files 
+.DS_Store
+
