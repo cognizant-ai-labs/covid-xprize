@@ -1,0 +1,83 @@
+BR_AC BRA Brazil Acre
+BR_AL BRA Brazil Alagoas
+BR_AM BRA Brazil Amazonas
+BR_AP BRA Brazil Amapa
+BR_BA BRA Brazil Bahia
+BR_CE BRA Brazil Ceara
+BR_DF BRA Brazil Distrito Federal
+BR_ES BRA Brazil Espirito Santo
+BR_GO BRA Brazil Goias
+BR_MA BRA Brazil Maranhao
+BR_MG BRA Brazil Minas Gerais
+BR_MS BRA Brazil Mato Grosso do Sul
+BR_MT BRA Brazil Mato Grosso
+BR_PA BRA Brazil Para
+BR_PB BRA Brazil Paraiba
+BR_PE BRA Brazil Pernambuco
+BR_PI BRA Brazil Piaui
+BR_PR BRA Brazil Parana
+BR_RJ BRA Brazil Rio de Janeiro
+BR_RN BRA Brazil Rio Grande do Norte
+BR_RO BRA Brazil Rondonia
+BR_RR BRA Brazil Roraima
+BR_RS BRA Brazil Rio Grande do Sul
+BR_SC BRA Brazil Santa Catarina
+BR_SE BRA Brazil Sergipe
+BR_SP BRA Brazil Sao Paulo
+BR_TO BRA Brazil Tocantins
+UK_ENG GBR United Kingdom England
+UK_NIR GBR United Kingdom Northern Ireland
+UK_SCO GBR United Kingdom Scotland
+UK_WAL GBR United Kingdom Wales
+US_AK USA United States Alaska
+US_AL USA United States Alabama
+US_AR USA United States Arkansas
+US_AZ USA United States Arizona
+US_CA USA United States California
+US_CO USA United States Colorado
+US_CT USA United States Connecticut
+US_DC USA United States Washington DC
+US_DE USA United States Delaware
+US_FL USA United States Florida
+US_GA USA United States Georgia
+US_HI USA United States Hawaii
+US_IA USA United States Iowa
+US_ID USA United States Idaho
+US_IL USA United States Illinois
+US_IN USA United States Indiana
+US_KS USA United States Kansas
+US_KY USA United States Kentucky
+US_LA USA United States Louisiana
+US_MA USA United States Massachusetts
+US_MD USA United States Maryland
+US_ME USA United States Maine
+US_MI USA United States Michigan
+US_MN USA United States Minnesota
+US_MO USA United States Missouri
+US_MS USA United States Mississippi
+US_MT USA United States Montana
+US_NC USA United States North Carolina
+US_ND USA United States North Dakota
+US_NE USA United States Nebraska
+US_NH USA United States New Hampshire
+US_NJ USA United States New Jersey
+US_NM USA United States New Mexico
+US_NV USA United States Nevada
+US_NY USA United States New York
+US_OH USA United States Ohio
+US_OK USA United States Oklahoma
+US_OR USA United States Oregon
+US_PA USA United States Pennsylvania
+US_RI USA United States Rhode Island
+US_SC USA United States South Carolina
+US_SD USA United States South Dakota
+US_TN USA United States Tennessee
+US_TX USA United States Texas
+US_UT USA United States Utah
+US_VA USA United States Virginia
+US_VI USA United States Virgin Islands
+US_VT USA United States Vermont
+US_WA USA United States Washington
+US_WI USA United States Wisconsin
+US_WV USA United States West Virginia
+US_WY USA United States Wyoming
