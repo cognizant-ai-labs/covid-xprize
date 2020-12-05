@@ -1,5 +1,5 @@
 import os
-from AlphanumericsTeam.data.util import VALID_COUNTRIES, VALID_REGIONS, get_orig_oxford_df, get_pop_df, DATA_FILE_PATH, COUNTRY_CODES, REGION_CODES
+from AlphanumericsTeam.data.util import VALID_COUNTRIES, VALID_REGIONS, get_orig_oxford_df, get_pop_df, DATA_FILE_PATH
 from AlphanumericsTeam.data.holiday import holiday_area
 from pprint import pprint
 from tqdm import tqdm
@@ -38,6 +38,8 @@ oxford_df['GeoID'] = oxford_df['CountryName'] + '__' + oxford_df['RegionName'].a
 pop_df = get_pop_df()
 tqdm.pandas()
 oxford_df[['Holidays','pop_2020', 'area_km2','density_perkm2']] = oxford_df.progress_apply(applyFunc, pop_df=pop_df, axis=1)
+
+oxford_df['Date'] = oxford_df['Date'].dt.strftime('%Y%m%d')
 
 AUG_DATA_PATH = os.path.join(DATA_FILE_PATH, "OxCGRT_latest_aug.csv")
 oxford_df.to_csv(AUG_DATA_PATH, index = False)

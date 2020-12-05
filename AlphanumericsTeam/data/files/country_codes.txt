@@ -1,181 +1,180 @@
-ABW,Aruba
-AFG,Afghanistan
-AGO,Angola
-ALB,Albania
-AND,Andorra
-ARE,United Arab Emirates
-ARG,Argentina
-AUS,Australia
-AUT,Austria
-AZE,Azerbaijan
-BDI,Burundi
-BEL,Belgium
-BEN,Benin
-BFA,Burkina Faso
-BGD,Bangladesh
-BGR,Bulgaria
-BHR,Bahrain
-BHS,Bahamas
-BIH,Bosnia and Herzegovina
-BLR,Belarus
-BLZ,Belize
-BMU,Bermuda
-BOL,Bolivia
-BRA,Brazil
-BRB,Barbados
-BRN,Brunei
-BTN,Bhutan
-BWA,Botswana
-CAF,Central African Republic
-CAN,Canada
-CHE,Switzerland
-CHL,Chile
-CHN,China
-CIV,Cote d'Ivoire
-CMR,Cameroon
-COD,Democratic Republic of Congo
-COG,Congo
-COL,Colombia
-COM,Comoros
-CPV,Cape Verde
-CRI,Costa Rica
-CUB,Cuba
-CYP,Cyprus
-CZE,Czech Republic
-DEU,Germany
-DJI,Djibouti
-DMA,Dominica
-DNK,Denmark
-DOM,Dominican Republic
-DZA,Algeria
-ECU,Ecuador
-EGY,Egypt
-ERI,Eritrea
-ESP,Spain
-EST,Estonia
-ETH,Ethiopia
-FIN,Finland
-FJI,Fiji
-FRA,France
-FRO,Faeroe Islands
-GAB,Gabon
-GBR,United Kingdom
-GEO,Georgia
-GHA,Ghana
-GIN,Guinea
-GMB,Gambia
-GRC,Greece
-GRL,Greenland
-GTM,Guatemala
-GUM,Guam
-GUY,Guyana
-HKG,Hong Kong
-HND,Honduras
-HRV,Croatia
-HTI,Haiti
-HUN,Hungary
-IDN,Indonesia
-IND,India
-IRL,Ireland
-IRN,Iran
-IRQ,Iraq
-ISL,Iceland
-ISR,Israel
-ITA,Italy
-JAM,Jamaica
-JOR,Jordan
-JPN,Japan
-KAZ,Kazakhstan
-KEN,Kenya
-KGZ,Kyrgyz Republic
-KHM,Cambodia
-KOR,South Korea
-KWT,Kuwait
-LAO,Laos
-LBN,Lebanon
-LBR,Liberia
-LBY,Libya
-LKA,Sri Lanka
-LSO,Lesotho
-LTU,Lithuania
-LUX,Luxembourg
-LVA,Latvia
-MAC,Macao
-MAR,Morocco
-MCO,Monaco
-MDA,Moldova
-MDG,Madagascar
-MEX,Mexico
-MLI,Mali
-MMR,Myanmar
-MNG,Mongolia
-MOZ,Mozambique
-MRT,Mauritania
-MUS,Mauritius
-MWI,Malawi
-MYS,Malaysia
-NAM,Namibia
-NER,Niger
-NGA,Nigeria
-NIC,Nicaragua
-NLD,Netherlands
-NOR,Norway
-NPL,Nepal
-NZL,New Zealand
-OMN,Oman
-PAK,Pakistan
-PAN,Panama
-PER,Peru
-PHL,Philippines
-PNG,Papua New Guinea
-POL,Poland
-PRI,Puerto Rico
-PRT,Portugal
-PRY,Paraguay
-PSE,Palestine
-QAT,Qatar
-RKS,Kosovo
-ROU,Romania
-RUS,Russia
-RWA,Rwanda
-SAU,Saudi Arabia
-SDN,Sudan
-SEN,Senegal
-SGP,Singapore
-SLB,Solomon Islands
-SLE,Sierra Leone
-SLV,El Salvador
-SMR,San Marino
-SOM,Somalia
-SRB,Serbia
-SSD,South Sudan
-SUR,Suriname
-SVK,Slovak Republic
-SVN,Slovenia
-SWE,Sweden
-SWZ,Eswatini
-SYC,Seychelles
-SYR,Syria
-TCD,Chad
-TGO,Togo
-THA,Thailand
-TJK,Tajikistan
-TLS,Timor-Leste
-TTO,Trinidad and Tobago
-TUN,Tunisia
-TUR,Turkey
-TWN,Taiwan
-TZA,Tanzania
-UGA,Uganda
-UKR,Ukraine
-URY,Uruguay
-USA,United States
-UZB,Uzbekistan
-VEN,Venezuela
-VIR,United States Virgin Islands
-VNM,Vietnam
-VUT,Vanuatu
-YEM,Yemen
-ZAF,South Africa
-ZMB,Zambia
-ZWE,Zimbabwe
+{'ABW': 'Aruba',
+ 'AFG': 'Afghanistan',
+ 'AGO': 'Angola',
+ 'ALB': 'Albania',
+ 'AND': 'Andorra',
+ 'ARE': 'United Arab Emirates',
+ 'ARG': 'Argentina',
+ 'AUS': 'Australia',
+ 'AUT': 'Austria',
+ 'AZE': 'Azerbaijan',
+ 'BDI': 'Burundi',
+ 'BEL': 'Belgium',
+ 'BEN': 'Benin',
+ 'BFA': 'Burkina Faso',
+ 'BGD': 'Bangladesh',
+ 'BGR': 'Bulgaria',
+ 'BHR': 'Bahrain',
+ 'BHS': 'Bahamas',
+ 'BIH': 'Bosnia and Herzegovina',
+ 'BLR': 'Belarus',
+ 'BLZ': 'Belize',
+ 'BMU': 'Bermuda',
+ 'BOL': 'Bolivia',
+ 'BRA': 'Brazil',
+ 'BRB': 'Barbados',
+ 'BRN': 'Brunei',
+ 'BTN': 'Bhutan',
+ 'BWA': 'Botswana',
+ 'CAF': 'Central African Republic',
+ 'CAN': 'Canada',
+ 'CHE': 'Switzerland',
+ 'CHL': 'Chile',
+ 'CHN': 'China',
+ 'CIV': "Cote d'Ivoire",
+ 'CMR': 'Cameroon',
+ 'COD': 'Democratic Republic of Congo',
+ 'COG': 'Congo',
+ 'COL': 'Colombia',
+ 'COM': 'Comoros',
+ 'CPV': 'Cape Verde',
+ 'CRI': 'Costa Rica',
+ 'CUB': 'Cuba',
+ 'CYP': 'Cyprus',
+ 'CZE': 'Czech Republic',
+ 'DEU': 'Germany',
+ 'DJI': 'Djibouti',
+ 'DMA': 'Dominica',
+ 'DNK': 'Denmark',
+ 'DOM': 'Dominican Republic',
+ 'DZA': 'Algeria',
+ 'ECU': 'Ecuador',
+ 'EGY': 'Egypt',
+ 'ERI': 'Eritrea',
+ 'ESP': 'Spain',
+ 'EST': 'Estonia',
+ 'ETH': 'Ethiopia',
+ 'FIN': 'Finland',
+ 'FJI': 'Fiji',
+ 'FRA': 'France',
+ 'FRO': 'Faeroe Islands',
+ 'GAB': 'Gabon',
+ 'GBR': 'United Kingdom',
+ 'GEO': 'Georgia',
+ 'GHA': 'Ghana',
+ 'GIN': 'Guinea',
+ 'GMB': 'Gambia',
+ 'GRC': 'Greece',
+ 'GRL': 'Greenland',
+ 'GTM': 'Guatemala',
+ 'GUM': 'Guam',
+ 'GUY': 'Guyana',
+ 'HKG': 'Hong Kong',
+ 'HND': 'Honduras',
+ 'HRV': 'Croatia',
+ 'HTI': 'Haiti',
+ 'HUN': 'Hungary',
+ 'IDN': 'Indonesia',
+ 'IND': 'India',
+ 'IRL': 'Ireland',
+ 'IRN': 'Iran',
+ 'IRQ': 'Iraq',
+ 'ISL': 'Iceland',
+ 'ISR': 'Israel',
+ 'ITA': 'Italy',
+ 'JAM': 'Jamaica',
+ 'JOR': 'Jordan',
+ 'JPN': 'Japan',
+ 'KAZ': 'Kazakhstan',
+ 'KEN': 'Kenya',
+ 'KGZ': 'Kyrgyz Republic',
+ 'KHM': 'Cambodia',
+ 'KOR': 'South Korea',
+ 'KWT': 'Kuwait',
+ 'LAO': 'Laos',
+ 'LBN': 'Lebanon',
+ 'LBR': 'Liberia',
+ 'LBY': 'Libya',
+ 'LKA': 'Sri Lanka',
+ 'LSO': 'Lesotho',
+ 'LTU': 'Lithuania',
+ 'LUX': 'Luxembourg',
+ 'LVA': 'Latvia',
+ 'MAC': 'Macao',
+ 'MAR': 'Morocco',
+ 'MCO': 'Monaco',
+ 'MDA': 'Moldova',
+ 'MDG': 'Madagascar',
+ 'MEX': 'Mexico',
+ 'MLI': 'Mali',
+ 'MMR': 'Myanmar',
+ 'MNG': 'Mongolia',
+ 'MOZ': 'Mozambique',
+ 'MRT': 'Mauritania',
+ 'MUS': 'Mauritius',
+ 'MWI': 'Malawi',
+ 'MYS': 'Malaysia',
+ 'NAM': 'Namibia',
+ 'NER': 'Niger',
+ 'NGA': 'Nigeria',
+ 'NIC': 'Nicaragua',
+ 'NLD': 'Netherlands',
+ 'NOR': 'Norway',
+ 'NPL': 'Nepal',
+ 'NZL': 'New Zealand',
+ 'OMN': 'Oman',
+ 'PAK': 'Pakistan',
+ 'PAN': 'Panama',
+ 'PER': 'Peru',
+ 'PHL': 'Philippines',
+ 'PNG': 'Papua New Guinea',
+ 'POL': 'Poland',
+ 'PRI': 'Puerto Rico',
+ 'PRT': 'Portugal',
+ 'PRY': 'Paraguay',
+ 'PSE': 'Palestine',
+ 'QAT': 'Qatar',
+ 'RKS': 'Kosovo',
+ 'ROU': 'Romania',
+ 'RUS': 'Russia',
+ 'RWA': 'Rwanda',
+ 'SAU': 'Saudi Arabia',
+ 'SDN': 'Sudan',
+ 'SEN': 'Senegal',
+ 'SGP': 'Singapore',
+ 'SLB': 'Solomon Islands',
+ 'SLE': 'Sierra Leone',
+ 'SLV': 'El Salvador',
+ 'SMR': 'San Marino',
+ 'SOM': 'Somalia',
+ 'SRB': 'Serbia',
+ 'SSD': 'South Sudan',
+ 'SUR': 'Suriname',
+ 'SVK': 'Slovak Republic',
+ 'SVN': 'Slovenia',
+ 'SWE': 'Sweden',
+ 'SWZ': 'Eswatini',
+ 'SYC': 'Seychelles',
+ 'SYR': 'Syria',
+ 'TCD': 'Chad',
+ 'TGO': 'Togo',
+ 'THA': 'Thailand',
+ 'TJK': 'Tajikistan',
+ 'TLS': 'Timor-Leste',
+ 'TTO': 'Trinidad and Tobago',
+ 'TUN': 'Tunisia',
+ 'TUR': 'Turkey',
+ 'TWN': 'Taiwan',
+ 'TZA': 'Tanzania',
+ 'UGA': 'Uganda',
+ 'UKR': 'Ukraine',
+ 'URY': 'Uruguay',
+ 'USA': 'United States',
+ 'UZB': 'Uzbekistan',
+ 'VEN': 'Venezuela',
+ 'VNM': 'Vietnam',
+ 'VUT': 'Vanuatu',
+ 'YEM': 'Yemen',
+ 'ZAF': 'South Africa',
+ 'ZMB': 'Zambia',
+ 'ZWE': 'Zimbabwe'}
