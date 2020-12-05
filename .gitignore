@@ -5,9 +5,11 @@ venv/
 __pycache__
 *.pyc
 .idea/
-
+.vscode
 predictions/
 prescriptions/
+AlphanumericsTeam/utils/oxford_region/*.csv
+AlphanumericsTeam/predictors/linear/data/*
 
 # Run the respective notebooks to download the data, train and persist the models and generate the predictions
 covid_xprize/examples/predictors/linear/data/
@@ -25,6 +27,5 @@ covid_xprize/examples/prescriptors/zero/prescriptions/
 
 covid_xprize/validation/tests/fixtures/OxCGRT_latest.csv
 
-# MacOS Desktop Services Store Files 
+# MacOS Desktop Services Store Files
 .DS_Store
-
