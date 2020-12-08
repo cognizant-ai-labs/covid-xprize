@@ -24,8 +24,9 @@ df = pd.read_csv(DATA_FILE,
                  error_bad_lines=False)
 
 # For testing, restrict training data to that before a hypothetical predictor submission date
-# vamos a predecir del 20 de nov al 5 de diciembre
-HYPOTHETICAL_SUBMISSION_DATE = np.datetime64("2020-11-19")
+# vamos a predecir del 13 de nov al 5 de diciembre para predecir 23 días
+# como es en la competencia
+HYPOTHETICAL_SUBMISSION_DATE = np.datetime64("2020-11-12")
 df = df[df.Date <= HYPOTHETICAL_SUBMISSION_DATE]                 
 
 # Add RegionID column that combines CountryName and RegionName for easier manipulation of data
