@@ -9,7 +9,7 @@ def add_test_data(oxford_path, tests_path):
     
     Parameters:
     oxford_path (str): path to oxford dataset
-    tests_path (str): path to tests_daaset
+    tests_path (str): path to tests_dataset
     
     """
     covid_tests = pd.read_csv(tests_path, 
