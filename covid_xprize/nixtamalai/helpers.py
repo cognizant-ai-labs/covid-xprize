@@ -35,3 +35,18 @@ def add_test_data(oxford_path, tests_path):
                    .join(covid_tests.rename_axis(oxford.index.names), how='left')
                   )
     return oxford_tests.reset_index()
+
+def update_OxCGRT_tests():
+    """Returns a dataframe with the latest data from oxford and covid tests.
+       Fetches latest data from OxCGRT and OWD and merges them
+    """
+    # source of latest Oxford data
+    OXFORD_URL = 'https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv'
+    # source of latest test data
+    TESTS_URL = "https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/testing/covid-testing-all-observations.csv"
+    # store them locally
+    OXFORD_FILE = '../data_sources/OxCGRT_latest.csv'
+    TESTS_FILE = '../data_sources/tests_latest.csv'
+    urllib.request.urlretrieve(OXFORD_URL, OXFORD_FILE)
+    urllib.request.urlretrieve(TESTS_URL, TESTS_FILE)
+    return add_test_data(OXFORD_FILE, TESTS_FILE)
