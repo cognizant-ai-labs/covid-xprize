@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 def add_test_data(oxford_path, tests_path):
     """Returns a dataframe with Oxford data merged with covid tests data.
@@ -50,3 +51,36 @@ def update_OxCGRT_tests():
     urllib.request.urlretrieve(OXFORD_URL, OXFORD_FILE)
     urllib.request.urlretrieve(TESTS_URL, TESTS_FILE)
     return add_test_data(OXFORD_FILE, TESTS_FILE)
+
+def hampel(vals_orig, k=7, threshold=3):
+    """Detect and filter outliers in a time series.
+    
+    Parameters
+    vals_orig: pandas series of values from which to remove outliers
+    k: size of window (including the sample; 7 is equal to 3 on either side of value)
+    threshold: number of standard deviations to filter outliers
+    
+    Returns
+    
+    """
+    
+    #Make copy so original not edited
+    vals = vals_orig.copy()
+    
+    #Hampel Filter
+    L = 1.4826 # Constant factor to estimate STD from MAD assuming normality
+    rolling_median = vals.rolling(window=k, center=True).median()
+    MAD = lambda x: np.median(np.abs(x - np.median(x)))
+    rolling_MAD = vals.rolling(window=k, center=True).apply(MAD)
+    threshold = threshold * L * rolling_MAD
+    difference = np.abs(vals - rolling_median)
+    
+    '''
+    Perhaps a condition should be added here in the case that the threshold value
+    is 0.0; maybe do not mark as outlier. MAD may be 0.0 without the original values
+    being equal. See differences between MAD vs SDV.
+    '''
+    
+    outlier_idx = difference > threshold
+    vals[outlier_idx] = rolling_median[outlier_idx] 
+    return(vals)
