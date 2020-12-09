@@ -12,14 +12,17 @@ def add_test_data(oxford_path, tests_path):
     tests_path (str): path to tests_dataset
     
     """
-    covid_tests = pd.read_csv(tests_path, 
-                 parse_dates=['Date'],
-                 encoding="ISO-8859-1",
-                 dtype={"RegionName": str,
-                        "RegionCode": str},
-                 error_bad_lines=False)
+    covid_tests = (pd.read_csv(tests_path, 
+                     parse_dates=['Date'],
+                     encoding="ISO-8859-1",
+                     dtype={"RegionName": str,
+                            "RegionCode": str},
+                     error_bad_lines=False)
+                    .rename({'ISO code': 'Code'}, axis=1)
+                  )
+    covid_tests.columns = covid_tests.columns.str.replace(' ', '_')
     # drop rows with null Code
-    covid_tests = covid_tests[covid_tests.Code.notna()]
+    covid_tests = covid_tests[covid_tests["Code"].notna()]
     covid_tests = covid_tests.set_index(['Code', 'Date'])
     oxford = pd.read_csv(oxford_path, 
                  parse_dates=['Date'],
@@ -30,7 +33,5 @@ def add_test_data(oxford_path, tests_path):
     oxford = oxford.set_index(['CountryCode', 'Date'])
     oxford_tests =(oxford
                    .join(covid_tests.rename_axis(oxford.index.names), how='left')
-                   .drop(['Entity', 'new_tests_per_thousand_7day_smoothed Annotations'], axis=1)
-                   .rename({'new_tests_per_thousand_7day_smoothed': 'covid_tests'})
                   )
     return oxford_tests.reset_index()
