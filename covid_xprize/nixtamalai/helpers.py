@@ -2,6 +2,11 @@ import pandas as pd
 import numpy as np
 import os
 import urllib
+import os
+from os import path
+
+CUR_DIRECTORY_PATH = path.abspath(os.path.dirname(__file__))
+
 
 def add_test_data(oxford_path, tests_path):
     """Returns a dataframe with Oxford data merged with covid tests data.
@@ -47,6 +52,14 @@ def add_test_data(oxford_path, tests_path):
                   )
     return oxford_tests.reset_index()
 
+
+def get_OxCGRT_tests():
+    _ = path.join(path.split(CUR_DIRECTORY_PATH)[0], 'data_sources')
+    OXFORD_FILE = path.join(_, 'OxCGRT_latest.csv')
+    TESTS_FILE = path.join(_, 'tests_latest.csv')    
+    return add_test_data(OXFORD_FILE, TESTS_FILE)
+
+
 def update_OxCGRT_tests():
     """Returns a dataframe with the latest data from oxford and covid tests.
        Fetches latest data from OxCGRT and OWD and merges them
@@ -56,11 +69,14 @@ def update_OxCGRT_tests():
     # source of latest test data
     TESTS_URL = "https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/testing/covid-testing-all-observations.csv"
     # store them locally
-    OXFORD_FILE = '../data_sources/OxCGRT_latest.csv'
-    TESTS_FILE = '../data_sources/tests_latest.csv'
+    _ = path.join(path.split(CUR_DIRECTORY_PATH)[0], 'data_sources')
+
+    OXFORD_FILE = path.join(_, 'OxCGRT_latest.csv')
+    TESTS_FILE = path.join(_, 'tests_latest.csv')
     urllib.request.urlretrieve(OXFORD_URL, OXFORD_FILE)
     urllib.request.urlretrieve(TESTS_URL, TESTS_FILE)
-    return add_test_data(OXFORD_FILE, TESTS_FILE)
+    return get_OxCGRT_tests()
+
 
 def hampel(vals_orig, k=7, threshold=3):
     """Detect and filter outliers in a time series.
@@ -95,6 +111,7 @@ def hampel(vals_orig, k=7, threshold=3):
     vals[outlier_idx] = rolling_median[outlier_idx] 
     return(vals)
 
+
 def preprocess(k=7, threshold=3, merge_owd=True):
     """Preprocess OxCGRT data.
     - Update data and merge with tests
@@ -108,7 +125,7 @@ def preprocess(k=7, threshold=3, merge_owd=True):
     - Return only relevant columns
     
     Parameters
-    k: size of window (including the sample; 7 is equal to 3 on either side of value)
+    k: size of window (including the sample; 7 is equal to 3 on either side of value). 0 Do not apply
     threshold: number of standard deviations to filter outliers
     merge_owd: wether we're going to merge OWD data
     
@@ -116,7 +133,7 @@ def preprocess(k=7, threshold=3, merge_owd=True):
     Dataframe with all variables merged and preprocessed.
     """
     # get updated data merged with tests
-    df = update_OxCGRT_tests()
+    df = get_OxCGRT_tests()
     # Add GeoID
     df['GeoID'] = df['CountryName'] + '__' + df['RegionName'].astype(str)
     # Add NewCases
@@ -145,7 +162,8 @@ def preprocess(k=7, threshold=3, merge_owd=True):
     for npi_col in npi_cols:
         df.update(df.groupby('GeoID')[npi_col].ffill().fillna(0))
     # Hampel filter (default values)
-    filtered = df.groupby('CountryCode').apply(lambda group: hampel(group.NewCases, k, threshold))
+    if k:
+        filtered = df.groupby('CountryCode').apply(lambda group: hampel(group.NewCases, k, threshold))
     filtered = filtered.reset_index()[['NewCases']]
     filtered.columns = ['NewCasesHampel']
     df = df.join(filtered)
@@ -157,6 +175,8 @@ def preprocess(k=7, threshold=3, merge_owd=True):
     cases_col = ['NewCases']
     df = df [id_cols + cases_col + npi_cols + tests_columns]
     if merge_owd:
-        owd = pd.read_csv("../data_sources/owd_by_country.csv").drop('Unnamed: 0', axis=1)
+        _ = path.join(path.split(CUR_DIRECTORY_PATH)[0], 'data_sources')
+        _ = path.join(_, 'owd_by_country.csv')        
+        owd = pd.read_csv(_).drop('Unnamed: 0', axis=1)
         df = df.merge(owd, on='CountryCode', how='left')
     return df
