@@ -9,7 +9,7 @@ import pandas as pd
 
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_FILE = os.path.join(ROOT_DIR, "models", "lars-all.pkl")
+MODEL_FILE = os.path.join(ROOT_DIR, "models", "lasso-all.pkl")
 DATA_FILE = os.path.join(ROOT_DIR, 'data', "OxCGRT_latest.csv")
 ID_COLS = ['CountryName',
            'RegionName',
@@ -81,7 +81,7 @@ def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str, ve
 
     # Add new cases column
     df['NewCases'] = df.groupby('GeoID').ConfirmedCases.diff().fillna(0)
-    #.rolling(7, min_periods=1).mean().apply(np.log).replace([np.inf, -np.inf], np.nan).fillna(0)
+    # .rolling(7, min_periods=1).mean().apply(np.log).replace([np.inf, -np.inf], np.nan).fillna(0)
 
     # Keep only columns of interest
     id_cols = ['CountryName',
@@ -131,6 +131,7 @@ def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str, ve
         MODELS = pickle.load(model_file)
 
     R = []
+
     for key, value in df.groupby("GeoID"):
         X = value.loc[:, npi_cols + cases_col].to_numpy()
         gips_df = ips_df.loc[ips_df.GeoID == key]
@@ -144,7 +145,7 @@ def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str, ve
             _ = gips_np[i].tolist()
             _.append(hy)
             del features[0]
-            features.append(_)
+            features.append(np.array(_))
             HY.append(hy)
         _ = gips_df.loc[:, id_cols].copy()
         _['PredictedDailyNewCases'] = HY

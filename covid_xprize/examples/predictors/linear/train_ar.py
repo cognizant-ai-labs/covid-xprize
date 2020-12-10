@@ -1,10 +1,11 @@
+
 import pickle
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 import os
 import urllib.request
-from sklearn.linear_model import LarsCV
+from sklearn.linear_model import LinearRegression
 
 
 # Main source for the training data
@@ -36,6 +37,7 @@ df['GeoID'] = df['CountryName'] + '__' + df['RegionName'].astype(str)
 
 # Add new cases column
 df['NewCases'] = df.groupby('GeoID').ConfirmedCases.diff().fillna(0)
+# .rolling(7, min_periods=1).mean().apply(np.log).replace([np.inf, -np.inf], np.nan).fillna(0)
 
 # Keep only columns of interest
 id_cols = ['CountryName',
@@ -72,14 +74,20 @@ LAGS = 30
 X = df.loc[:, npi_cols + cases_col].to_numpy()
 features = list()
 y = list()
-for lag in range(LAGS, X.shape[0] - LAGS - 1):
-    features.append(X[lag - LAGS:lag].flatten())
-    y.append(X[lag, -1])
-m = LarsCV().fit(np.array(features), np.array(y))
+
+for key, value in tqdm(df.groupby("GeoID")):
+    X = value.loc[:, npi_cols + cases_col].to_numpy()
+    if X.shape[0] <= LAGS:
+        continue
+    for lag in range(LAGS, X.shape[0] - LAGS - 1):
+        features.append(X[lag - LAGS:lag].flatten())
+        y.append(X[lag, -1])
+
+m = LinearRegression().fit(np.array(features), np.array(y))
 MODELS = m
 
 # Save model to file
 if not os.path.exists('models'):
     os.mkdir('models')
-with open('models/lars-all.pkl', 'wb') as model_file:
+with open('models/ar-all.pkl', 'wb') as model_file:
     pickle.dump(MODELS, model_file)

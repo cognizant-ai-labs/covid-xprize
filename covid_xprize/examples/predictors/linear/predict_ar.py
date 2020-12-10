@@ -9,7 +9,7 @@ import pandas as pd
 
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_FILE = os.path.join(ROOT_DIR, "models", "lars-all.pkl")
+MODEL_FILE = os.path.join(ROOT_DIR, "models", "ar-all.pkl")
 DATA_FILE = os.path.join(ROOT_DIR, 'data', "OxCGRT_latest.csv")
 ID_COLS = ['CountryName',
            'RegionName',

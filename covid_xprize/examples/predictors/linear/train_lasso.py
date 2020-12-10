@@ -1,10 +1,11 @@
+
 import pickle
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 import os
 import urllib.request
-from sklearn.linear_model import LarsCV
+from sklearn.linear_model import Lasso
 
 
 # Main source for the training data
@@ -29,7 +30,7 @@ df = pd.read_csv(DATA_FILE,
 # como es en la competencia
 HYPOTHETICAL_SUBMISSION_DATE = np.datetime64("2020-11-12")
 df = df[df.Date <= HYPOTHETICAL_SUBMISSION_DATE]
-df =  df.loc[df.ConfirmedCases >= 32]                 
+# df =  df.loc[df.ConfirmedCases >= 32]                 
 
 # Add RegionID column that combines CountryName and RegionName for easier manipulation of data
 df['GeoID'] = df['CountryName'] + '__' + df['RegionName'].astype(str)
@@ -68,18 +69,27 @@ for npi_col in npi_cols:
 
 # MODELS = dict()
 LAGS = 30
-
-X = df.loc[:, npi_cols + cases_col].to_numpy()
 features = list()
 y = list()
-for lag in range(LAGS, X.shape[0] - LAGS - 1):
-    features.append(X[lag - LAGS:lag].flatten())
-    y.append(X[lag, -1])
-m = LarsCV().fit(np.array(features), np.array(y))
+
+for key, value in tqdm(df.groupby("GeoID")):
+    X = value.loc[:, npi_cols + cases_col].to_numpy()
+    if X.shape[0] <= LAGS:
+        continue
+    for lag in range(LAGS, X.shape[0] - LAGS - 1):
+        features.append(X[lag - LAGS:lag].flatten())
+        y.append(X[lag, -1])
+
+m = Lasso(alpha=0.1,
+          precompute=True,
+          max_iter=10000,
+          positive=True,
+          selection='random')
+m.fit(np.array(features), np.array(y))
 MODELS = m
 
 # Save model to file
 if not os.path.exists('models'):
     os.mkdir('models')
-with open('models/lars-all.pkl', 'wb') as model_file:
+with open('models/lasso-all.pkl', 'wb') as model_file:
     pickle.dump(MODELS, model_file)
