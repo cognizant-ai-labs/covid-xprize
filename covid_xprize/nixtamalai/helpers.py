@@ -24,9 +24,17 @@ def add_test_data(oxford_path, tests_path):
                     .rename({'ISO code': 'Code'}, axis=1)
                   )
     covid_tests.columns = covid_tests.columns.str.replace(' ', '_')
+    covid_tests.columns = ['tests_' + c  if c not in ['Code', 'Date'] 
+                           else c for c in covid_tests.columns]
     # drop rows with null Code
     covid_tests = covid_tests[covid_tests["Code"].notna()]
-    covid_tests = covid_tests.set_index(['Code', 'Date'])
+    # set index for merge and drop unnecesary columns
+    covid_tests = (covid_tests.set_index(['Code', 'Date'])
+                  .drop(['tests_Source_label', 
+                         'tests_Source_URL', 
+                         'tests_Notes', 
+                         'tests_Entity'], axis=1)
+                  )
     oxford = pd.read_csv(oxford_path, 
                  parse_dates=['Date'],
                  encoding="ISO-8859-1",
@@ -86,3 +94,69 @@ def hampel(vals_orig, k=7, threshold=3):
     outlier_idx = difference > threshold
     vals[outlier_idx] = rolling_median[outlier_idx] 
     return(vals)
+
+def preprocess(k=7, threshold=3, merge_owd=True):
+    """Preprocess OxCGRT data.
+    - Update data and merge with tests
+    - Add CountryID
+    - Add NewCases 
+    - Handle missing data in NewCases
+    - Handle missing data in NPIs
+    - Handle missing data in Tests
+    - Fix outliers
+    - Optionally merge OWD data
+    - Return only relevant columns
+    
+    Parameters
+    k: size of window (including the sample; 7 is equal to 3 on either side of value)
+    threshold: number of standard deviations to filter outliers
+    merge_owd: wether we're going to merge OWD data
+    
+    Returns
+    Dataframe with all variables merged and preprocessed.
+    """
+    # get updated data merged with tests
+    df = update_OxCGRT_tests()
+    # Add GeoID
+    df['GeoID'] = df['CountryName'] + '__' + df['RegionName'].astype(str)
+    # Add NewCases
+    df['NewCases'] = df.groupby('GeoID').ConfirmedCases.diff().fillna(0)
+    # Missing data in NewCases
+    df.update(df.groupby('GeoID').NewCases.apply(
+        lambda group: group.interpolate()).fillna(0))
+    # Missing data in Tests
+    tests_columns = [c for c in df.columns if c.startswith('tests')]
+    for column in tests_columns:
+        df.update(df.groupby('GeoID')[column].apply(
+        lambda group: group.interpolate()).fillna(0))
+    # Missing data in NPIs assuming they are the same as previous day
+    npi_cols = ['C1_School closing',
+                'C2_Workplace closing',
+                'C3_Cancel public events',
+                'C4_Restrictions on gatherings',
+                'C5_Close public transport',
+                'C6_Stay at home requirements',
+                'C7_Restrictions on internal movement',
+                'C8_International travel controls',
+                'H1_Public information campaigns',
+                'H2_Testing policy',
+                'H3_Contact tracing',
+                'H6_Facial Coverings']
+    for npi_col in npi_cols:
+        df.update(df.groupby('GeoID')[npi_col].ffill().fillna(0))
+    # Hampel filter (default values)
+    filtered = df.groupby('CountryCode').apply(lambda group: hampel(group.NewCases, k, threshold))
+    filtered = filtered.reset_index()[['NewCases']]
+    filtered.columns = ['NewCasesHampel']
+    df = df.join(filtered)
+    id_cols = ['CountryName',
+               'CountryCode',
+               'RegionName',
+               'GeoID',
+               'Date']
+    cases_col = ['NewCases']
+    df = df [id_cols + cases_col + npi_cols + tests_columns]
+    if merge_owd:
+        owd = pd.read_csv("../data_sources/owd_by_country.csv").drop('Unnamed: 0', axis=1)
+        df = df.merge(owd, on='CountryCode', how='left')
+    return df
