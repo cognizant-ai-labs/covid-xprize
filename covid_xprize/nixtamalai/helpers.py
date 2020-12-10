@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import urllib
 
 def add_test_data(oxford_path, tests_path):
     """Returns a dataframe with Oxford data merged with covid tests data.
