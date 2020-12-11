@@ -173,7 +173,7 @@ def preprocess(k=7, threshold=3, merge_owd='imputed'):
                'RegionName',
                'GeoID',
                'Date']
-    cases_col = ['NewCases']
+    cases_col = ['NewCases', 'NewCasesHampel']
     df = df [id_cols + cases_col + npi_cols + tests_columns]
     if merge_owd == 'imputed':
         _ = path.join(path.split(CUR_DIRECTORY_PATH)[0], 'data_sources')
