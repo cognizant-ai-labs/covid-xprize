@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 from .helpers import NPI_COLS, ID_COLS, CASES_COL
+from .helpers import preprocess_npi
+from collections import OrderedDict
 
 
 class Features(object):
@@ -12,14 +14,21 @@ class Features(object):
         self._data = None
         self._stop_training = np.datetime64(date)
 
+    def update_prediction(self, hy: float) -> None:
+        self._last_hy = hy
+
+    @property
+    def lags(self):
+        return self._lags
+
     def get_data(self, exo, date, output, key, lag, y=True):
         lags = self._lags
-        f = {"e%s" % i: v for i, v in enumerate(exo[lag - lags:lag].flatten())}
-        f.update({"l%s" % i: v for i, v in enumerate(output[lag - lags:lag].flatten())})
+        f = OrderedDict(dict(GeoID=key))
+        f.update(Date=date[lag-1])
+        f.update([("e%s" % i, v) for i, v in enumerate(exo[lag - lags:lag].flatten())])
+        f.update([("l%s" % i, v) for i, v in enumerate(output[lag - lags:lag].flatten())])
         if y:
             f.update(dict(y=output[lag]))
-        f.update(GeoID=key)
-        f.update(Date=date[lag])
         return f
 
     def fit(self, data: pd.DataFrame) -> "Features":
@@ -32,7 +41,7 @@ class Features(object):
             output = value.loc[:, CASES_COL[0]].to_numpy()
             if exo.shape[0] <= lags:
                 continue
-            for lag in range(lags, exo.shape[0] - 1):
+            for lag in range(lags, exo.shape[0]):
                 D.append(self.get_data(exo, date, output, key, lag))
             D.append(self.get_data(exo, date, output, key, lag + 1, y=False))
         self._data = pd.DataFrame(D)
@@ -46,12 +55,28 @@ class Features(object):
 
     def transform(self, data: pd.DataFrame, start: str="2020-11-13", end: str="2020-12-05"):
         start = np.datetime64(start)
-        end = np.datetime64(start)
-        cnt = end - start + 1
+        end = np.datetime64(end)
+        data = data[(data.Date >= start) & (data.Date <= end)]
+        cnt = ((end - start) + 1).astype(int)
         max_date = self._data.Date.max()
         if start > max_date:
             start = max_date
         for key, value in self._data.groupby("GeoID"):
             X = value.loc[value.Date == start]
-            yield X.drop(columns=["Date", "y"])
-            
+            _ = X.drop(columns=["Date", "y"])
+            yield _
+            columns = _.columns
+            _ = _.to_numpy()
+            X = _[0, 1:-self.lags]
+            output = _[0, -self.lags:].tolist()
+            X.shape = (self.lags, int(X.shape[0] / self.lags))
+            X = X.tolist()
+            gips_df = data.loc[data.GeoID == key]
+            gips_np = gips_df.loc[:, NPI_COLS].to_numpy()
+            for i in range(cnt):
+                X.append(gips_np[i].tolist())
+                del X[0]
+                output.append(self._last_hy)
+                del output[0]
+                _ = np.concatenate(([key], np.array(X).flatten(), output))
+                yield pd.DataFrame([_], columns=columns)

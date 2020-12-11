@@ -77,6 +77,17 @@ def get_OxCGRT_tests():
     return add_test_data(OXFORD_FILE, TESTS_FILE)
 
 
+def get_OxCGRT():
+    _ = path.join(path.split(CUR_DIRECTORY_PATH)[0], 'data_sources')
+    OXFORD_FILE = path.join(_, 'OxCGRT_latest.csv')
+    return pd.read_csv(OXFORD_FILE, 
+                       parse_dates=['Date'],
+                       encoding="ISO-8859-1",
+                       dtype={"RegionName": str,
+                              "RegionCode": str},
+                       error_bad_lines=False)        
+
+
 def update_OxCGRT_tests():
     """Returns a dataframe with the latest data from oxford and covid tests.
        Fetches latest data from OxCGRT and OWD and merges them
@@ -128,6 +139,23 @@ def hampel(vals_orig, k=7, threshold=3):
     vals[outlier_idx] = rolling_median[outlier_idx] 
     return(vals)
 
+
+def preprocess_npi(df: pd.DataFrame)->None:
+    # Add GeoID
+    df['GeoID'] = df['CountryName'] + '__' + df['RegionName'].astype(str)
+    # Missing data in NPIs assuming they are the same as previous day
+    for npi_col in NPI_COLS:
+        df.update(df.groupby('GeoID')[npi_col].ffill().fillna(0))
+
+
+def preprocess_newcases(df: pd.DataFrame)->None:
+    # Add NewCases
+    df['NewCases'] = df.groupby('GeoID').ConfirmedCases.diff().fillna(0)
+    # Missing data in NewCases
+    df.update(df.groupby('GeoID').NewCases.apply(
+        lambda group: group.interpolate()).fillna(0))
+
+
 def preprocess(k=7, threshold=3, merge_owd='imputed'):
     """Preprocess OxCGRT data.
     - Update data and merge with tests
@@ -152,34 +180,21 @@ def preprocess(k=7, threshold=3, merge_owd='imputed'):
     """
     # get updated data merged with tests
     df = get_OxCGRT_tests()
-    # Add GeoID
-    df['GeoID'] = df['CountryName'] + '__' + df['RegionName'].astype(str)
-    # Add NewCases
-    df['NewCases'] = df.groupby('GeoID').ConfirmedCases.diff().fillna(0)
-    # Missing data in NewCases
-    df.update(df.groupby('GeoID').NewCases.apply(
-        lambda group: group.interpolate()).fillna(0))
+    preprocess_npi(df)
+    preprocess_newcases(df)
     # Missing data in Tests
     tests_columns = [c for c in df.columns if c.startswith('tests')]
     for column in tests_columns:
         df.update(df.groupby('GeoID')[column].apply(
         lambda group: group.interpolate()).fillna(0))
-    # Missing data in NPIs assuming they are the same as previous day
-    npi_cols = NPI_COLS
-    for npi_col in npi_cols:
-        df.update(df.groupby('GeoID')[npi_col].ffill().fillna(0))
     # Hampel filter (default values)
     filtered = df.groupby('CountryCode').apply(lambda group: hampel(group.NewCases, k, threshold))
     filtered = filtered.reset_index()[['NewCases']]
     filtered.columns = ['NewCasesHampel']
     df = df.join(filtered)
-    id_cols = ['CountryName',
-               'CountryCode',
-               'RegionName',
-               'GeoID',
-               'Date']
+
     cases_col = ['NewCases', 'NewCasesHampel']
-    df = df [id_cols + cases_col + npi_cols + tests_columns]
+    df = df[ID_COLS + CASES_COL + NPI_COLS + tests_columns]
     if merge_owd == 'imputed':
         _ = path.join(path.split(CUR_DIRECTORY_PATH)[0], 'data_sources')
         _ = path.join(_, 'owd_by_country_imputed.csv')
@@ -188,6 +203,6 @@ def preprocess(k=7, threshold=3, merge_owd='imputed'):
     elif merge_owd == 'original':
         _ = path.join(path.split(CUR_DIRECTORY_PATH)[0], 'data_sources')
         _ = path.join(_, 'owd_by_country.csv')
-        owd = pd.read_csv("../data_sources/owd_by_country.csv").drop('Unnamed: 0', axis=1)
+        owd = pd.read_csv(_).drop('Unnamed: 0', axis=1)
         df = df.merge(owd, on='CountryCode', how='left')
     return df
