@@ -26,3 +26,16 @@ def test_Features_transform():
     m = models.Features().fit(data)
     for X in m.transform(data):
         m.update_prediction(-10)
+
+
+def test_AR():
+    data = helpers.get_OxCGRT()
+    helpers.preprocess_npi(data)
+    helpers.preprocess_newcases(data)
+    m = models.Features().fit(data)
+    X, y = m.training_set()
+    ar = models.AR().fit(X, y)
+    for X in m.transform(data):
+        hy = ar.predict(X)[0]
+        assert np.isfinite(hy)
+        m.update_prediction(hy)

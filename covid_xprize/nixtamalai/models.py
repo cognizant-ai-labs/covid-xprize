@@ -80,3 +80,20 @@ class Features(object):
                 del output[0]
                 _ = np.concatenate(([key], np.array(X).flatten(), output))
                 yield pd.DataFrame([_], columns=columns)
+
+
+class AR(object):
+    def __init__(self):
+        from sklearn.linear_model import LinearRegression
+        self._model = LinearRegression()
+
+    def fit(self, X: pd.DataFrame, y: np.ndarray) -> "AR":
+        X = X.drop(columns="GeoID").to_numpy()
+        self._model.fit(X, y)
+        return self
+
+    def predict(self, X):
+        X = X.drop(columns="GeoID").to_numpy()
+        return self._model.predict(X)
+        
+
