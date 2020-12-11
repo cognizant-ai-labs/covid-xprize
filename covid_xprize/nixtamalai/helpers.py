@@ -186,3 +186,13 @@ def preprocess(k=7, threshold=3, merge_owd='imputed'):
         owd = pd.read_csv("../data_sources/owd_by_country.csv").drop('Unnamed: 0', axis=1)
         df = df.merge(owd, on='CountryCode', how='left')
     return df
+
+def mae(pred, true):
+    """Return the Median Absolute Error.
+    
+    Parameters
+    pred: array with predicted values
+    true: array with ground truth
+    """
+    return np.mean(np.abs(pred - true))
+    
