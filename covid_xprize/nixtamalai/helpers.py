@@ -6,6 +6,23 @@ import os
 from os import path
 
 CUR_DIRECTORY_PATH = path.abspath(os.path.dirname(__file__))
+NPI_COLS = ['C1_School closing',
+            'C2_Workplace closing',
+            'C3_Cancel public events',
+            'C4_Restrictions on gatherings',
+            'C5_Close public transport',
+            'C6_Stay at home requirements',
+            'C7_Restrictions on internal movement',
+            'C8_International travel controls',
+            'H1_Public information campaigns',
+            'H2_Testing policy',
+            'H3_Contact tracing',
+            'H6_Facial Coverings']
+ID_COLS = ['CountryName',
+           'RegionName',
+           'GeoID',
+           'Date']
+CASES_COL = ['NewCases']            
 
 
 def add_test_data(oxford_path, tests_path):
@@ -125,7 +142,7 @@ def preprocess(k=7, threshold=3, merge_owd=True):
     - Return only relevant columns
     
     Parameters
-    k: size of window (including the sample; 7 is equal to 3 on either side of value). 0 Do not apply
+    k: size of window (including the sample; 7 is equal to 3 on either side of value).
     threshold: number of standard deviations to filter outliers
     merge_owd: wether we're going to merge OWD data
     
@@ -147,23 +164,11 @@ def preprocess(k=7, threshold=3, merge_owd=True):
         df.update(df.groupby('GeoID')[column].apply(
         lambda group: group.interpolate()).fillna(0))
     # Missing data in NPIs assuming they are the same as previous day
-    npi_cols = ['C1_School closing',
-                'C2_Workplace closing',
-                'C3_Cancel public events',
-                'C4_Restrictions on gatherings',
-                'C5_Close public transport',
-                'C6_Stay at home requirements',
-                'C7_Restrictions on internal movement',
-                'C8_International travel controls',
-                'H1_Public information campaigns',
-                'H2_Testing policy',
-                'H3_Contact tracing',
-                'H6_Facial Coverings']
+    npi_cols = NPI_COLS
     for npi_col in npi_cols:
         df.update(df.groupby('GeoID')[npi_col].ffill().fillna(0))
     # Hampel filter (default values)
-    if k:
-        filtered = df.groupby('CountryCode').apply(lambda group: hampel(group.NewCases, k, threshold))
+    filtered = df.groupby('CountryCode').apply(lambda group: hampel(group.NewCases, k, threshold))
     filtered = filtered.reset_index()[['NewCases']]
     filtered.columns = ['NewCasesHampel']
     df = df.join(filtered)
