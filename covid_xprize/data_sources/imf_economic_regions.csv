@@ -1,0 +1,183 @@
+,CountryName,CountryCode,imf_region
+0,Afghanistan,AFG,LowIncomeOthers
+1,Albania,ALB,LowIncomeOthers
+2,Algeria,DZA,EmergingMiddleEast
+3,Andorra,AND,Euro
+4,Angola,AGO,EmergingAfrica
+5,Argentina,ARG,EmergingLatinAmerica
+6,Aruba,ABW,EmergingLatinAmerica
+7,Australia,AUS,HighIncomeOthers
+8,Austria,AUT,Euro
+9,Azerbaijan,AZE,EmergingEurope
+10,Bahamas,BHS,EmergingLatinAmerica
+11,Bahrain,BHR,EmergingMiddleEast
+12,Bangladesh,BGD,LowIncomeAsia
+13,Barbados,BRB,EmergingLatinAmerica
+14,Belarus,BLR,EmergingEurope
+15,Belgium,BEL,Euro
+16,Belize,BLZ,LowIncomeLatinAmerica
+17,Benin,BEN,LowIncomeAfrica
+18,Bermuda,BMU,EmergingLatinAmerica
+19,Bhutan,BTN,Others
+20,Bolivia,BOL,EmergingLatinAmerica
+21,Bosnia and Herzegovina,BIH,EmergingEurope
+22,Botswana,BWA,LowIncomeAfrica
+23,Brazil,BRA,EmergingLatinAmerica
+24,Brunei,BRN,EmergingAsia
+25,Bulgaria,BGR,EmergingEurope
+26,Burkina Faso,BFA,LowIncomeAfrica
+27,Burundi,BDI,LowIncomeAfrica
+28,Cambodia,KHM,LowIncomeAsia
+29,Cameroon,CMR,LowIncomeAfrica
+30,Canada,CAN,HighIncomeOthers
+31,Cape Verde,CPV,LowIncomeAfrica
+32,Central African Republic,CAF,LowIncomeAfrica
+33,Chad,TCD,LowIncomeAfrica
+34,Chile,CHL,EmergingLatinAmerica
+35,China,CHN,EmergingAsia
+36,Colombia,COL,EmergingLatinAmerica
+37,Comoros,COM,EmergingAfrica
+38,Congo,COG,EmergingAfrica
+39,Costa Rica,CRI,EmergingLatinAmerica
+40,Cote d'Ivoire,CIV,LowIncomeAfrica
+41,Croatia,HRV,EmergingEurope
+42,Cuba,CUB,EmergingLatinAmerica
+43,Cyprus,CYP,Euro
+44,Czech Republic,CZE,EmergingEurope
+45,Democratic Republic of Congo,COD,LowIncomeAfrica
+46,Denmark,DNK,Euro
+47,Djibouti,DJI,LowIncomeAfrica
+48,Dominica,DMA,EmergingLatinAmerica
+49,Dominican Republic,DOM,EmergingLatinAmerica
+50,Ecuador,ECU,EmergingLatinAmerica
+51,Egypt,EGY,EmergingMiddleEast
+52,El Salvador,SLV,LowIncomeLatinAmerica
+53,Eritrea,ERI,LowIncomeAfrica
+54,Estonia,EST,Euro
+55,Eswatini,SWZ,EmergingAfrica
+56,Ethiopia,ETH,LowIncomeAfrica
+57,Faeroe Islands,FRO,EmergingEurope
+58,Fiji,FJI,EmergingAsia
+59,Finland,FIN,Euro
+60,France,FRA,Euro
+61,Gabon,GAB,LowIncomeAfrica
+62,Gambia,GMB,LowIncomeAfrica
+63,Georgia,GEO,EmergingEurope
+64,Germany,DEU,Euro
+65,Ghana,GHA,LowIncomeAfrica
+66,Greece,GRC,Euro
+67,Greenland,GRL,Euro
+68,Guam,GUM,EmergingAsia
+69,Guatemala,GTM,LowIncomeLatinAmerica
+70,Guinea,GIN,LowIncomeAfrica
+71,Guyana,GUY,LowIncomeLatinAmerica
+72,Haiti,HTI,LowIncomeLatinAmerica
+73,Honduras,HND,LowIncomeLatinAmerica
+74,Hong Kong,HKG,EmergingAsia
+75,Hungary,HUN,EmergingEurope
+76,Iceland,ISL,EmergingEurope
+77,India,IND,EmergingAsia
+78,Indonesia,IDN,EmergingAsia
+79,Iran,IRN,EmergingMiddleEast
+80,Iraq,IRQ,EmergingMiddleEast
+81,Ireland,IRL,Euro
+82,Israel,ISR,Euro
+83,Italy,ITA,Euro
+84,Jamaica,JAM,EmergingLatinAmerica
+85,Japan,JPN,HighIncomeOthers
+86,Jordan,JOR,LowIncomeAsia
+87,Kazakhstan,KAZ,EmergingEurope
+88,Kenya,KEN,LowIncomeAfrica
+89,Kosovo,RKS,Others
+90,Kuwait,KWT,EmergingMiddleEast
+91,Kyrgyz Republic,KGZ,LowIncomeOthers
+92,Laos,LAO,LowIncomeAsia
+93,Latvia,LVA,Euro
+94,Lebanon,LBN,EmergingMiddleEast
+95,Lesotho,LSO,LowIncomeAfrica
+96,Liberia,LBR,LowIncomeAfrica
+97,Libya,LBY,EmergingMiddleEast
+98,Lithuania,LTU,Euro
+99,Luxembourg,LUX,Euro
+100,Macao,MAC,EmergingAsia
+101,Madagascar,MDG,LowIncomeAfrica
+102,Malawi,MWI,LowIncomeAfrica
+103,Malaysia,MYS,EmergingAsia
+104,Mali,MLI,LowIncomeAfrica
+105,Mauritania,MRT,LowIncomeAfrica
+106,Mauritius,MUS,EmergingAfrica
+107,Mexico,MEX,EmergingLatinAmerica
+108,Moldova,MDA,LowIncomeOthers
+109,Monaco,MCO,Euro
+110,Mongolia,MNG,LowIncomeAsia
+111,Morocco,MAR,EmergingMiddleEast
+112,Mozambique,MOZ,LowIncomeAfrica
+113,Myanmar,MMR,LowIncomeAsia
+114,Namibia,NAM,LowIncomeAfrica
+115,Nepal,NPL,LowIncomeAsia
+116,Netherlands,NLD,Euro
+117,New Zealand,NZL,HighIncomeOthers
+118,Nicaragua,NIC,LowIncomeLatinAmerica
+119,Niger,NER,LowIncomeAfrica
+120,Nigeria,NGA,LowIncomeAfrica
+121,Norway,NOR,Euro
+122,Oman,OMN,EmergingMiddleEast
+123,Pakistan,PAK,EmergingMiddleEast
+124,Palestine,PSE,LowIncomeAsia
+125,Panama,PAN,EmergingLatinAmerica
+126,Papua New Guinea,PNG,LowIncomeAsia
+127,Paraguay,PRY,EmergingLatinAmerica
+128,Peru,PER,EmergingLatinAmerica
+129,Philippines,PHL,EmergingAsia
+130,Poland,POL,EmergingEurope
+131,Portugal,PRT,Euro
+132,Puerto Rico,PRI,EmergingLatinAmerica
+133,Qatar,QAT,EmergingMiddleEast
+134,Romania,ROU,EmergingEurope
+135,Russia,RUS,EmergingEurope
+136,Rwanda,RWA,LowIncomeAfrica
+137,San Marino,SMR,Euro
+138,Saudi Arabia,SAU,EmergingMiddleEast
+139,Senegal,SEN,LowIncomeAfrica
+140,Serbia,SRB,EmergingEurope
+141,Seychelles,SYC,EmergingAfrica
+142,Sierra Leone,SLE,LowIncomeAfrica
+143,Singapore,SGP,EmergingAsia
+144,Slovak Republic,SVK,Euro
+145,Slovenia,SVN,Euro
+146,Solomon Islands,SLB,EmergingAsia
+147,Somalia,SOM,LowIncomeOthers
+148,South Africa,ZAF,EmergingAfrica
+149,South Korea,KOR,HighIncomeOthers
+150,South Sudan,SSD,LowIncomeAfrica
+151,Spain,ESP,Euro
+152,Sri Lanka,LKA,EmergingAsia
+153,Sudan,SDN,LowIncomeOthers
+154,Suriname,SUR,EmergingLatinAmerica
+155,Sweden,SWE,Euro
+156,Switzerland,CHE,Euro
+157,Syria,SYR,LowIncomeOthers
+158,Taiwan,TWN,EmergingAsia
+159,Tajikistan,TJK,LowIncomeOthers
+160,Tanzania,TZA,LowIncomeAfrica
+161,Thailand,THA,EmergingAsia
+162,Timor-Leste,TLS,LowIncomeAsia
+163,Togo,TGO,LowIncomeAfrica
+164,Trinidad and Tobago,TTO,LowIncomeLatinAmerica
+165,Tunisia,TUN,EmergingAfrica
+166,Turkey,TUR,EmergingEurope
+167,Turkmenistan,TKM,EmergingAsia
+168,Uganda,UGA,LowIncomeAfrica
+169,Ukraine,UKR,EmergingEurope
+170,United Arab Emirates,ARE,EmergingMiddleEast
+171,United Kingdom,GBR,Euro
+172,United States,USA,HighIncomeOthers
+173,United States Virgin Islands,VIR,HighIncomeOthers
+174,Uruguay,URY,EmergingLatinAmerica
+175,Uzbekistan,UZB,LowIncomeOthers
+176,Vanuatu,VUT,EmergingAsia
+177,Venezuela,VEN,EmergingLatinAmerica
+178,Vietnam,VNM,LowIncomeAsia
+179,Yemen,YEM,LowIncomeOthers
+180,Zambia,ZMB,LowIncomeAfrica
+181,Zimbabwe,ZWE,LowIncomeAfrica

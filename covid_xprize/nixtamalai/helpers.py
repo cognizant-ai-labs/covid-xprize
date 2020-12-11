@@ -128,8 +128,7 @@ def hampel(vals_orig, k=7, threshold=3):
     vals[outlier_idx] = rolling_median[outlier_idx] 
     return(vals)
 
-
-def preprocess(k=7, threshold=3, merge_owd=True):
+def preprocess(k=7, threshold=3, merge_owd='imputed'):
     """Preprocess OxCGRT data.
     - Update data and merge with tests
     - Add CountryID
@@ -144,7 +143,9 @@ def preprocess(k=7, threshold=3, merge_owd=True):
     Parameters
     k: size of window (including the sample; 7 is equal to 3 on either side of value).
     threshold: number of standard deviations to filter outliers
-    merge_owd: wether we're going to merge OWD data
+    merge_owd: 'imputed' -> merges imputed data; 
+               'original' -> merges original data;
+               anything else -> don't merge OWD  
     
     Returns
     Dataframe with all variables merged and preprocessed.
@@ -177,11 +178,16 @@ def preprocess(k=7, threshold=3, merge_owd=True):
                'RegionName',
                'GeoID',
                'Date']
-    cases_col = ['NewCases']
+    cases_col = ['NewCases', 'NewCasesHampel']
     df = df [id_cols + cases_col + npi_cols + tests_columns]
-    if merge_owd:
+    if merge_owd == 'imputed':
         _ = path.join(path.split(CUR_DIRECTORY_PATH)[0], 'data_sources')
-        _ = path.join(_, 'owd_by_country.csv')        
+        _ = path.join(_, 'owd_by_country_imputed.csv')
         owd = pd.read_csv(_).drop('Unnamed: 0', axis=1)
+        df = df.merge(owd, on='CountryCode', how='left')
+    elif merge_owd == 'original':
+        _ = path.join(path.split(CUR_DIRECTORY_PATH)[0], 'data_sources')
+        _ = path.join(_, 'owd_by_country.csv')
+        owd = pd.read_csv("../data_sources/owd_by_country.csv").drop('Unnamed: 0', axis=1)
         df = df.merge(owd, on='CountryCode', how='left')
     return df
