@@ -29,13 +29,26 @@ def test_Features_transform():
 
 
 def test_AR():
+    from microtc.utils import save_model
     data = helpers.get_OxCGRT()
     helpers.preprocess_npi(data)
     helpers.preprocess_newcases(data)
     m = models.Features().fit(data)
     X, y = m.training_set()
     ar = models.AR().fit(X, y)
+    save_model([m, ar], "AR.model")
     for X in m.transform(data):
         hy = ar.predict(X)[0]
         assert np.isfinite(hy)
         m.update_prediction(hy)
+
+
+def test_Lars():
+    from microtc.utils import save_model
+    data = helpers.get_OxCGRT()
+    helpers.preprocess_npi(data)
+    helpers.preprocess_newcases(data)
+    m = models.Features().fit(data)
+    X, y = m.training_set()
+    ar = models.Lars().fit(X, y)
+    save_model([m, ar], "Lars.model")
