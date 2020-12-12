@@ -57,7 +57,7 @@ class Features(object):
         start = np.datetime64(start)
         end = np.datetime64(end)
         data = data[(data.Date >= start) & (data.Date <= end)]
-        cnt = ((end - start) + 1).astype(int)
+        cnt = (end - start).astype(int)
         max_date = self._data.Date.max()
         if start > max_date:
             start = max_date
@@ -95,5 +95,10 @@ class AR(object):
     def predict(self, X):
         X = X.drop(columns="GeoID").to_numpy()
         return self._model.predict(X)
-        
+
+
+class Lars(AR):
+    def __init__(self):
+        from sklearn.linear_model import LarsCV
+        self._model = LarsCV()
 
