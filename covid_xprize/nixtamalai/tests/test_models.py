@@ -52,3 +52,18 @@ def test_Lars():
     X, y = m.training_set()
     ar = models.Lars().fit(X, y)
     save_model([m, ar], "Lars.model")
+
+
+def test_evomsa():
+    from microtc.utils import save_model
+    from EvoMSA import base
+    data = helpers.get_OxCGRT()
+    helpers.preprocess_npi(data)
+    helpers.preprocess_newcases(data)
+    m = models.Features().fit(data)
+    X, y = m.training_set()
+    evo = base.EvoMSA(TR=False, stacked_method=models.AR,
+                      classifier=False,
+                      models=[[models.Identity, models.AR],
+                              [models.Identity, models.Lars]]).fit(X, y)
+    save_model([m, evo], "evomsa.model")

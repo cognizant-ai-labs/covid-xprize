@@ -13,7 +13,7 @@ from collections import defaultdict
 
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_FILE = os.path.join(ROOT_DIR, "models", "Lars.model")
+MODEL_FILE = os.path.join(ROOT_DIR, "models", "evomsa.model")
 
 
 def predict(start_date: str,

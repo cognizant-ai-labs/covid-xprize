@@ -3,6 +3,7 @@ import numpy as np
 from .helpers import NPI_COLS, ID_COLS, CASES_COL
 from .helpers import preprocess_npi
 from collections import OrderedDict
+from typing import Union
 
 
 class Features(object):
@@ -87,18 +88,32 @@ class AR(object):
         from sklearn.linear_model import LinearRegression
         self._model = LinearRegression()
 
-    def fit(self, X: pd.DataFrame, y: np.ndarray) -> "AR":
-        X = X.drop(columns="GeoID").to_numpy()
+    def fit(self, X: Union[pd.DataFrame, np.ndarray], y: np.ndarray) -> "AR":
+        if isinstance(X, pd.DataFrame):
+            X = X.drop(columns="GeoID").to_numpy()
         self._model.fit(X, y)
         return self
 
-    def predict(self, X):
-        X = X.drop(columns="GeoID").to_numpy()
+    def predict(self, X: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
+        if isinstance(X, pd.DataFrame):
+            X = X.drop(columns="GeoID").to_numpy()
         return self._model.predict(X)
+
+    def decision_function(self, X: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
+        return self.predict(X)
 
 
 class Lars(AR):
     def __init__(self):
         from sklearn.linear_model import LarsCV
         self._model = LarsCV()
+
+
+class Identity(object):
+    def fit(self, X):
+        return self
+
+    def transform(self, X):
+        return X.drop(columns="GeoID").to_numpy()
+
 
