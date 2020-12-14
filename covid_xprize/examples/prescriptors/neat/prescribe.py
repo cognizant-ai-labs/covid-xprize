@@ -200,7 +200,7 @@ def prescribe(start_date_str: str,
 
     # Create the output directory if necessary.
     output_dir = os.path.dirname(output_file_path)
-    if output_dir is not '':
+    if output_dir != '':
         os.makedirs(output_dir, exist_ok=True)
 
     # Save to a csv file
