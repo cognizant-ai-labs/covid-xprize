@@ -70,6 +70,9 @@ def prescribe(start_date_str: str,
 
     # Fill in any missing case data before start_date
     # using predictor given past_ips_df.
+    # Note that the following assumes that the df returned by prepare_historical_df()
+    # has the same final date for all regions. This has been true so far, but relies
+    # on it being true for the Oxford data csv loaded by prepare_historical_df().
     last_historical_data_date_str = df['Date'].max()
     last_historical_data_date = pd.to_datetime(last_historical_data_date_str,
                                                format='%Y-%m-%d')
