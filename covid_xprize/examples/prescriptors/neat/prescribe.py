@@ -195,8 +195,10 @@ def prescribe(start_date_str: str,
     prescription_df = pd.concat(prescription_dfs)
     prescription_df = prescription_df.drop(columns='GeoID')
 
-    # Create the output path
-    os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
+    # Create the output directory if necessary.
+    output_dir = os.path.dirname(output_file_path)
+    if output_dir is not '':
+        os.makedirs(output_dir, exist_ok=True)
 
     # Save to a csv file
     prescription_df.to_csv(output_file_path, index=False)
