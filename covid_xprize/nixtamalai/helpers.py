@@ -185,7 +185,7 @@ def preprocess_full(k=7, threshold=3, merge_owd='imputed'):
     df = get_OxCGRT_tests()
     df = (df.pipe(preprocess_npi)
             .pipe(preprocess_newcases)
-        )
+    )
     # Missing data in Tests
     tests_columns = [c for c in df.columns if c.startswith('tests')]
     for column in tests_columns:
