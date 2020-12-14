@@ -20,6 +20,7 @@ NPI_COLS = ['C1_School closing',
             'H6_Facial Coverings']
 ID_COLS = ['CountryName',
            'RegionName',
+           'CountryCode',
            'GeoID',
            'Date']
 CASES_COL = ['NewCases']            
@@ -192,8 +193,6 @@ def preprocess(k=7, threshold=3, merge_owd='imputed'):
     filtered = filtered.reset_index()[['NewCases']]
     filtered.columns = ['NewCasesHampel']
     df = df.join(filtered)
-
-    cases_col = ['NewCases', 'NewCasesHampel']
     df = df[ID_COLS + CASES_COL + NPI_COLS + tests_columns]
     if merge_owd == 'imputed':
         _ = path.join(path.split(CUR_DIRECTORY_PATH)[0], 'data_sources')
