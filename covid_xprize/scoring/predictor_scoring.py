@@ -66,5 +66,5 @@ def add_population_column(df):
     """
 
     pop_df = XPrizePredictor._load_additional_context_df()
-    return df.merge(pop_df, on=['GeoID'], how='left', suffixes=('', '_y'))
+    return df.merge(pop_df[['GeoID', 'Population']], on=['GeoID'], how='left', suffixes=('', '_y'))
 
