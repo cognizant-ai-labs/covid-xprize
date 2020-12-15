@@ -97,7 +97,10 @@ class AR(object):
     def predict(self, X: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
         if isinstance(X, pd.DataFrame):
             X = X.drop(columns="GeoID").to_numpy()
-        return self._model.predict(X)
+        hy = self._model.predict(X)
+        hy[hy < 0 ] = 0
+        hy[~ np.isfinite(hy)] = np.exp(12)
+        return hy
 
     def decision_function(self, X: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
         return self.predict(X)
@@ -107,6 +110,22 @@ class Lars(AR):
     def __init__(self):
         from sklearn.linear_model import LarsCV
         self._model = LarsCV()
+
+
+class SVR(AR):
+    def __init__(self):
+        from sklearn.svm import SVR
+        self._model = SVR()
+
+
+class Lasso(AR):
+    def __init__(self):
+        from sklearn.linear_model import Lasso
+        self._model = Lasso(alpha=0.1,
+                            precompute=True,
+                            max_iter=10000,
+                            positive=True,
+                            selection='random')    
 
 
 class Identity(object):
