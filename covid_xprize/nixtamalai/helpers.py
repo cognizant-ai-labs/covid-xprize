@@ -20,6 +20,7 @@ NPI_COLS = ['C1_School closing',
             'H6_Facial Coverings']
 ID_COLS = ['CountryName',
            'RegionName',
+           'CountryCode',
            'GeoID',
            'Date']
 CASES_COL = ['NewCases']            
@@ -140,23 +141,25 @@ def hampel(vals_orig, k=7, threshold=3):
     return(vals)
 
 
-def preprocess_npi(df: pd.DataFrame)->None:
+def preprocess_npi(df: pd.DataFrame):
     # Add GeoID
     df['GeoID'] = df['CountryName'] + '__' + df['RegionName'].astype(str)
     # Missing data in NPIs assuming they are the same as previous day
     for npi_col in NPI_COLS:
         df.update(df.groupby('GeoID')[npi_col].ffill().fillna(0))
+    return df
 
 
-def preprocess_newcases(df: pd.DataFrame)->None:
+def preprocess_newcases(df: pd.DataFrame):
     # Add NewCases
     df['NewCases'] = df.groupby('GeoID').ConfirmedCases.diff().fillna(0)
     # Missing data in NewCases
     df.update(df.groupby('GeoID').NewCases.apply(
         lambda group: group.interpolate()).fillna(0))
+    return df
 
 
-def preprocess(k=7, threshold=3, merge_owd='imputed'):
+def preprocess_full(k=7, threshold=3, merge_owd='imputed'):
     """Preprocess OxCGRT data.
     - Update data and merge with tests
     - Add CountryID
@@ -180,8 +183,9 @@ def preprocess(k=7, threshold=3, merge_owd='imputed'):
     """
     # get updated data merged with tests
     df = get_OxCGRT_tests()
-    preprocess_npi(df)
-    preprocess_newcases(df)
+    df = (df.pipe(preprocess_npi)
+            .pipe(preprocess_newcases)
+    )
     # Missing data in Tests
     tests_columns = [c for c in df.columns if c.startswith('tests')]
     for column in tests_columns:
@@ -192,8 +196,6 @@ def preprocess(k=7, threshold=3, merge_owd='imputed'):
     filtered = filtered.reset_index()[['NewCases']]
     filtered.columns = ['NewCasesHampel']
     df = df.join(filtered)
-
-    cases_col = ['NewCases', 'NewCasesHampel']
     df = df[ID_COLS + CASES_COL + NPI_COLS + tests_columns]
     if merge_owd == 'imputed':
         _ = path.join(path.split(CUR_DIRECTORY_PATH)[0], 'data_sources')
@@ -206,3 +208,13 @@ def preprocess(k=7, threshold=3, merge_owd='imputed'):
         owd = pd.read_csv(_).drop('Unnamed: 0', axis=1)
         df = df.merge(owd, on='CountryCode', how='left')
     return df
+
+def mae(pred, true):
+    """Return the Median Absolute Error.
+    
+    Parameters
+    pred: array with predicted values
+    true: array with ground truth
+    """
+    return np.mean(np.abs(pred - true))
+    
