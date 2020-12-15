@@ -1,6 +1,7 @@
 name: covid-xprize
 channels:
   - conda-forge
+  - ingeotec
   - defaults
 dependencies:
   - python=3.7
@@ -15,6 +16,7 @@ dependencies:
   - nose=1.3.7
   - pip
   - jupyterlab
+  - microtc
   - pip:
     - neat-python==0.92
     - tensorflow==2.2.1
