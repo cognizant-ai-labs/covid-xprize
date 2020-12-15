@@ -61,8 +61,9 @@ def test_Lars():
 def test_Lasso():
     from microtc.utils import save_model
     data = helpers.get_OxCGRT()
-    helpers.preprocess_npi(data)
-    helpers.preprocess_newcases(data)
+    data = (data.pipe(helpers.preprocess_npi)
+                .pipe(helpers.preprocess_newcases)
+    )    
     m = models.Features().fit(data)
     X, y = m.training_set()
     ar = models.Lasso().fit(X, y)
@@ -73,8 +74,9 @@ def test_evomsa():
     from microtc.utils import save_model
     from EvoMSA import base
     data = helpers.get_OxCGRT()
-    helpers.preprocess_npi(data)
-    helpers.preprocess_newcases(data)
+    data = (data.pipe(helpers.preprocess_npi)
+                .pipe(helpers.preprocess_newcases)
+    )
     m = models.Features().fit(data)
     X, y = m.training_set()
     evo = base.EvoMSA(TR=False, stacked_method=models.AR,
