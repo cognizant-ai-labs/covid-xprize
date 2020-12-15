@@ -143,7 +143,9 @@ def hampel(vals_orig, k=7, threshold=3):
 
 def preprocess_npi(df: pd.DataFrame):
     # Add GeoID
-    df['GeoID'] = df['CountryName'] + '__' + df['RegionName'].astype(str)
+    df['GeoID'] = np.where(df["RegionName"].isnull(),
+                                      df["CountryName"],
+                                      df["CountryName"] + ' / ' + df["RegionName"])
     # Missing data in NPIs assuming they are the same as previous day
     for npi_col in NPI_COLS:
         df.update(df.groupby('GeoID')[npi_col].ffill().fillna(0))
@@ -159,7 +161,7 @@ def preprocess_newcases(df: pd.DataFrame):
     return df
 
 
-def preprocess_full(k=7, threshold=3, merge_owd='imputed'):
+def preprocess_full(k=7, threshold=3, merge_owd='imputed', tests=False):
     """Preprocess OxCGRT data.
     - Update data and merge with tests
     - Add CountryID
@@ -182,26 +184,33 @@ def preprocess_full(k=7, threshold=3, merge_owd='imputed'):
     Dataframe with all variables merged and preprocessed.
     """
     # get updated data merged with tests
-    df = get_OxCGRT_tests()
+    if tests:
+        df = get_OxCGRT_tests()
+        tests_columns = [c for c in df.columns if c.startswith('tests')]
+        all_columns = ID_COLS + CASES_COL + NPI_COLS + tests_columns
+        for column in tests_columns:
+            df.update(df.groupby('GeoID')[column].apply(
+            lambda group: group.interpolate()).fillna(0))
+    else:
+        all_columns = ID_COLS + CASES_COL + NPI_COLS
+        df = get_OxCGRT()
+
     df = (df.pipe(preprocess_npi)
             .pipe(preprocess_newcases)
     )
     # Missing data in Tests
-    tests_columns = [c for c in df.columns if c.startswith('tests')]
-    for column in tests_columns:
-        df.update(df.groupby('GeoID')[column].apply(
-        lambda group: group.interpolate()).fillna(0))
     # Hampel filter (default values)
     filtered = df.groupby('CountryCode').apply(lambda group: hampel(group.NewCases, k, threshold))
     filtered = filtered.reset_index()[['NewCases']]
     filtered.columns = ['NewCasesHampel']
     df = df.join(filtered)
-    df = df[ID_COLS + CASES_COL + NPI_COLS + tests_columns]
+    df = df[all_columns]
     if merge_owd == 'imputed':
         _ = path.join(path.split(CUR_DIRECTORY_PATH)[0], 'data_sources')
         _ = path.join(_, 'owd_by_country_imputed.csv')
         owd = pd.read_csv(_).drop('Unnamed: 0', axis=1)
-        df = df.merge(owd, on='CountryCode', how='left')
+        df = (df.merge(owd, on='CountryCode', how='left')
+              .drop('imf_region', axis=1))
     elif merge_owd == 'original':
         _ = path.join(path.split(CUR_DIRECTORY_PATH)[0], 'data_sources')
         _ = path.join(_, 'owd_by_country.csv')
