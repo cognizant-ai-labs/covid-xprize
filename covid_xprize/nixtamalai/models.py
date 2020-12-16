@@ -15,8 +15,12 @@ class Features(object):
         self._data = None
         self._stop_training = np.datetime64(date)
 
-    def update_prediction(self, hy: float) -> None:
+    def update_prediction(self, hy: np.ndarray) -> float:
+        hy[hy < 0 ] = 0
+        hy[~ np.isfinite(hy)] = np.exp(12)
+        hy = hy[0]
         self._last_hy = hy
+        return hy
 
     @property
     def lags(self):
@@ -65,6 +69,7 @@ class Features(object):
         if start > max_date:
             start = max_date
         for key, value in self._data.groupby("GeoID"):
+            self._last_key = key
             X = value.loc[value.Date == start]
             _ = X.drop(columns=["Date", "y"])
             yield _
@@ -86,6 +91,26 @@ class Features(object):
                 yield pd.DataFrame([_], columns=columns)
 
 
+class FeaturesN(Features):
+    def __init__(self, *args, **kwargs):
+        super(FeaturesN, self).__init__(*args, **kwargs)
+        self.population = None
+
+    def get_data(self, exo, date, output, key, lag, y=True):
+        _ = 100000 * np.array(output) / self.population[key] 
+        return super(FeaturesN, self).get_data(exo, date, _, key, lag, y=y)
+
+    def fit(self, data: pd.DataFrame) -> "Features":
+        self.population = {k:v for k, v in data.groupby("GeoID").Population.last().items()}
+        return super(FeaturesN, self).fit(data)
+
+    def update_prediction(self, hy: np.ndarray) -> float:
+        hy = super(FeaturesN, self).update_prediction(hy)
+        pop = self.population.get(self._last_key, 1)
+        hy = pop * hy / 100000
+        return hy
+
+
 class AR(object):
     def __init__(self):
         from sklearn.linear_model import LinearRegression
@@ -101,8 +126,6 @@ class AR(object):
         if isinstance(X, pd.DataFrame):
             X = X.drop(columns="GeoID").to_numpy()
         hy = self._model.predict(X)
-        hy[hy < 0 ] = 0
-        hy[~ np.isfinite(hy)] = np.exp(12)
         return hy
 
     def decision_function(self, X: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
