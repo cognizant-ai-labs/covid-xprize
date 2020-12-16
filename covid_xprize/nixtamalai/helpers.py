@@ -22,12 +22,19 @@ NPI_COLS = ['C1_School closing',
             'H2_Testing policy',
             'H3_Contact tracing',
             'H6_Facial Coverings']
+STATIC_COLS =['economic_freedom',
+              'gni_per_capita', 
+              'human_development',
+              'life_expectancy',
+              'average_years_school',
+              'political_regime',
+              'Population']
 ID_COLS = ['CountryName',
            'RegionName',
            'CountryCode',
            'GeoID',
            'Date']
-CASES_COL = ['NewCases']            
+CASES_COL = ['NewCasesHampel']            
 
 
 def add_test_data(oxford_path, tests_path):
@@ -244,6 +251,7 @@ def preprocess_full(k=7, threshold=3, merge_owd='imputed', tests=False):
     df = (df.merge(country_pop_df, on='GeoID', how='left')
           .drop('CountryName_y', axis=1)
           .rename({'CountryName_x': 'CountryName'}, axis=1)
+          .dropna()
           )
     return df
 
