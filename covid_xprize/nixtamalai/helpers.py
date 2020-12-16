@@ -251,7 +251,7 @@ def preprocess_full(k=7, threshold=3, merge_owd='imputed', tests=False):
     df = (df.merge(country_pop_df, on='GeoID', how='left')
           .drop('CountryName_y', axis=1)
           .rename({'CountryName_x': 'CountryName'}, axis=1)
-          .dropna()
+          .dropna(subset=['Population'])
           )
     return df
 
