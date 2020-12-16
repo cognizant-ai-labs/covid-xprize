@@ -56,7 +56,7 @@ def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str, ve
                               encoding="ISO-8859-1",
                               dtype={"RegionName": str},
                               error_bad_lines=True)
-    preprocess_npi(hist_ips_df)
+    hist_ips_df = preprocess_npi(hist_ips_df)
     trans, model = load_model(MODEL_FILE)
     output = defaultdict(list)
     for X in trans.transform(hist_ips_df, start_date_str, end_date_str):

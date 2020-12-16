@@ -31,7 +31,7 @@ STATIC_COLS =['economic_freedom',
               'Population']
 ID_COLS = ['CountryName',
            'RegionName',
-           'CountryCode',
+           # 'CountryCode',
            'GeoID',
            'Date']
 CASES_COL = ['NewCasesHampel']            
