@@ -1,11 +1,15 @@
 import pandas as pd
 import numpy as np
-import os
 import urllib
-import os
 from os import path
 
-CUR_DIRECTORY_PATH = path.abspath(os.path.dirname(__file__))
+CUR_DIRECTORY_PATH = path.abspath(path.dirname(__file__))
+DATA_PATH = path.join(path.split(CUR_DIRECTORY_PATH)[0], 'data_sources')
+ADDITIONAL_CONTEXT_FILE = path.join(DATA_PATH, "Additional_Context_Data_Global.csv")
+ADDITIONAL_US_STATES_CONTEXT = path.join(DATA_PATH, "US_states_populations.csv")
+ADDITIONAL_UK_CONTEXT = path.join(DATA_PATH, "uk_populations.csv")
+ADDITIONAL_BRAZIL_CONTEXT = path.join(DATA_PATH, "brazil_populations.csv")
+US_PREFIX = "United States / "
 NPI_COLS = ['C1_School closing',
             'C2_Workplace closing',
             'C3_Cancel public events',
@@ -18,12 +22,19 @@ NPI_COLS = ['C1_School closing',
             'H2_Testing policy',
             'H3_Contact tracing',
             'H6_Facial Coverings']
+STATIC_COLS =['economic_freedom',
+              'gni_per_capita', 
+              'human_development',
+              'life_expectancy',
+              'average_years_school',
+              'political_regime',
+              'Population']
 ID_COLS = ['CountryName',
            'RegionName',
            'CountryCode',
            'GeoID',
            'Date']
-CASES_COL = ['NewCases']            
+CASES_COL = ['NewCasesHampel']            
 
 
 def add_test_data(oxford_path, tests_path):
@@ -143,7 +154,9 @@ def hampel(vals_orig, k=7, threshold=3):
 
 def preprocess_npi(df: pd.DataFrame):
     # Add GeoID
-    df['GeoID'] = df['CountryName'] + '__' + df['RegionName'].astype(str)
+    df['GeoID'] = np.where(df["RegionName"].isnull(),
+                                      df["CountryName"],
+                                      df["CountryName"] + ' / ' + df["RegionName"])
     # Missing data in NPIs assuming they are the same as previous day
     for npi_col in NPI_COLS:
         df.update(df.groupby('GeoID')[npi_col].ffill().fillna(0))
@@ -159,7 +172,7 @@ def preprocess_newcases(df: pd.DataFrame):
     return df
 
 
-def preprocess_full(k=7, threshold=3, merge_owd='imputed'):
+def preprocess_full(k=7, threshold=3, merge_owd='imputed', tests=False):
     """Preprocess OxCGRT data.
     - Update data and merge with tests
     - Add CountryID
@@ -182,31 +195,64 @@ def preprocess_full(k=7, threshold=3, merge_owd='imputed'):
     Dataframe with all variables merged and preprocessed.
     """
     # get updated data merged with tests
-    df = get_OxCGRT_tests()
+    if tests:
+        df = get_OxCGRT_tests()
+        tests_columns = [c for c in df.columns if c.startswith('tests')]
+        all_columns = ID_COLS + CASES_COL + NPI_COLS + tests_columns
+        # Missing data in Tests
+        for column in tests_columns:
+            df.update(df.groupby('GeoID')[column].apply(
+            lambda group: group.interpolate()).fillna(0))
+    else:
+        all_columns = ID_COLS + CASES_COL + NPI_COLS
+        df = get_OxCGRT()
+
     df = (df.pipe(preprocess_npi)
             .pipe(preprocess_newcases)
     )
-    # Missing data in Tests
-    tests_columns = [c for c in df.columns if c.startswith('tests')]
-    for column in tests_columns:
-        df.update(df.groupby('GeoID')[column].apply(
-        lambda group: group.interpolate()).fillna(0))
     # Hampel filter (default values)
     filtered = df.groupby('CountryCode').apply(lambda group: hampel(group.NewCases, k, threshold))
     filtered = filtered.reset_index()[['NewCases']]
     filtered.columns = ['NewCasesHampel']
     df = df.join(filtered)
-    df = df[ID_COLS + CASES_COL + NPI_COLS + tests_columns]
+    df = df[all_columns]
     if merge_owd == 'imputed':
-        _ = path.join(path.split(CUR_DIRECTORY_PATH)[0], 'data_sources')
-        _ = path.join(_, 'owd_by_country_imputed.csv')
+        _ = path.join(DATA_PATH, 'owd_by_country_imputed.csv')
         owd = pd.read_csv(_).drop('Unnamed: 0', axis=1)
-        df = df.merge(owd, on='CountryCode', how='left')
+        df = (df.merge(owd, on='CountryCode', how='left')
+              .drop('imf_region', axis=1))
     elif merge_owd == 'original':
-        _ = path.join(path.split(CUR_DIRECTORY_PATH)[0], 'data_sources')
-        _ = path.join(_, 'owd_by_country.csv')
+        _ = path.join(DATA_PATH, 'owd_by_country.csv')
         owd = pd.read_csv(_).drop('Unnamed: 0', axis=1)
         df = df.merge(owd, on='CountryCode', how='left')
+    # Merge population data
+    country_pop_df = pd.read_csv(ADDITIONAL_CONTEXT_FILE,
+                                            usecols=['CountryName', 'Population'])
+    country_pop_df['GeoID'] = country_pop_df['CountryName']
+
+    # US state level population
+    us_states_pop_df = pd.read_csv(ADDITIONAL_US_STATES_CONTEXT,
+                                                usecols=['NAME', 'POPESTIMATE2019'])
+    # change names so we can simply append the dataframes
+    us_states_pop_df = us_states_pop_df.rename(columns={'POPESTIMATE2019': 'Population'})
+    # GeoID for the states
+    us_states_pop_df['GeoID'] = US_PREFIX + us_states_pop_df['NAME']
+    # Append
+    country_pop_df = country_pop_df.append(us_states_pop_df)
+    # UK population 
+    uk_pop_df = pd.read_csv(ADDITIONAL_UK_CONTEXT)
+    # Append
+    country_pop_df = country_pop_df.append(uk_pop_df)
+    # Brazil population
+    brazil_pop_df = pd.read_csv(ADDITIONAL_BRAZIL_CONTEXT)
+    country_pop_df = (country_pop_df.append(brazil_pop_df)
+                      .drop('NAME', axis=1)
+                     )
+    df = (df.merge(country_pop_df, on='GeoID', how='left')
+          .drop('CountryName_y', axis=1)
+          .rename({'CountryName_x': 'CountryName'}, axis=1)
+          .dropna()
+          )
     return df
 
 def mae(pred, true):

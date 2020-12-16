@@ -26,6 +26,7 @@ class Features(object):
         lags = self._lags
         f = OrderedDict(dict(GeoID=key))
         f.update(Date=date[lag-1])
+        #TODO: pegar datos estáticos para el país key (las predicciones queden al final)
         f.update([("e%s" % i, v) for i, v in enumerate(exo[lag - lags:lag].flatten())])
         f.update([("l%s" % i, v) for i, v in enumerate(output[lag - lags:lag].flatten())])
         if y:
@@ -49,6 +50,7 @@ class Features(object):
         return self
 
     def training_set(self):
+        #TODO: convertir a tasa * 100,000
         data = self._data.dropna()
         y = data.loc[:, "y"].to_numpy()
         data.drop(columns=["Date", "y"], inplace=True)
@@ -80,6 +82,7 @@ class Features(object):
                 output.append(self._last_hy)
                 del output[0]
                 _ = np.concatenate(([key], np.array(X).flatten(), output))
+                #TODO: pegar datos estáticos para el país key (las predicciones queden al final)
                 yield pd.DataFrame([_], columns=columns)
 
 
