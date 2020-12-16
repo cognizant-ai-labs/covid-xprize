@@ -68,9 +68,9 @@ class Features(object):
         max_date = self._data.Date.max()
         if start > max_date:
             start = max_date
-        for key, value in self._data.groupby("GeoID"):
+        for key in data.GeoID.unique():
             self._last_key = key
-            X = value.loc[value.Date == start]
+            X = self._data.loc[(self._data.Date == start) & (self._data.GeoID == key)]
             _ = X.drop(columns=["Date", "y"])
             yield _
             columns = _.columns
@@ -81,7 +81,7 @@ class Features(object):
             X = X.tolist()
             gips_df = data.loc[data.GeoID == key]
             gips_np = gips_df.loc[:, NPI_COLS].to_numpy()
-            for i in range(cnt):
+            for i in range(min(cnt, gips_np.shape[0])):
                 X.append(gips_np[i].tolist())
                 del X[0]
                 output.append(self._last_hy)

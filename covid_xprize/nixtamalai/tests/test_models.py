@@ -11,20 +11,14 @@ def test_Features_fit():
 
 
 def test_Features_traning_set():
-    data = helpers.get_OxCGRT()
-    data = (data.pipe(helpers.preprocess_npi)
-                .pipe(helpers.preprocess_newcases)
-    )
+    data = helpers.preprocess_full()
     m = models.Features().fit(data)
     X, y = m.training_set()
     assert isinstance(X, pd.DataFrame) and isinstance(y, np.ndarray)
 
 
 def test_Features_transform():
-    data = helpers.get_OxCGRT()
-    data = (data.pipe(helpers.preprocess_npi)
-                .pipe(helpers.preprocess_newcases)
-    )
+    data = helpers.preprocess_full()
     m = models.Features().fit(data)
     for X in m.transform(data):
         m.update_prediction(-10)
@@ -32,10 +26,6 @@ def test_Features_transform():
 
 def test_AR():
     from microtc.utils import save_model
-    # data = helpers.get_OxCGRT()
-    # data = (data.pipe(helpers.preprocess_npi)
-    #             .pipe(helpers.preprocess_newcases)
-    # )
     data = helpers.preprocess_full()
     m = models.Features().fit(data)
     X, y = m.training_set()
@@ -48,10 +38,7 @@ def test_AR():
 
 def test_Lars():
     from microtc.utils import save_model
-    data = helpers.get_OxCGRT()
-    data = (data.pipe(helpers.preprocess_npi)
-                .pipe(helpers.preprocess_newcases)
-    )
+    data = helpers.preprocess_full()
     m = models.Features().fit(data)
     X, y = m.training_set()
     ar = models.Lars().fit(X, y)
@@ -73,10 +60,7 @@ def test_Lasso():
 def test_evomsa():
     from microtc.utils import save_model
     from EvoMSA import base
-    data = helpers.get_OxCGRT()
-    data = (data.pipe(helpers.preprocess_npi)
-                .pipe(helpers.preprocess_newcases)
-    )
+    data = helpers.preprocess_full()
     m = models.Features().fit(data)
     X, y = m.training_set()
     evo = base.EvoMSA(TR=False, stacked_method=models.AR,
@@ -96,3 +80,28 @@ def test_transform_population():
         hy = m.update_prediction(np.array([10]))
         assert hy != 10
         break
+
+
+def test_AR_N():
+    from microtc.utils import save_model
+    data = helpers.preprocess_full()
+    m = models.FeaturesN().fit(data)
+    X, y = m.training_set()
+    ar = models.AR().fit(X, y)
+    save_model([m, ar], "ARN.model")
+
+
+
+def test_evomsaN():
+    from microtc.utils import save_model
+    from EvoMSA import base
+    data = helpers.preprocess_full()
+    m = models.FeaturesN().fit(data)
+    X, y = m.training_set()
+    evo = base.EvoMSA(TR=False, stacked_method=models.AR,
+                      classifier=False,
+                      models=[[models.Identity, models.AR],
+                              [models.Identity, models.Lars],
+                              # [models.Identity, models.SVR],
+                              [models.Identity, models.Lasso]]).fit(X, y)
+    save_model([m, evo], "evomsaN.model")
