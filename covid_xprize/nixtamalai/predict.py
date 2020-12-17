@@ -69,7 +69,7 @@ def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str, ve
     hist_ips_df = hist_ips_df[(hist_ips_df.Date >= start_date) & (hist_ips_df.Date <= end_date)]
     for key, value in output.items():
         geo_pred_df = hist_ips_df.loc[hist_ips_df.GeoID == key, ID_COLS].copy()
-        geo_pred_df['PredictedDailyNewCases'] = value
+        geo_pred_df['PredictedDailyNewCases'] = value[-geo_pred_df.shape[0]:]
         geo_pred_dfs.append(geo_pred_df)
     pred_df = pd.concat(geo_pred_dfs)
     # Drop GeoID column to match expected output format
