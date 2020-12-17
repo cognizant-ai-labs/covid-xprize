@@ -165,10 +165,9 @@ class Identity(object):
 class KMeans(object):
     def fit(self, X):
         from sklearn.cluster import KMeans
-        from sklearn.metrics import silhouette_score
         r = [(k, v.l29.to_numpy()[-28:]) for k, v in X.groupby("GeoID")]
         data = np.array([x[1] for x in r])
-        kmeans = KMeans(n_clusters=3).fit(data)
+        kmeans = KMeans(n_clusters=2).fit(data)
         self.group = {k: v for (k, _), v  in zip(r, kmeans.predict(data))}
         return self
 
