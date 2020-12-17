@@ -117,4 +117,18 @@ def test_kmeans():
                       models=[[models.KMeans, models.ARG],
                               [models.KMeans, models.LarsG],
                               [models.KMeans, models.LassoG]]).fit(X, y)
-    save_model([m, evo], "kmeans.model")    
+    save_model([m, evo], "kmeans.model")
+
+
+def test_transform_gap():
+    from collections import defaultdict
+    data = helpers.preprocess_full()
+    m = models.FeaturesN().fit(data)
+    X, y = m.training_set()
+    output = defaultdict(list)
+    for X in m.transform(data, start="2020-12-04", end="2020-12-05"):
+        hy = m.update_prediction(np.array([10]))
+        output[X.iloc[0]["GeoID"]].append(hy)
+
+    for key, value in output.items():
+        assert len(value) > 2

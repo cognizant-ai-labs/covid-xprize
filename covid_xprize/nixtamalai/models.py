@@ -92,7 +92,11 @@ class Features(object):
     def transform(self, data: pd.DataFrame, start: str="2020-11-13", end: str="2020-12-05"):
         start = np.datetime64(start)
         end = np.datetime64(end)
-        data = data[(data.Date >= start) & (data.Date <= end)]
+        max_date = self._data.Date.max()
+        if start > max_date:
+            start = max_date
+        # start es el último día del entrenamiento
+        data = data[(data.Date > start) & (data.Date <= end)]
         static = (data
                 .loc[:, ["Date", "GeoID"] + self._static_cols]
                 .groupby('GeoID')
@@ -101,10 +105,6 @@ class Features(object):
                 .drop('Date', axis=1))
         exo_cols = [c for c in self._data.columns if c.startswith('e')]
         lag_cols = [c for c in self._data.columns if c.startswith('l')]
-        cnt = (end - start).astype(int)
-        max_date = self._data.Date.max()
-        if start > max_date:
-            start = max_date
         exo_lags = self._data[["GeoID", "Date"] + exo_cols + lag_cols]
         for key in exo_lags.GeoID.unique():
             self._last_key = key
@@ -124,7 +124,7 @@ class Features(object):
             X = X.tolist()
             gips_df = data.loc[data.GeoID == key]
             gips_np = gips_df.loc[:, NPI_COLS].to_numpy()
-            for i in range(min(cnt, gips_np.shape[0])):
+            for i in range(gips_np.shape[0]):
                 X.append(gips_np[i].tolist())
                 del X[0]
                 output.append(self._last_hy)
