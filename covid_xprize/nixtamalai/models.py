@@ -19,8 +19,12 @@ class Features(object):
         self._lag_cols = None
         self._rename_static = None
 
-    def update_prediction(self, hy: float) -> None:
+    def update_prediction(self, hy: np.ndarray) -> float:
+        hy[hy < 0 ] = 0
+        hy[~ np.isfinite(hy)] = np.exp(12)
+        hy = hy[0]
         self._last_hy = hy
+        return hy
 
     @property
     def lags(self):
@@ -92,8 +96,9 @@ class Features(object):
         if start > max_date:
             start = max_date
         exo_lags = self._data[["GeoID", "Date"] + exo_cols + lag_cols]
-        for key, value in exo_lags.groupby("GeoID"):
-            X = value.loc[value.Date == start]
+        for key in exo_lags.GeoID.unique():
+            self._last_key = key
+            X = exo_lags.loc[(self._data.Date == start) & (self._data.GeoID == key)]
             _ = X.drop(columns=["Date"])
             d = (_.merge(static, on="GeoID")
                 .reindex(['GeoID'] + STATIC_COLS + 
@@ -109,7 +114,7 @@ class Features(object):
             X = X.tolist()
             gips_df = data.loc[data.GeoID == key]
             gips_np = gips_df.loc[:, NPI_COLS].to_numpy()
-            for i in range(cnt):
+            for i in range(min(cnt, gips_np.shape[0])):
                 X.append(gips_np[i].tolist())
                 del X[0]
                 output.append(self._last_hy)
@@ -123,6 +128,26 @@ class Features(object):
                     )
                 #print(d)
                 yield d
+
+
+class FeaturesN(Features):
+    def __init__(self, *args, **kwargs):
+        super(FeaturesN, self).__init__(*args, **kwargs)
+        self.population = None
+
+    def get_data(self, exo, date, output, key, lag, y=True):
+        _ = 100000 * np.array(output) / self.population[key] 
+        return super(FeaturesN, self).get_data(exo, date, _, key, lag, y=y)
+
+    def fit(self, data: pd.DataFrame) -> "Features":
+        self.population = {k:v for k, v in data.groupby("GeoID").Population.last().items()}
+        return super(FeaturesN, self).fit(data)
+
+    def update_prediction(self, hy: np.ndarray) -> float:
+        hy = super(FeaturesN, self).update_prediction(hy)
+        pop = self.population.get(self._last_key, 1)
+        hy = pop * hy / 100000
+        return hy
 
 
 class AR(object):
@@ -139,7 +164,8 @@ class AR(object):
     def predict(self, X: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
         if isinstance(X, pd.DataFrame):
             X = X.drop(columns="GeoID").to_numpy()
-        return self._model.predict(X)
+        hy = self._model.predict(X)
+        return hy
 
     def decision_function(self, X: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
         return self.predict(X)
@@ -151,6 +177,22 @@ class Lars(AR):
         self._model = LarsCV()
 
 
+class SVR(AR):
+    def __init__(self):
+        from sklearn.svm import SVR
+        self._model = SVR()
+
+
+class Lasso(AR):
+    def __init__(self):
+        from sklearn.linear_model import Lasso
+        self._model = Lasso(alpha=0.1,
+                            precompute=True,
+                            max_iter=10000,
+                            positive=True,
+                            selection='random')    
+
+
 class Identity(object):
     def fit(self, X):
         return self
@@ -159,3 +201,57 @@ class Identity(object):
         return X.drop(columns="GeoID").to_numpy()
 
 
+class KMeans(object):
+    def fit(self, X):
+        from sklearn.cluster import KMeans
+        r = [(k, v.l29.to_numpy()[-28:]) for k, v in X.groupby("GeoID")]
+        data = np.array([x[1] for x in r])
+        kmeans = KMeans(n_clusters=2).fit(data)
+        self.group = {k: v for (k, _), v  in zip(r, kmeans.predict(data))}
+        return self
+
+    def transform(self, X):
+        _ = np.atleast_2d([self.group.get(x, 0) for x in X.GeoID]).T
+        return np.concatenate((_, X.drop(columns="GeoID").to_numpy()), axis=1)
+
+
+class ARG(object):
+    def model(self):
+        from sklearn.linear_model import LinearRegression
+        return LinearRegression()
+
+    def fit(self, X: np.ndarray, y: np.ndarray) -> "ARG":
+        models = []
+        for kl in np.unique(X[:, 0]):
+            m = X[:, 0] == kl
+            _ = self.model().fit(X[m, 1:], y[m])
+            models.append(_)
+        self.models = models
+        return self
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        hy = []
+        for x in X:
+            m = self.models[int(x[0])]
+            _ = m.predict(np.atleast_2d(x[1:]))
+            hy.append(_)
+        return np.array(hy)
+
+    def decision_function(self, X: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
+        return self.predict(X)
+
+
+class LarsG(ARG):
+    def model(self):
+        from sklearn.linear_model import LarsCV
+        return LarsCV()
+
+
+class LassoG(ARG):
+    def model(self):
+        from sklearn.linear_model import Lasso
+        return Lasso(alpha=0.1,
+                     precompute=True,
+                     max_iter=10000,
+                     positive=True,
+                     selection='random')          
