@@ -13,7 +13,7 @@ from collections import defaultdict
 
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_FILE = os.path.join(ROOT_DIR, "models", "evomsa.model")
+MODEL_FILE = os.path.join(ROOT_DIR, "models", "kmeans.model")
 
 
 def predict(start_date: str,
@@ -56,16 +56,13 @@ def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str, ve
                               encoding="ISO-8859-1",
                               dtype={"RegionName": str},
                               error_bad_lines=True)
-    preprocess_npi(hist_ips_df)
+    hist_ips_df = preprocess_npi(hist_ips_df)
     trans, model = load_model(MODEL_FILE)
     output = defaultdict(list)
     for X in trans.transform(hist_ips_df, start_date_str, end_date_str):
-        hy = model.predict(X)[0]
-        if not np.isfinite(hy):
-            hy = np.exp(12)
+        hy = trans.update_prediction(model.predict(X))
         key = X.iloc[0]["GeoID"]
         output[key].append(hy)
-        trans.update_prediction(hy)
     geo_pred_dfs = list()
     start_date = pd.to_datetime(start_date_str, format='%Y-%m-%d')
     end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')    
