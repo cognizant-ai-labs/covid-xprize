@@ -3,9 +3,10 @@ Code to allow this package to be pip-installed
 """
 
 import os
+from distutils.core import setup
 
 import sys
-from setuptools import setup, find_packages
+from setuptools import find_packages
 
 LIBRARY_VERSION = '1.0.6'
 
