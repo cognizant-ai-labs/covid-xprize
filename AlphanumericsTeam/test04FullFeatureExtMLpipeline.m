@@ -65,7 +65,7 @@ GeoID = strcat(string(AllCountryCodes), string(AllRegionCodes));
 NumGeoLocations = length(CountryAndRegionList); % Number of country-region pairs
 
 % FEATURE EXTRACTION (Different methods for calculating the reproduction rate)
-for k = 219 : 225% 1: NumGeoLocations
+for k = 219 : 221% 1: NumGeoLocations
     %     row_indexes = GeoID == CountryAndRegionList(k) & all_data.ConfirmedCases > min_cases;
     %     geoid_all_row_indexes = GeoID == CountryAndRegionList(k) & all_data.Date >= start_date & all_data.Date <= end_date;
     geoid_all_row_indexes = GeoID == CountryAndRegionList(k) & all_data.ConfirmedCases > min_cases & all_data.Date >= start_date & all_data.Date <= end_date;
@@ -123,7 +123,7 @@ for k = 219 : 225% 1: NumGeoLocations
     % Regression/Classification Phase
     % Y Data
     y_data = Lambda2';
-%     y_data = Lambda2Smoothed';
+    %     y_data = Lambda2Smoothed';
     
     % Replace nans in y_data with latest non-nan values
     %         I_nans = find(isnan(y_data) | isinf(y_data));
@@ -191,6 +191,30 @@ for k = 219 : 225% 1: NumGeoLocations
     y_pred_svmgau = predict(Mdlsvmgau, x_data_test);
     LambdaHatSVMGAU = [y_data_train ; y_pred_svmgau]';
     
+    % Method: LSTM
+    numFeatures = size(x_data, 2);
+    numResponses = 1;
+    numHiddenUnits = 200;
+    layers = [ ...
+        sequenceInputLayer(numFeatures)
+        lstmLayer(numHiddenUnits)
+        fullyConnectedLayer(numResponses)
+        regressionLayer];
+    options = trainingOptions('adam', ...
+        'MaxEpochs',150, ...
+        'GradientThreshold',1, ...
+        'InitialLearnRate',0.005, ...
+        'LearnRateSchedule','piecewise', ...
+        'LearnRateDropPeriod',125, ...
+        'LearnRateDropFactor',0.2, ...
+        'Verbose',0, ...
+        'Plots','training-progress');
+    MdlLSTM = trainNetwork(x_data_train', y_data_train', layers, options);
+    MdlLSTM = predictAndUpdateState(MdlLSTM, x_data_train');
+    [MdlLSTM, y_pred_lstm] = predictAndUpdateState(MdlLSTM, x_data_test');
+    LambdaHatLSTM = [y_data_train ; y_pred_lstm']';
+    
+    
     % Postprocess the estimates
     % Clip the max incline/decline
     counter = 1 : length(LambdaHatLinear);
@@ -209,6 +233,11 @@ for k = 219 : 225% 1: NumGeoLocations
     LambdaHatSVMGAU(I_pos) = lambda_threshold;
     LambdaHatSVMGAU(I_neg) = -lambda_threshold;
     
+    I_pos = LambdaHatLSTM > lambda_threshold & counter > numTimeStepsTrain;
+    I_neg = LambdaHatLSTM < -lambda_threshold & counter > numTimeStepsTrain;
+    LambdaHatLSTM(I_pos) = lambda_threshold;
+    LambdaHatLSTM(I_neg) = -lambda_threshold;
+
     % Build an estimate of the new cases
     CumLambdaHatLinear = cumsum(LambdaHatLinear(counter > numTimeStepsTrain))';
     NewCasesEstimateLinear = [NewCasesSmoothed(1 : numTimeStepsTrain) ; NewCasesSmoothed(numTimeStepsTrain)*exp(CumLambdaHatLinear)];
@@ -219,6 +248,9 @@ for k = 219 : 225% 1: NumGeoLocations
     CumLambdaHatSVMGAU = cumsum(LambdaHatSVMGAU(counter > numTimeStepsTrain))';
     NewCasesEstimateSVMGAU = [NewCasesSmoothed(1 : numTimeStepsTrain) ; NewCasesSmoothed(numTimeStepsTrain)*exp(CumLambdaHatSVMGAU)];
     
+    CumLambdaHatLSTM = cumsum(LambdaHatLSTM(counter > numTimeStepsTrain))';
+    NewCasesEstimateLSTM = [NewCasesSmoothed(1 : numTimeStepsTrain) ; NewCasesSmoothed(numTimeStepsTrain)*exp(CumLambdaHatLSTM)];
+
     if(plot_figures)
         %     dn = datenum(string(geoid_dates_unsorted),'yyyymmdd');
         dn = 1 : length(NewCasesSmoothed);
@@ -239,6 +271,7 @@ for k = 219 : 225% 1: NumGeoLocations
         plot(dn , LambdaHatSVM, 'linewidth', 3); lgn = cat(2, lgn, {'LambdaHatSVM'});
         plot(dn , LambdaHatSVMGAU, 'linewidth', 3); lgn = cat(2, lgn, {'LambdaHatSVMGAU'});
         % % %         plot(dn , (LambdaHatLinear + LambdaHatSVM)/2, 'linewidth', 3); lgn = cat(2, lgn, {'Avg. LambdaHats'});
+        plot(dn , LambdaHatLSTM, 'linewidth', 3); lgn = cat(2, lgn, {'LambdaHatLSTM'});
         
         legend(lgn);
         grid
@@ -260,6 +293,7 @@ for k = 219 : 225% 1: NumGeoLocations
         plot(dn, NewCasesEstimateLinear, 'Linewidth', 2); lgn = cat(2, lgn, {'NewCasesEstimateLinear'});
         plot(dn, NewCasesEstimateSVM, 'Linewidth', 2); lgn = cat(2, lgn, {'NewCasesEstimateSVM'});
         plot(dn, NewCasesEstimateSVMGAU, 'Linewidth', 2); lgn = cat(2, lgn, {'NewCasesEstimateSVMGAU'});
+        plot(dn, NewCasesEstimateLSTM, 'Linewidth', 2); lgn = cat(2, lgn, {'NewCasesEstimateLSTM'});
         
         legend(lgn);
         grid
