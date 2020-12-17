@@ -9,6 +9,7 @@ ADDITIONAL_CONTEXT_FILE = path.join(DATA_PATH, "Additional_Context_Data_Global.c
 ADDITIONAL_US_STATES_CONTEXT = path.join(DATA_PATH, "US_states_populations.csv")
 ADDITIONAL_UK_CONTEXT = path.join(DATA_PATH, "uk_populations.csv")
 ADDITIONAL_BRAZIL_CONTEXT = path.join(DATA_PATH, "brazil_populations.csv")
+COUNTRIES_REGIONS = path.join(DATA_PATH, "countries_regions.csv")
 US_PREFIX = "United States / "
 NPI_COLS = ['C1_School closing',
             'C2_Workplace closing',
@@ -253,6 +254,13 @@ def preprocess_full(k=7, threshold=3, merge_owd='imputed', tests=False):
           .rename({'CountryName_x': 'CountryName'}, axis=1)
           .dropna(subset=['Population'])
           )
+    # Filter countries not used for evaluation
+    cr = pd.read_csv(COUNTRIES_REGIONS)
+    cr['GeoID'] = np.where(cr["RegionName"].isnull(),
+                                    cr["CountryName"],
+                                    cr["CountryName"] + ' / ' + cr["RegionName"])
+    rois = cr.GeoID.unique()
+    df = df[df.GeoID.isin(rois)]
     return df
 
 def mae(pred, true):
