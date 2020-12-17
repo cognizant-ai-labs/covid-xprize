@@ -47,7 +47,7 @@ setup(
     package_dir={PACKAGE_NAME: PACKAGE_NAME},  # the one line where all the magic happens
     package_data={
         PACKAGE_NAME: [
-            'covid_xprize/data/countries_regions.csv',
+            'data/countries_regions.csv',
             'covid_xprize/examples/predictors/lstm/tests/fixtures/*',
             'covid_xprize/validation/data',
             'examples/predictors/lstm/data/*',
