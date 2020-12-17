@@ -45,12 +45,15 @@ setup(
     python_requires='>={}.{}'.format(*REQUIRED_PYTHON),
     packages=find_packages(),
     package_dir={PACKAGE_NAME: PACKAGE_NAME},  # the one line where all the magic happens
+    include_package_data=True,
     package_data={
         PACKAGE_NAME: [
-            'countries_regions.csv',
             'covid_xprize/examples/predictors/lstm/tests/fixtures/*',
             'covid_xprize/validation/data',
             'examples/predictors/lstm/data/*',
+        ],
+        '': [
+            'countries_regions.csv',
         ],
         '.': [
             'LICENSE.md'
