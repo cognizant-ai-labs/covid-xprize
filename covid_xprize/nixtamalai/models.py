@@ -10,14 +10,14 @@ class Features(object):
     """Transform DataFrame into features to used in the 
     regressors"""
 
-    def __init__(self, lags: int=30, date: str="2020-11-12"):
+    def __init__(self, lags: int=30, date: str="2020-11-12", static_cols: list=STATIC_COLS):
         self._lags = lags
         self._data = None
         self._stop_training = np.datetime64(date)
         self._exo_cols = None
-        self._static_cols = None
         self._lag_cols = None
         self._rename_static = None
+        self.static_cols = static_cols
 
     def update_prediction(self, hy: np.ndarray) -> float:
         hy[hy < 0 ] = 0
@@ -29,6 +29,16 @@ class Features(object):
     @property
     def lags(self):
         return self._lags
+
+    @property
+    def static_cols(self):
+        return self._static_cols
+
+    @static_cols.setter
+    def static_cols(self, s):
+        if not set(s).issubset(set(STATIC_COLS)): 
+            raise Exception("Static Columns must be a subset of STATIC_COLS")
+        self._static_cols = s
 
     def get_data(self, exo, date, output, key, lag, y=True):
         lags = self._lags
@@ -42,9 +52,9 @@ class Features(object):
 
     def fit(self, data: pd.DataFrame) -> "Features":
         data = data.loc[data.Date <= self._stop_training, 
-                       ["Date", "GeoID"] + NPI_COLS + CASES_COL + STATIC_COLS]
+                       ["Date", "GeoID"] + NPI_COLS + CASES_COL + self._static_cols]
         static = (data
-                  .loc[:, ["Date", "GeoID"] + STATIC_COLS]
+                  .loc[:, ["Date", "GeoID"] + self._static_cols]
                   .groupby('GeoID')
                   .first()
                   .reset_index()
@@ -64,9 +74,9 @@ class Features(object):
         d = pd.DataFrame(D)
         self._lag_cols = [c for c in d.columns if c.startswith('l')]
         self._exo_cols = [c for c in d.columns if c.startswith('e')]
-        self._rename_static ={c: "s%s" % i for i,c in enumerate(STATIC_COLS)}
+        self._rename_static ={c: "s%s" % i for i,c in enumerate(self._static_cols)}
         d = (d.merge(static, on="GeoID", how='inner')
-             .reindex(['GeoID', 'Date'] + STATIC_COLS + 
+             .reindex(['GeoID', 'Date'] + self._static_cols + 
                       self._exo_cols + self._lag_cols +['y'], axis=1)
              .rename(columns=self._rename_static)
              )
@@ -88,7 +98,7 @@ class Features(object):
         # start es el último día del entrenamiento
         data = data[(data.Date > start) & (data.Date <= end)]
         static = (data
-                .loc[:, ["Date", "GeoID"] + STATIC_COLS]
+                .loc[:, ["Date", "GeoID"] + self._static_cols]
                 .groupby('GeoID')
                 .first()
                 .reset_index()
@@ -101,7 +111,7 @@ class Features(object):
             X = exo_lags.loc[(self._data.Date == start) & (self._data.GeoID == key)]
             _ = X.drop(columns=["Date"])
             d = (_.merge(static, on="GeoID")
-                .reindex(['GeoID'] + STATIC_COLS + 
+                .reindex(['GeoID'] + self._static_cols + 
                         self._exo_cols + self._lag_cols, axis=1)
                 .rename(columns=self._rename_static)
                 )
@@ -122,7 +132,7 @@ class Features(object):
                 _ = np.concatenate(([key], np.array(X).flatten(), output))
                 d = pd.DataFrame([_], columns=columns)
                 d = (d.merge(static, on="GeoID")
-                    .reindex(['GeoID'] + STATIC_COLS + 
+                    .reindex(['GeoID'] + self._static_cols + 
                             self._exo_cols + self._lag_cols, axis=1)
                     .rename(columns=self._rename_static)
                     )
