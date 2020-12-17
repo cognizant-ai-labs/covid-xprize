@@ -162,3 +162,58 @@ class Identity(object):
         return X.drop(columns="GeoID").to_numpy()
 
 
+class KMeans(object):
+    def fit(self, X):
+        from sklearn.cluster import KMeans
+        from sklearn.metrics import silhouette_score
+        r = [(k, v.l29.to_numpy()[-28:]) for k, v in X.groupby("GeoID")]
+        data = np.array([x[1] for x in r])
+        kmeans = KMeans(n_clusters=3).fit(data)
+        self.group = {k: v for (k, _), v  in zip(r, kmeans.predict(data))}
+        return self
+
+    def transform(self, X):
+        _ = np.atleast_2d([self.group.get(x, 0) for x in X.GeoID]).T
+        return np.concatenate((_, X.drop(columns="GeoID").to_numpy()), axis=1)
+
+
+class ARG(object):
+    def model(self):
+        from sklearn.linear_model import LinearRegression
+        return LinearRegression()
+
+    def fit(self, X: np.ndarray, y: np.ndarray) -> "ARG":
+        models = []
+        for kl in np.unique(X[:, 0]):
+            m = X[:, 0] == kl
+            _ = self.model().fit(X[m, 1:], y[m])
+            models.append(_)
+        self.models = models
+        return self
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        hy = []
+        for x in X:
+            m = self.models[int(x[0])]
+            _ = m.predict(np.atleast_2d(x[1:]))
+            hy.append(_)
+        return np.array(hy)
+
+    def decision_function(self, X: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
+        return self.predict(X)
+
+
+class LarsG(ARG):
+    def model(self):
+        from sklearn.linear_model import LarsCV
+        return LarsCV()
+
+
+class LassoG(ARG):
+    def model(self):
+        from sklearn.linear_model import Lasso
+        return Lasso(alpha=0.1,
+                     precompute=True,
+                     max_iter=10000,
+                     positive=True,
+                     selection='random')          

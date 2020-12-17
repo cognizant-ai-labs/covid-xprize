@@ -102,6 +102,19 @@ def test_evomsaN():
                       classifier=False,
                       models=[[models.Identity, models.AR],
                               [models.Identity, models.Lars],
-                              # [models.Identity, models.SVR],
                               [models.Identity, models.Lasso]]).fit(X, y)
     save_model([m, evo], "evomsaN.model")
+
+
+def test_kmeans():
+    from microtc.utils import save_model
+    from EvoMSA import base
+    data = helpers.preprocess_full()
+    m = models.FeaturesN().fit(data)
+    X, y = m.training_set()
+    evo = base.EvoMSA(TR=False, stacked_method=models.AR,
+                      classifier=False,
+                      models=[[models.KMeans, models.ARG],
+                              [models.KMeans, models.LarsG],
+                              [models.KMeans, models.LassoG]]).fit(X, y)
+    save_model([m, evo], "kmeans.model")    
