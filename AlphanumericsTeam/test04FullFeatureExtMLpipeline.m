@@ -8,7 +8,7 @@ plot_figures = true; % plot per-region/country plots or not
 min_cases = 100; % the minimum cases start date for processing each region/country
 start_date = 20200101; % start date
 end_date = 20201225; % end date
-predict_ahead_num_days = 120; % number of days to predict ahead
+predict_ahead_num_days = 90; % number of days to predict ahead
 Rt_wlen = 7; % Reproduction rate estimation window
 Rt_generation_period = 3; % The generation period used for calculating the reproduction number
 lambda_threshold = 10.06; % The threshold for the maximum absolute value of the reproduction rates exponent lambda
@@ -66,7 +66,7 @@ GeoID = strcat(string(AllCountryCodes), string(AllRegionCodes));
 NumGeoLocations = length(CountryAndRegionList); % Number of country-region pairs
 
 % FEATURE EXTRACTION (Different methods for calculating the reproduction rate)
-for k = 219 : 230% 1: NumGeoLocations
+for k = 219 : 219% 1: NumGeoLocations
     k
     %     row_indexes = GeoID == CountryAndRegionList(k) & all_data.ConfirmedCases > min_cases;
     %     geoid_all_row_indexes = GeoID == CountryAndRegionList(k) & all_data.Date >= start_date & all_data.Date <= end_date;
@@ -162,8 +162,8 @@ for k = 219 : 230% 1: NumGeoLocations
     LambdaHatARX = [y_data_train ; y_pred_ar]';
     %     LambdaHatARX = LambdaHatARX + lambda_vector(numTimeStepsTrain) - LambdaHatARX(numTimeStepsTrain); % correct offset
     
-    %     AllFeatures = [InterventionPlans, LambdaHatARX'];
-    AllFeatures = [InterventionPlans, InterventionPlansLagged1, InterventionPlansLagged2, InterventionPlansLagged3, LambdaHatARX', ones(size(InterventionPlans, 1), 1)];
+    AllFeatures = [InterventionPlans, LambdaHatARX'];
+%     AllFeatures = [InterventionPlans, InterventionPlansLagged1, InterventionPlansLagged2, InterventionPlansLagged3, LambdaHatARX', ones(size(InterventionPlans, 1), 1)];
     %     AllFeatures = [InterventionPlans, InterventionPlansLagged1, InterventionPlansLagged2, InterventionPlansLagged3, randn(size(InterventionPlans, 1), 1), ones(size(InterventionPlans, 1), 1)];
     %         AllFeatures = [cumsum(InterventionPlansLagged1, 1), InterventionPlansLagged1, cumsum(InterventionPlansLagged3, 1), InterventionPlansLagged3, ones(size(InterventionPlans, 1), 1)];
     % Noise, Ones and IP lagged (ones compensates for DC and noise for randomness)
@@ -199,7 +199,7 @@ for k = 219 : 230% 1: NumGeoLocations
     %     LambdaHatSVM = LambdaHatSVM + lambda_vector(numTimeStepsTrain) - LambdaHatSVM(numTimeStepsTrain); % correct offset
     
     % Method: SVM with gaussian kernel
-    Mdlsvmgau = fitrsvm(x_data_train, y_data_train,'KernelFunction','gaussian', 'KernelScale','auto');%, 'Standardize', true);%, 'Standardize', true, 'KFold', 10);
+    Mdlsvmgau = fitrsvm(x_data_train, y_data_train,'KernelFunction','gaussian', 'KernelScale','auto', 'Standardize', true);%, 'Standardize', true, 'KFold', 10);
     %     Mdlsvmgau.ConvergenceInfo.Converged
     y_pred_svmgau = predict(Mdlsvmgau, x_data_test);
     LambdaHatSVMGAU = [y_data_train ; y_pred_svmgau]';
@@ -215,27 +215,27 @@ for k = 219 : 230% 1: NumGeoLocations
     % Method: LSTM
     if(LSTM)
         numFeatures = size(x_data, 2);
+        numHiddenUnits = 200;
         numResponses = 1;
-        numHiddenUnits = 100;
         layers = [ ...
-            sequenceInputLayer(numFeatures)
+            sequenceInputLayer(numFeatures)%, 'Normalization', 'zscore')
+            fullyConnectedLayer(numFeatures)
+            %reluLayer
             lstmLayer(numHiddenUnits)
             lstmLayer(numHiddenUnits)
-            lstmLayer(numHiddenUnits)
-            lstmLayer(numHiddenUnits)
+            %lstmLayer(numHiddenUnits)
+            %lstmLayer(numHiddenUnits)
             fullyConnectedLayer(numResponses)
             regressionLayer];
         options = trainingOptions('adam', ...
             'MaxEpochs',250, ...
             'GradientThreshold',1, ...
-            'InitialLearnRate',0.002, ...
+            'InitialLearnRate',0.005, ...
             'LearnRateSchedule','piecewise', ...
             'LearnRateDropPeriod',125, ...
             'LearnRateDropFactor',0.2, ...
             'Verbose',1, ...
-            'Plots','none');%'training-progress');
-        
-        
+            'Plots','none');%'training-progress');        
         
         MdlLSTM = trainNetwork(x_data_train', y_data_train', layers, options);
         MdlLSTM = predictAndUpdateState(MdlLSTM, x_data_train');
