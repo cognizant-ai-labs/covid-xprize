@@ -289,8 +289,8 @@ def preprocess_full(k=7, threshold=3, merge_owd='imputed', tests=False):
                       .drop('NAME', axis=1)
                    )
     df = (df.merge(additional_data, on='CountryName', how='left')
-          .drop('GeoID_y', axis=1)
-          .rename({'GeoID_x': 'GeoID'}, axis=1)
+          .drop(['GeoID_y', 'CountryCode_y'], axis=1)
+          .rename({'GeoID_x': 'GeoID', 'CountryCode_x': 'CountryCode'}, axis=1)
           .dropna(subset=['Population'])
           )
     # Filter countries not used for evaluation
