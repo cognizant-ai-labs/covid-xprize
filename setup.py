@@ -7,7 +7,7 @@ import os
 import sys
 from setuptools import setup, find_packages
 
-LIBRARY_VERSION = '1.0.5'
+LIBRARY_VERSION = '1.0.7'
 
 CURRENT_PYTHON = sys.version_info[:2]
 REQUIRED_PYTHON = (3, 6)
@@ -44,9 +44,10 @@ setup(
     version=LIBRARY_VERSION,
     python_requires='>={}.{}'.format(*REQUIRED_PYTHON),
     packages=find_packages(),
-    package_dir={PACKAGE_NAME: PACKAGE_NAME}, # the one line where all the magic happens
+    package_dir={PACKAGE_NAME: PACKAGE_NAME},  # the one line where all the magic happens
     package_data={
         PACKAGE_NAME: [
+            'countries_regions.csv',
             'covid_xprize/examples/predictors/lstm/tests/fixtures/*',
             'covid_xprize/validation/data',
             'examples/predictors/lstm/data/*',
