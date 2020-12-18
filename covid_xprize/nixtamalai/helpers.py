@@ -43,11 +43,12 @@ STATIC_COLS =['economic_freedom',
               'airplane_departures']
 ID_COLS = ['CountryName',
            'RegionName',
+           #TODO: quitarlo (pero bien)
            'CountryCode',
            'GeoID',
            'Date']
-CASES_COL = ['NewCasesHampel']            
-
+CASES_COL = ['NewCasesHampel']
+DEATHS_COL = ['NewDeathsHampel']
 
 def add_test_data(oxford_path, tests_path):
     """Returns a dataframe with Oxford data merged with covid tests data.
@@ -163,6 +164,12 @@ def hampel(vals_orig, k=7, threshold=3):
     vals[outlier_idx] = rolling_median[outlier_idx] 
     return(vals)
 
+def hampel_filter_column(df: pd.DataFrame, col: str, k: int=7, threshold: int=3) -> pd.DataFrame:
+    filtered = df.groupby('CountryCode').apply(lambda group: hampel(group[col], k, threshold))
+    filtered = filtered.reset_index()[[col]]
+    filtered.columns = [col + 'Hampel']
+    return filtered
+
 
 def preprocess_npi(df: pd.DataFrame):
     # Add GeoID
@@ -178,8 +185,11 @@ def preprocess_npi(df: pd.DataFrame):
 def preprocess_newcases(df: pd.DataFrame):
     # Add NewCases
     df['NewCases'] = df.groupby('GeoID').ConfirmedCases.diff().fillna(0)
+    df['NewDeaths'] = df.groupby('GeoID').ConfirmedDeaths.diff().fillna(0)
     # Missing data in NewCases
     df.update(df.groupby('GeoID').NewCases.apply(
+        lambda group: group.interpolate()).fillna(0))
+    df.update(df.groupby('GeoID').NewDeaths.apply(
         lambda group: group.interpolate()).fillna(0))
     return df
 
@@ -241,22 +251,22 @@ def preprocess_full(k=7, threshold=3, merge_owd='imputed', tests=False):
     if tests:
         df = get_OxCGRT_tests()
         tests_columns = [c for c in df.columns if c.startswith('tests')]
-        all_columns = ID_COLS + CASES_COL + NPI_COLS + tests_columns
+        all_columns = ID_COLS + CASES_COL + DEATHS_COL + NPI_COLS + tests_columns 
         # Missing data in Tests
         for column in tests_columns:
             df.update(df.groupby('GeoID')[column].apply(
             lambda group: group.interpolate()).fillna(0))
     else:
-        all_columns = ID_COLS + CASES_COL + NPI_COLS
+        all_columns = ID_COLS + CASES_COL + DEATHS_COL + NPI_COLS
         df = get_OxCGRT()
 
     df = (df.pipe(preprocess_npi)
             .pipe(preprocess_newcases)
     )
-    # Hampel filter (default values)
-    filtered = df.groupby('CountryCode').apply(lambda group: hampel(group.NewCases, k, threshold))
-    filtered = filtered.reset_index()[['NewCases']]
-    filtered.columns = ['NewCasesHampel']
+    # Remove outliers from NewCases & NewDeaths
+    filtered = hampel_filter_column(df, 'NewCases')
+    df = df.join(filtered)
+    filtered = hampel_filter_column(df, 'NewDeaths')
     df = df.join(filtered)
     df = df[all_columns]
     if merge_owd == 'imputed':
