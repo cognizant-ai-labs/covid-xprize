@@ -1,5 +1,5 @@
 import os
-from AlphanumericsTeam.data.util import get_orig_df, DATA_FILE_PATH
+from AlphanumericsTeam.data.util import get_orig_df, DATA_FILE_PATH, COUNTRY_CODES, REGION_CODES
 from AlphanumericsTeam.data.holiday import holiday_area
 from pprint import pprint
 from tqdm import tqdm
@@ -12,6 +12,15 @@ def fun(row):
         return holiday_area(row["CountryCode"], date)
     if row["Jurisdiction"] == "STATE_TOTAL":
         return holiday_area(row["RegionCode"], date)
+
+oxford_df  = oxford_df[(
+                        (oxford_df["Jurisdiction"] == "NAT_TOTAL") &
+                        (oxford_df["CountryCode"].isin(COUNTRY_CODES))
+                       )|
+                       (
+                        (oxford_df["Jurisdiction"] == "STATE_TOTAL") &
+                        (oxford_df["RegionCode"].isin(REGION_CODES))
+                       )]
 
 # Create and register a new `tqdm` instance with `pandas`
 tqdm.pandas()

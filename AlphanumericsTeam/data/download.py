@@ -1,9 +1,5 @@
 import os
 import pandas as pd
-import argparse
-import datetime
-import holidays
-from collections import defaultdict
 from dateutil.parser import parse
 import urllib.request
 

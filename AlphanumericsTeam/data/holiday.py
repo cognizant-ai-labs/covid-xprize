@@ -59,16 +59,13 @@ def holiday_region(region, date):
     country, reg = region.split("_")
 
     # convert two character code to oxford compatible three character codes
-    if country == "BR":
-        country == "BRA"
-    elif country == "US":
+    if country == "US":
         country == "USA"
     elif country == "UK":
         country == "GBR"
-    elif country == "CAN":
-        country == "CAN"
     else:
-        raise Exception("Unknown country for the input region")
+        print(country)
+        raise Exception("Unknown country for the input to holiday region")
 
     # get the attribute for the country
     func = getattr(holidays, country)
