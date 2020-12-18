@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from .helpers import NPI_COLS, ID_COLS, CASES_COL, STATIC_COLS
+from .helpers import NPI_COLS, ID_COLS, CASES_COL, DEATHS_COL, STATIC_COLS
 from .helpers import preprocess_npi
 from collections import OrderedDict
 from typing import Union
@@ -10,7 +10,12 @@ class Features(object):
     """Transform DataFrame into features to used in the 
     regressors"""
 
-    def __init__(self, lags: int=30, date: str="2020-11-12", static_cols: list=STATIC_COLS):
+    def __init__(self, 
+                 lags: int=30, 
+                 date: str="2020-11-12", 
+                 static_cols: list=STATIC_COLS,
+                 cases_col:list=CASES_COL):
+
         self._lags = lags
         self._data = None
         self._stop_training = np.datetime64(date)
@@ -18,6 +23,7 @@ class Features(object):
         self._lag_cols = None
         self._rename_static = None
         self.static_cols = static_cols
+        self.cases_col = cases_col
 
     def update_prediction(self, hy: np.ndarray) -> float:
         hy[hy < 0 ] = 0
@@ -34,11 +40,21 @@ class Features(object):
     def static_cols(self):
         return self._static_cols
 
+    @property
+    def cases_col(self):
+        return self._cases_col
+
     @static_cols.setter
     def static_cols(self, s):
         if not set(s).issubset(set(STATIC_COLS)): 
             raise Exception("Static Columns must be a subset of STATIC_COLS")
         self._static_cols = s
+
+    @cases_col.setter
+    def cases_col(self, s):
+        if not (s == CASES_COL or s == DEATHS_COL):
+            raise Exception("Cases must be CASES_COL or DEATHS_COL")
+        self._cases_col = s
 
     def get_data(self, exo, date, output, key, lag, y=True):
         lags = self._lags
@@ -52,7 +68,7 @@ class Features(object):
 
     def fit(self, data: pd.DataFrame) -> "Features":
         data = data.loc[data.Date <= self._stop_training, 
-                       ["Date", "GeoID"] + NPI_COLS + CASES_COL + self._static_cols]
+                       ["Date", "GeoID"] + NPI_COLS + self.cases_col + self._static_cols]
         static = (data
                   .loc[:, ["Date", "GeoID"] + self._static_cols]
                   .groupby('GeoID')
@@ -64,7 +80,7 @@ class Features(object):
         for key, value in data.groupby("GeoID"):
             exo = value.loc[:, NPI_COLS].to_numpy()
             date = value.loc[:, "Date"].to_numpy()
-            output = value.loc[:, CASES_COL[0]].to_numpy()
+            output = value.loc[:, self.cases_col[0]].to_numpy()
             if exo.shape[0] <= lags:
                 continue
             for lag in range(lags, exo.shape[0]):

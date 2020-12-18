@@ -1,6 +1,36 @@
 # Copyright 2020 (c) Cognizant Digital Business, Evolutionary AI. All rights reserved. Issued under the Apache 2.0 License.
+import os
+
+import pandas as pd
 
 from covid_xprize.examples.predictors.lstm.xprize_predictor import XPrizePredictor
+
+LATEST_DATA_URL = 'https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv'
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+COUNTRIES_REGIONS_FILE = os.path.join(ROOT_DIR, "..", "..", "countries_regions.csv")
+
+
+def load_dataset(url=LATEST_DATA_URL,
+                 geos_file=COUNTRIES_REGIONS_FILE):
+    """
+    Load dataset from the passed URL, and keep only countries and regions from passed geos_file
+    """
+    latest_df = pd.read_csv(url,
+                            parse_dates=['Date'],
+                            encoding="ISO-8859-1",
+                            dtype={"RegionName": str,
+                                   "RegionCode": str},
+                            error_bad_lines=False)
+    # Keep only the fixed list of countries and regions
+    geos_df = pd.read_csv(geos_file,
+                          encoding="ISO-8859-1")
+    countries = list(geos_df.CountryName.unique())
+    regions = list(geos_df.RegionName.unique())
+    latest_df = latest_df[(latest_df.CountryName.isin(countries)) &
+                          (latest_df.RegionName.isin(regions))]
+    # Use '' instead of nan for region names
+    latest_df["RegionName"] = latest_df["RegionName"].fillna("")
+    return latest_df
 
 
 def add_predictor_performance_columns(ranking_df):

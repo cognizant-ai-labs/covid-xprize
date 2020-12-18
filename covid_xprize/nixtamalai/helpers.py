@@ -10,6 +10,7 @@ ADDITIONAL_US_STATES_CONTEXT = path.join(DATA_PATH, "US_states_populations.csv")
 ADDITIONAL_UK_CONTEXT = path.join(DATA_PATH, "uk_populations.csv")
 ADDITIONAL_BRAZIL_CONTEXT = path.join(DATA_PATH, "brazil_populations.csv")
 COUNTRIES_REGIONS = path.join(DATA_PATH, "countries_regions.csv")
+IMF_REGIONS = path.join(DATA_PATH, "imf_economic_regions.csv")
 US_PREFIX = "United States / "
 NPI_COLS = ['C1_School closing',
             'C2_Workplace closing',
@@ -29,14 +30,25 @@ STATIC_COLS =['economic_freedom',
               'life_expectancy',
               'average_years_school',
               'political_regime',
-              'Population']
+              'Population',
+              'pop_density',
+              'urban_pop',
+              '65_plus',
+              'obesity_rate',
+              'cancer_rate',
+              'smoking_deaths',
+              'pneumonia_deaths',
+              'air_pullution_deaths',
+              'co2_emissions',
+              'airplane_departures']
 ID_COLS = ['CountryName',
            'RegionName',
+           #TODO: quitarlo (pero bien)
            'CountryCode',
            'GeoID',
            'Date']
-CASES_COL = ['NewCasesHampel']            
-
+CASES_COL = ['NewCasesHampel']
+DEATHS_COL = ['NewDeathsHampel']
 
 def add_test_data(oxford_path, tests_path):
     """Returns a dataframe with Oxford data merged with covid tests data.
@@ -152,6 +164,12 @@ def hampel(vals_orig, k=7, threshold=3):
     vals[outlier_idx] = rolling_median[outlier_idx] 
     return(vals)
 
+def hampel_filter_column(df: pd.DataFrame, col: str, k: int=7, threshold: int=3) -> pd.DataFrame:
+    filtered = df.groupby('CountryCode').apply(lambda group: hampel(group[col], k, threshold))
+    filtered = filtered.reset_index()[[col]]
+    filtered.columns = [col + 'Hampel']
+    return filtered
+
 
 def preprocess_npi(df: pd.DataFrame):
     # Add GeoID
@@ -167,10 +185,44 @@ def preprocess_npi(df: pd.DataFrame):
 def preprocess_newcases(df: pd.DataFrame):
     # Add NewCases
     df['NewCases'] = df.groupby('GeoID').ConfirmedCases.diff().fillna(0)
+    df['NewDeaths'] = df.groupby('GeoID').ConfirmedDeaths.diff().fillna(0)
     # Missing data in NewCases
     df.update(df.groupby('GeoID').NewCases.apply(
         lambda group: group.interpolate()).fillna(0))
+    df.update(df.groupby('GeoID').NewDeaths.apply(
+        lambda group: group.interpolate()).fillna(0))
     return df
+
+def get_additional_context() -> pd.DataFrame:
+    rename_cols = {'Population Density (# per km2)': 'pop_density',
+                    'Urban population (% of total population)': 'urban_pop',
+                    'Population ages 65 and above (% of total population)': '65_plus',
+                    'Obesity Rate (%)': 'obesity_rate',
+                    'Cancer Rate (%)': 'cancer_rate',
+                    'Share of Deaths from Smoking (%)': 'smoking_deaths',
+                    'Pneumonia Death Rate (per 100K)': 'pneumonia_deaths',
+                    'Share of Deaths from Air Pollution (%)': 'air_pullution_deaths',
+                    'CO2 emissions (metric tons per capita)': 'co2_emissions',
+                    'Air transport (# carrier departures worldwide)': 'airplane_departures'
+                    }
+    additional_data_df = (pd.read_csv(ADDITIONAL_CONTEXT_FILE)
+                          .drop('GDP per capita (current US$)', axis=1)
+                         )
+    additional_data_df['GeoID'] = additional_data_df['CountryName']
+    additional_data_df = additional_data_df.rename(rename_cols, axis=1)
+    # Impute variables with imf regions 
+    regions = pd.read_csv(IMF_REGIONS).drop('Unnamed: 0', axis=1)
+    additional_data_df = additional_data_df.merge(regions[['CountryCode', 'imf_region']], 
+                                                  on='CountryCode')
+    additional_data_df = (additional_data_df
+                          .groupby('imf_region')
+                          .apply(lambda group: group.fillna(group.mean()))
+                          .drop('imf_region', axis=1)
+                          .reset_index()
+                          .drop(['level_1', 'imf_region'], axis=1)
+                         )
+    return additional_data_df
+
 
 
 def preprocess_full(k=7, threshold=3, merge_owd='imputed', tests=False):
@@ -199,22 +251,22 @@ def preprocess_full(k=7, threshold=3, merge_owd='imputed', tests=False):
     if tests:
         df = get_OxCGRT_tests()
         tests_columns = [c for c in df.columns if c.startswith('tests')]
-        all_columns = ID_COLS + CASES_COL + NPI_COLS + tests_columns
+        all_columns = ID_COLS + CASES_COL + DEATHS_COL + NPI_COLS + tests_columns 
         # Missing data in Tests
         for column in tests_columns:
             df.update(df.groupby('GeoID')[column].apply(
             lambda group: group.interpolate()).fillna(0))
     else:
-        all_columns = ID_COLS + CASES_COL + NPI_COLS
+        all_columns = ID_COLS + CASES_COL + DEATHS_COL + NPI_COLS
         df = get_OxCGRT()
 
     df = (df.pipe(preprocess_npi)
             .pipe(preprocess_newcases)
     )
-    # Hampel filter (default values)
-    filtered = df.groupby('CountryCode').apply(lambda group: hampel(group.NewCases, k, threshold))
-    filtered = filtered.reset_index()[['NewCases']]
-    filtered.columns = ['NewCasesHampel']
+    # Remove outliers from NewCases & NewDeaths
+    filtered = hampel_filter_column(df, 'NewCases')
+    df = df.join(filtered)
+    filtered = hampel_filter_column(df, 'NewDeaths')
     df = df.join(filtered)
     df = df[all_columns]
     if merge_owd == 'imputed':
@@ -226,11 +278,8 @@ def preprocess_full(k=7, threshold=3, merge_owd='imputed', tests=False):
         _ = path.join(DATA_PATH, 'owd_by_country.csv')
         owd = pd.read_csv(_).drop('Unnamed: 0', axis=1)
         df = df.merge(owd, on='CountryCode', how='left')
-    # Merge population data
-    country_pop_df = pd.read_csv(ADDITIONAL_CONTEXT_FILE,
-                                            usecols=['CountryName', 'Population'])
-    country_pop_df['GeoID'] = country_pop_df['CountryName']
-
+    # Merge additional data from xprize
+    additional_data = get_additional_context()
     # US state level population
     us_states_pop_df = pd.read_csv(ADDITIONAL_US_STATES_CONTEXT,
                                                 usecols=['NAME', 'POPESTIMATE2019'])
@@ -239,19 +288,19 @@ def preprocess_full(k=7, threshold=3, merge_owd='imputed', tests=False):
     # GeoID for the states
     us_states_pop_df['GeoID'] = US_PREFIX + us_states_pop_df['NAME']
     # Append
-    country_pop_df = country_pop_df.append(us_states_pop_df)
+    additional_data = additional_data.append(us_states_pop_df)
     # UK population 
     uk_pop_df = pd.read_csv(ADDITIONAL_UK_CONTEXT)
     # Append
-    country_pop_df = country_pop_df.append(uk_pop_df)
+    additional_data = additional_data.append(uk_pop_df)
     # Brazil population
     brazil_pop_df = pd.read_csv(ADDITIONAL_BRAZIL_CONTEXT)
-    country_pop_df = (country_pop_df.append(brazil_pop_df)
+    additional_data = (additional_data.append(brazil_pop_df)
                       .drop('NAME', axis=1)
-                     )
-    df = (df.merge(country_pop_df, on='GeoID', how='left')
-          .drop('CountryName_y', axis=1)
-          .rename({'CountryName_x': 'CountryName'}, axis=1)
+                   )
+    df = (df.merge(additional_data, on='CountryName', how='left')
+          .drop(['GeoID_y', 'CountryCode_y'], axis=1)
+          .rename({'GeoID_x': 'GeoID', 'CountryCode_x': 'CountryCode'}, axis=1)
           .dropna(subset=['Population'])
           )
     # Filter countries not used for evaluation
