@@ -113,12 +113,13 @@ class Features(object):
             start = max_date
         # start es el último día del entrenamiento
         data = data[(data.Date > start) & (data.Date <= end)]
-        static = (data
-                .loc[:, ["Date", "GeoID"] + self._static_cols]
-                .groupby('GeoID')
-                .first()
-                .reset_index()
-                .drop('Date', axis=1))
+        static_cols = [c for c in self._data.columns if c.startswith('s')]
+        static = (self._data
+                  .loc[:, ["Date", "GeoID"] + static_cols]
+                  .groupby('GeoID')
+                  .first()
+                  .reset_index()
+                  .drop('Date', axis=1))
         exo_cols = [c for c in self._data.columns if c.startswith('e')]
         lag_cols = [c for c in self._data.columns if c.startswith('l')]
         exo_lags = self._data[["GeoID", "Date"] + exo_cols + lag_cols]
@@ -127,9 +128,8 @@ class Features(object):
             X = exo_lags.loc[(self._data.Date == start) & (self._data.GeoID == key)]
             _ = X.drop(columns=["Date"])
             d = (_.merge(static, on="GeoID")
-                .reindex(['GeoID'] + self._static_cols + 
-                        self._exo_cols + self._lag_cols, axis=1)
-                .rename(columns=self._rename_static)
+                 .reindex(['GeoID'] + static_cols + 
+                         self._exo_cols + self._lag_cols, axis=1)
                 )
             yield d
             columns = _.columns
@@ -148,9 +148,8 @@ class Features(object):
                 _ = np.concatenate(([key], np.array(X).flatten(), output))
                 d = pd.DataFrame([_], columns=columns)
                 d = (d.merge(static, on="GeoID")
-                    .reindex(['GeoID'] + self._static_cols + 
-                            self._exo_cols + self._lag_cols, axis=1)
-                    .rename(columns=self._rename_static)
+                     .reindex(['GeoID'] + static_cols + 
+                              self._exo_cols + self._lag_cols, axis=1)
                     )
                 #print(d)
                 yield d
@@ -219,6 +218,14 @@ class Lasso(AR):
                             selection='random')    
 
 
+class RandomForest(AR):
+    def __init__(self):
+        from sklearn.ensemble import RandomForestRegressor    
+        self._model = RandomForestRegressor(n_jobs=1, n_estimators=40,
+                                            max_features=0.5,
+                                            min_samples_leaf=5)
+
+
 class Identity(object):
     def fit(self, X):
         return self
@@ -280,4 +287,13 @@ class LassoG(ARG):
                      precompute=True,
                      max_iter=10000,
                      positive=True,
-                     selection='random')          
+                     selection='random')
+
+
+class RandomForestG(ARG):
+    def model(self):
+        from sklearn.ensemble import RandomForestRegressor    
+        return RandomForestRegressor(n_jobs=1, n_estimators=40,
+                                     max_features=0.5,
+                                     min_samples_leaf=5)                     
+        
