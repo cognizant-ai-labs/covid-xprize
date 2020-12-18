@@ -107,7 +107,6 @@ MDA,Moldova
 MDG,Madagascar
 MEX,Mexico
 MLI,Mali
-MLT,Malta
 MMR,Myanmar
 MNG,Mongolia
 MOZ,Mozambique
@@ -161,9 +160,7 @@ TCD,Chad
 TGO,Togo
 THA,Thailand
 TJK,Tajikistan
-TKM,Turkmenistan
 TLS,Timor-Leste
-TON,Tonga
 TTO,Trinidad and Tobago
 TUN,Tunisia
 TUR,Turkey

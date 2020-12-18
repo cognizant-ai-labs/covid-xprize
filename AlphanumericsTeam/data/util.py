@@ -7,6 +7,9 @@ cd = os.path.dirname(os.path.realpath(__file__))
 ROOT_DIRECTORY = os.path.abspath(os.path.join(cd, os.pardir))
 DATA_FILE_PATH = os.path.join(ROOT_DIRECTORY, "data", "files")
 
+FINAL_COUNTRIES = dict(
+            {}
+)
 print(ROOT_DIRECTORY)
 print(DATA_FILE_PATH)
 
