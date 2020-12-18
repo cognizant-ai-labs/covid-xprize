@@ -26,8 +26,7 @@ oxford_df  = oxford_df[(
 tqdm.pandas()
 oxford_df['Holidays'] = oxford_df.progress_apply(fun, axis=1)
 oxford_df['NewCases'] = oxford_df.ConfirmedCases.diff().fillna(0)
-
+oxford_df['GeoID'] = oxford_df['CountryName'] + '__' + oxford_df['RegionName'].astype(str)
 
 AUG_DATA_PATH = os.path.join(DATA_FILE_PATH, "OxCGRT_latest_aug.csv")
-print(AUG_DATA_PATH)
 oxford_df.to_csv(AUG_DATA_PATH, index = False)

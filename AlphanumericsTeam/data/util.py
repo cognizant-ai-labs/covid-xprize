@@ -4,16 +4,10 @@ import pandas as pd
 from pandas.io.parsers import read_csv
 import csv
 
-cd = os.path.dirname(os.path.realpath(__file__))
-
-ROOT_DIRECTORY = os.path.abspath(os.path.join(cd, os.pardir))
+ROOT_DIRECTORY = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                              os.pardir)
 DATA_FILE_PATH = os.path.join(ROOT_DIRECTORY, "data", "files")
 
-FINAL_COUNTRIES = dict(
-            {}
-)
-print(ROOT_DIRECTORY)
-print(DATA_FILE_PATH)
 
 def get_country_codes():
     country_code_file  = os.path.join(DATA_FILE_PATH, "country_codes.txt")

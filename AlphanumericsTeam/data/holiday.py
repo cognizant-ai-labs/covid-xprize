@@ -64,7 +64,7 @@ def holiday_region(region, date):
     elif country == "UK":
         country == "GBR"
     else:
-        print(country)
+        print("This country --> ", country)
         raise Exception("Unknown country for the input to holiday region")
 
     # get the attribute for the country
