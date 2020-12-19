@@ -226,6 +226,14 @@ class RandomForest(AR):
                                             min_samples_leaf=5)
 
 
+class ExtraTrees(AR):
+    def __init__(self):
+        from sklearn.ensemble import ExtraTreesRegressor
+        self._model = ExtraTreesRegressor(n_jobs=1, n_estimators=40,
+                                          max_features=0.5,
+                                          min_samples_leaf=5)
+
+
 class Identity(object):
     def fit(self, X):
         return self
@@ -295,5 +303,4 @@ class RandomForestG(ARG):
         from sklearn.ensemble import RandomForestRegressor    
         return RandomForestRegressor(n_jobs=1, n_estimators=40,
                                      max_features=0.5,
-                                     min_samples_leaf=5)                     
-        
+                                     min_samples_leaf=5)                    
