@@ -275,6 +275,7 @@ def preprocess_full(k=7, threshold=3, merge_owd='imputed', tests=False):
         df = (df.merge(owd, on='CountryCode', how='left')
               .drop('imf_region', axis=1))
     elif merge_owd == 'original':
+        print('not imputed')
         _ = path.join(DATA_PATH, 'owd_by_country.csv')
         owd = pd.read_csv(_).drop('Unnamed: 0', axis=1)
         df = df.merge(owd, on='CountryCode', how='left')
@@ -301,7 +302,6 @@ def preprocess_full(k=7, threshold=3, merge_owd='imputed', tests=False):
     df = (df.merge(additional_data, on='CountryName', how='left')
           .drop(['GeoID_y', 'CountryCode_y'], axis=1)
           .rename({'GeoID_x': 'GeoID', 'CountryCode_x': 'CountryCode'}, axis=1)
-          .dropna(subset=['Population'])
           )
     # Filter countries not used for evaluation
     cr = pd.read_csv(COUNTRIES_REGIONS)
