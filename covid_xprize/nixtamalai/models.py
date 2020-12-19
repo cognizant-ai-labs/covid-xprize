@@ -182,13 +182,13 @@ class AR(object):
 
     def fit(self, X: Union[pd.DataFrame, np.ndarray], y: np.ndarray) -> "AR":
         if isinstance(X, pd.DataFrame):
-            X = X.drop(columns="GeoID").to_numpy()
+            X = X.drop(columns="GeoID").to_numpy().astype(np.float)
         self._model.fit(X, y)
         return self
 
     def predict(self, X: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
         if isinstance(X, pd.DataFrame):
-            X = X.drop(columns="GeoID").to_numpy()
+            X = X.drop(columns="GeoID").to_numpy().astype(np.float)
         hy = self._model.predict(X)
         return hy
 
@@ -234,6 +234,40 @@ class ExtraTrees(AR):
                                           min_samples_leaf=5)
 
 
+class EvoDAG(AR):
+    def __init__(self):
+        from EvoDAG.model import EvoDAGE
+        from multiprocessing import cpu_count
+        self._model = EvoDAGE(classifier=False, max_training_size=10000,
+                              random_generations=1000,
+                              n_jobs=cpu_count(), seed=0,
+                              orthogonal_selection=True)
+
+    # def fit(self, X: Union[pd.DataFrame, np.ndarray], y: np.ndarray) -> "AR":
+    #     from EvoDAG import base
+    #     from tqdm import tqdm
+    #     if isinstance(X, pd.DataFrame):
+    #         X = X.drop(columns="GeoID").to_numpy().astype(np.float)
+    #     index = np.arange(X.shape[0])
+    #     MODELS = []
+    #     for _ in tqdm(range(30)):
+    #         np.random.shuffle(index)
+    #         i = index[:10000]
+    #         _ = base.EvoDAG.init(classifier=False).fit(X[i], y[i]).model()
+    #         MODELS.append(_)
+    #     self._model = MODELS
+    #     return self
+# 
+    # def predict(self, X: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
+    #     if isinstance(X, pd.DataFrame):
+    #         X = X.drop(columns="GeoID").to_numpy().astype(np.float)
+    #     HY = []
+    #     for m in self._model:
+    #         HY.append(m.predict(X))
+    #     hy = np.vstack(HY)
+    #     hy = np.median(hy, axis=0)
+    #     return hy
+# 
 class Identity(object):
     def fit(self, X):
         return self
