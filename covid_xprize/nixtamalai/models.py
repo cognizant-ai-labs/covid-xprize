@@ -273,7 +273,7 @@ class Identity(object):
         return self
 
     def transform(self, X):
-        return X.drop(columns="GeoID").to_numpy()
+        return X.drop(columns="GeoID").to_numpy().copy().astype(np.float)
 
 
 class KMeans(object):
