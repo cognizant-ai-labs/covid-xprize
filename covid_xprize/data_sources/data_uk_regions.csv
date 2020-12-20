@@ -1,0 +1,5 @@
+GeoID,life_expectancy,gni_per_capita,average_years_school,Population,Area,human_development,pop_density,urban_pop
+United Kingdom / England,81.38125,38.94500000000001,12.899999999999999,50783994,114906,0.91725,441.9612030703357,83.4
+United Kingdom / Northern Ireland,81.04,29.84,12.4,1893700,14130,0.887,134.01981599433827,66.0
+United Kingdom / Scotland,79.23,37.13,13.2,5463300,77933,0.914,70.1025239628912,70.0
+United Kingdom / Wales,80.36,28.51,12.7,3153000,20779,0.883,151.73973723470812,64.2
