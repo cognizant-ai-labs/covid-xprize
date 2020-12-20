@@ -1,7 +1,7 @@
 from collections import defaultdict
 import holidays
 from dateutil.parser import parse
-
+from AlphanumericsTeam.data.util import REG_C_MAP
 
 # Key for weekdays/weekend
 #  Mon   Tue   Wed   Thu   Fri   Sat   Sun
@@ -60,18 +60,18 @@ def holiday_region(region, date):
 
     # convert two character code to oxford compatible three character codes
     if country == "US":
-        country == "USA"
+        country = "USA"
     elif country == "UK":
-        country == "GBR"
+        country = "GBR"
     else:
-        print("This country --> ", country)
-        raise Exception("Unknown country for the input to holiday region")
+        country = None
 
-    # get the attribute for the country
-    func = getattr(holidays, country)
+    if country:
+        # get the attribute for the country
+        func = getattr(holidays, country)
 
-    if date in func(state=reg):  # holiday for the state
-        return 2  # return holiday (priority over weekend)
+        if date in func(state=reg):  # holiday for the state
+            return 2  # return holiday (priority over weekend)
 
     return int( parse(date).weekday() in WEEKENDS[country])  # check for weekend
 
@@ -81,3 +81,12 @@ def holiday_area(area_code, date):
         return holiday_region(area_code, date)
     else:
         return holiday_country(area_code, date)
+
+def holiday_areaname(country_name, region_name, date):
+
+    code  = REG_C_MAP[(country_name, region_name)]
+
+    if "_" in code:
+        return holiday_region(code, date)
+    else:
+        return holiday_country(code, date)

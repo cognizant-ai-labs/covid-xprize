@@ -35,22 +35,22 @@ for k = 150 : 200%NumGeoLocations
     all_geoid_entry_indexes = find(string(GeoID) == CountryAndRegionList(k));
     all_geoid_data = all_data.data(all_geoid_entry_indexes + 1 , :);
     all_geoid_textdata = all_data.textdata(all_geoid_entry_indexes + 1 , :);
-    
+
     dates_unsorted = all_geoid_data(:, 1);
     [dates, date_indexes] = sort(dates_unsorted, 'ascend');
     ConfirmedCases = all_geoid_data(date_indexes, 31);
     ConfirmedDeaths = all_geoid_data(date_indexes, 32);
     NewCases = [0; diff(ConfirmedCases)];
-    
+
     % Replace nans with 0 and the last one with the previous number
     NewCasesFilled = NewCases;
     NewCasesFilled(isnan(NewCasesFilled)) = 0;
     if(isnan(NewCases(end)))
         NewCasesFilled(end) = NewCasesFilled(end-1);
     end
-    
+
     %     NewCasesFilled = log(NewCasesFilled);
-    
+
     % Smooth the data using Tikhonov regularization
     switch filter_type
         case 'TIKHONOV'
@@ -68,12 +68,12 @@ for k = 150 : 200%NumGeoLocations
         otherwise
             error('Unknown filter type');
     end
-    
+
     Noise = NewCasesFilled - NewCasesSmoothed;
-    
+
     NoiseNormalized = Noise./NewCasesSmoothed;
     NoiseNormalized(isnan(NoiseNormalized)) = 0;
-    
+
     % LSTM Forcasting
     if(false)
         start_time = 100;
@@ -84,24 +84,24 @@ for k = 150 : 200%NumGeoLocations
         dataTrain = NoiseNormalized(start_time : end - numTimeStepsTest)';
         dataTest = NoiseNormalized(end - numTimeStepsTest + 1 : end)';
         numTimeStepsTrain = length(dataTrain);
-        
+
         mu = mean(dataTrain);
         sig = std(dataTrain);
         dataTrainStandardized = (dataTrain - mu) / sig;
-        
+
         XTrain = dataTrainStandardized(1:end-1);
         YTrain = dataTrainStandardized(2:end);
-        
+
         numFeatures = 1;
         numResponses = 1;
         numHiddenUnits = 100;
-        
+
         layers = [ ...
             sequenceInputLayer(numFeatures)
             lstmLayer(numHiddenUnits)
             fullyConnectedLayer(numResponses)
             regressionLayer];
-        
+
         options = trainingOptions('adam', ...
             'MaxEpochs',250, ...
             'GradientThreshold',1, ...
@@ -111,25 +111,26 @@ for k = 150 : 200%NumGeoLocations
             'LearnRateDropFactor',0.2, ...
             'Verbose',0, ...
             'Plots','training-progress');
-        
+
         net = trainNetwork(XTrain,YTrain,layers,options);
-        
+
         dataTestStandardized = (dataTest - mu) / sig;
         XTest = dataTestStandardized(1:end-1);
-        
+
         net = predictAndUpdateState(net,XTrain);
         [net,YPred] = predictAndUpdateState(net,YTrain(end));
-        
+
+
         numTimeStepsTest = numel(XTest);
         for i = 2:numTimeStepsTest
             [net, YPred(:,i)] = predictAndUpdateState(net, YPred(:,i-1), 'ExecutionEnvironment', 'cpu');
         end
-        
+
         YPred = sig*YPred + mu;
-        
+
         YTest = dataTest(2:end);
         rmse = sqrt(mean((YPred-YTest).^2))
-        
+
         figure
         hold on
         idx = numTimeStepsTrain:(numTimeStepsTrain+numTimeStepsTest);
@@ -142,7 +143,7 @@ for k = 150 : 200%NumGeoLocations
         title("Forecast")
         legend(["Observed" "Train" "Forecast"])
         grid
-        
+
         figure
         subplot(2,1,1)
         plot(YTest)
@@ -152,14 +153,14 @@ for k = 150 : 200%NumGeoLocations
         legend(["Observed" "Forecast"])
         ylabel("Cases")
         title("Forecast")
-        
+
         subplot(2,1,2)
         stem(YPred - YTest)
         xlabel("Month")
         ylabel("Error")
         title("RMSE = " + rmse)
     end
-    
+
     % % %     % To check vs the Johns Hopkins University dataset (DONE!)
     % % %     AllCasesFname = './../../COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv';
     % % %     AllDeathsFname = './../../COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv';
@@ -168,7 +169,7 @@ for k = 150 : 200%NumGeoLocations
     % % %     min_cases = 100; % min number of cases
     % % %     % load COBID-19 data (https://github.com/CSSEGISandData/COVID-19.git)
     % % %     [TotalCases, Infected, Recovered, Deceased, FirstCaseDateIndex, MinCaseDateIndex, NumDays] = ReadCOVID19Data(AllCasesFname, AllDeathsFname, AllRecoveredFname, RegionList, min_cases);
-    
+
     dn = datenum(string(dates),'yyyymmdd');
     lgn = {};
     figure
@@ -184,8 +185,8 @@ for k = 150 : 200%NumGeoLocations
     title(CountryAndRegionList(k), 'interpreter', 'none');
     datetick('x','mmm/dd', 'keepticks','keeplimits')
     axis 'tight'
-    
-    
-    
-    
+
+
+
+
 end

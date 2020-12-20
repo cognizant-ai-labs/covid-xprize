@@ -28,9 +28,12 @@ NPI_COLS = ['C1_School closing',
             'H2_Testing policy',
             'H3_Contact tracing',
             'H6_Facial Coverings']
-NB_LOOKBACK_DAYS = 30
-# For testing, restrict training data to that before a hypothetical predictor submission date
-HYPOTHETICAL_SUBMISSION_DATE = np.datetime64("2020-07-31")
+NEW_COLS = ['Holidays',
+            'pop_2020',
+            'density_perkm2'
+           ]
+
+NB_LOOKBACK_DAYS = 60
 
 
 def predict(start_date: str,
@@ -79,6 +82,7 @@ def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str, ve
 
     # Add GeoID column that combines CountryName and RegionName for easier manipulation of data",
     hist_ips_df['GeoID'] = hist_ips_df['CountryName'] + '__' + hist_ips_df['RegionName'].astype(str)
+
     # Fill any missing NPIs by assuming they are the same as previous day
     for npi_col in NPI_COLS:
         hist_ips_df.update(hist_ips_df.groupby(['CountryName', 'RegionName'])[npi_col].ffill().fillna(0))

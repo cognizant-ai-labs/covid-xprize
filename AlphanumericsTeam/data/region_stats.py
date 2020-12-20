@@ -5,7 +5,7 @@ import datetime
 import holidays
 from collections import defaultdict
 from dateutil.parser import parse
-from AlphanumericsTeam.data.util import get_region_codes, get_country_codes, get_orig_df
+from AlphanumericsTeam.data.util import get_region_codes, get_country_codes, get_orig_oxford_df
 from AlphanumericsTeam.data.holiday import holiday_country, holiday_region
 
 LATEST_DATA_URL = 'https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv'
@@ -71,7 +71,7 @@ def main():
 
     columns_of_interest = ["Date", "ConfirmedCases", "NewCases"]
 
-    oxford_df = get_orig_df()
+    oxford_df = get_orig_oxford_df()
 
     if args.region_code:
 
