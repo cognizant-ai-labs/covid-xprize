@@ -29,15 +29,6 @@ def applyFunc(row, pop_df):
             res.extend(pop_df[pop_df["Code"]==row["RegionCode"]].values.tolist()[0][2:5])
         return pd.Series(res)
 
-## code for filtering out rows that dont belong to set of countries and region we care
-#oxford_df  = oxford_df[(
-#                        (oxford_df["Jurisdiction"] == "NAT_TOTAL") &
-#                        (oxford_df["CountryCode"].isin(COUNTRY_CODES))
-#                       )|
-#                       (
-#                        (oxford_df["Jurisdiction"] == "STATE_TOTAL") &
-#                        (oxford_df["RegionCode"].isin(REGION_CODES))
-#                       )]
 
 # Create and register a new `tqdm` instance with `pandas`
 oxford_df['NewCases'] = oxford_df.ConfirmedCases.diff().fillna(0)
