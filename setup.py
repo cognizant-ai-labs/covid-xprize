@@ -55,8 +55,7 @@ setup(
             'LICENSE.md'
         ]
     },
-    data_files=[('.',
-                 ['countries_regions.csv'])],
+    data_files=[('covid_xprize/data/', ['countries_regions.csv'])],
     install_requires=[
         'keras==2.4.3',
         'neat-python==0.92',
