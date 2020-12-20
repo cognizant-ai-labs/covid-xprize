@@ -185,7 +185,8 @@ def do_main():
                         dest="output_path",
                         type=str,
                         required=True,
-                        help="The path to where the generated scenario CSV file should be written")
+                        help="The path to where the generated scenario CSV file should be written "
+                             "including the filename. For example: /tmp/my_scenario.csv")
     args = parser.parse_args()
     LOGGER.info("Generating scenario...")
     # Load the latest dataset from Oxford, for the fixed list of countries and regions
@@ -208,14 +209,9 @@ def do_main():
     LOGGER.info(f"{nb_regions} regions")
     LOGGER.info(f"{nb_rows} rows in generated file, which corresponds to {nb_days} days")
     # Save
-    today = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
-    sd = 20200101  # IP file always contains data since inception
-    ed = args.end_date.replace('-', "")
-    output_dir = args.output_path
-    file_name = f"{today}_{sd}_{ed}_ips.csv"
-    full_file_name = os.path.join(output_dir, file_name)
-    LOGGER.info(f"Saving to: {full_file_name}")
-    scenario_df.to_csv(full_file_name, index=False)
+    output_path = args.output_path
+    LOGGER.info(f"Saving to: {output_path}")
+    scenario_df.to_csv(output_path, index=False)
     LOGGER.info(f"Done!")
 
 
