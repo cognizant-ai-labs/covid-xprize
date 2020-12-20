@@ -56,9 +56,17 @@ def validate_submission(start_date: str,
 
 def _check_columns(expected_columns, pred_df):
     errors = []
+    # Make sure each column is present
     missing_columns = expected_columns - set(pred_df.columns)
     if missing_columns:
         errors.append(f"Missing columns: {missing_columns}")
+        return errors
+    # Make sure column PredictedDailyNewCases contains numbers
+    column_type = pred_df[PREDICTED_DAILY_NEW_CASES].dtype
+    if not np.issubdtype(column_type, np.number):
+        errors.append(f"Column {PREDICTED_DAILY_NEW_CASES} contains non numerical values: {column_type}")
+        return errors
+
     return errors
 
 
