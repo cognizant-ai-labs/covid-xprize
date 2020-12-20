@@ -261,8 +261,8 @@ def preprocess_full(k=7, threshold=3, merge_owd='imputed', tests=False):
         df = get_OxCGRT()
 
     df = (df.pipe(preprocess_npi)
-            .pipe(preprocess_newcases)
-    )
+          .pipe(preprocess_newcases)
+         )
     # Remove outliers from NewCases & NewDeaths
     filtered = hampel_filter_column(df, 'NewCases')
     df = df.join(filtered)
@@ -310,6 +310,20 @@ def preprocess_full(k=7, threshold=3, merge_owd='imputed', tests=False):
                                     cr["CountryName"] + ' / ' + cr["RegionName"])
     rois = cr.GeoID.unique()
     df = df[df.GeoID.isin(rois)]
+    # Merge sub-national data
+    _ = path.join(DATA_PATH, 'data_us_states.csv')
+    total_us_states = pd.read_csv(_)
+    _ = path.join(DATA_PATH, 'data_uk_regions.csv')
+    varsuk = pd.read_csv(_)
+    adds = pd.concat([total_us_states, varsuk]).drop("Area", axis=1)
+    data_subnatl = df.loc[df.GeoID.isin(adds.GeoID.unique()),:]
+    _ = data_subnatl.merge(adds, on="GeoID", how="left")
+    _ = (_
+        .drop(columns=[c for c in _.columns if c.endswith("x")])
+        .rename({c:c[:-2] for c in _.columns if c.endswith("_y")}, axis=1)
+        )
+    df = df[~df.GeoID.isin(adds.GeoID.unique())]
+    df = df.append(_, ignore_index = True)
     return df
 
 def mae(pred, true):

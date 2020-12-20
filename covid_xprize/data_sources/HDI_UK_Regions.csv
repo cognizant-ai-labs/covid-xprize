@@ -1,0 +1,13 @@
+Country,ISO_Code,Level,GDLCODE,Region,"Life expectancy","GNI per capita in thousands of US$ (2011 PPP)","Expected years schooling","Mean years schooling","Population size in millions"
+"United Kingdom","GBR","Subnat","GBRr104","East Midlands",81.27,31.63,17.6,12.6,4.78
+"United Kingdom","GBR","Subnat","GBRr106","East of England",82.15,35.97,16.6,12.8,6.22
+"United Kingdom","GBR","Subnat","GBRr107","London",82.75,70.64,17.4,13.8,8.96
+"United Kingdom","GBR","Subnat","GBRr101","North East",79.82,28.59,18.3,12.4,2.67
+"United Kingdom","GBR","Subnat","GBRr102","North West",79.92,34.50,17.8,12.7,7.29
+"United Kingdom","GBR","Subnat","GBRr112","Northern Ireland",81.04,29.84,16.2,12.4,1.90
+"United Kingdom","GBR","Subnat","GBRr111","Scotland",79.23,37.13,17.8,13.2,5.46
+"United Kingdom","GBR","Subnat","GBRr108","South East",82.43,43.12,17.2,13.3,9.15
+"United Kingdom","GBR","Subnat","GBRr109","South West",81.92,34.51,17.4,13.1,5.58
+"United Kingdom","GBR","Subnat","GBRr110","Wales",80.36,28.51,16.1,12.7,3.15
+"United Kingdom","GBR","Subnat","GBRr105","West Midlands",80.79,32.60,17.6,12.5,5.87
+"United Kingdom","GBR","Subnat","GBRr103","Yorkshire and The Humber",80.62,30.83,17.7,12.5,5.49
