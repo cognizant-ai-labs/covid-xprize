@@ -8,6 +8,9 @@ scipy==1.5.2
 tensorflow==2.2.1
 keras==2.4.3
 neat-python==0.92
+holidays==0.10.4
+pytz==2019.3
+hijri-converter
 
 # plotting
 plotly==4.11.0
