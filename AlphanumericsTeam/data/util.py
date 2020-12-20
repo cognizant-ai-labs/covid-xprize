@@ -31,7 +31,7 @@ def get_region_codes():
     return region_codes
 
 
-def get_orig_df():
+def get_orig_oxford_df():
     DATA_URL = os.path.join(DATA_FILE_PATH, "OxCGRT_latest.csv")
     oxford_df = pd.read_csv(DATA_URL,
                             parse_dates=['Date'],
@@ -44,7 +44,7 @@ def get_orig_df():
     return oxford_df
 
 
-def get_aug_df():
+def get_aug_oxford_df():
     DATA_URL = os.path.join(DATA_FILE_PATH, "OxCGRT_latest_aug.csv")
     oxford_df = pd.read_csv(DATA_URL,
                             parse_dates=['Date'],
@@ -55,6 +55,11 @@ def get_aug_df():
 
     oxford_df["RegionName"] = oxford_df["RegionName"].fillna("")
     return oxford_df
+
+def get_pop_df():
+    DATA_URL = os.path.join(DATA_FILE_PATH, "pop.csv")
+    pop_df = pd.read_csv(DATA_URL)
+    return pop_df
 
 
 def get_valid_areas():
@@ -73,6 +78,22 @@ def get_valid_areas():
                 region_dict[row["RegionCode"]] = (row['CountryName'], row['RegionName'])
 
     return country_dict, region_dict
+
+
+def filter_df_regions(oxford_df):
+
+    ## code for filtering out rows that dont belong to set of countries and region we care
+    oxford_df  = oxford_df[(
+                            (oxford_df["Jurisdiction"] == "NAT_TOTAL") &
+                            (oxford_df["CountryCode"].isin(COUNTRY_CODES))
+                           )|
+                           (
+                            (oxford_df["Jurisdiction"] == "STATE_TOTAL") &
+                            (oxford_df["RegionCode"].isin(REGION_CODES))
+                           )]
+
+    return oxford_df
+
 
 VALID_COUNTRIES =  {'ABW': 'Aruba',
  'AFG': 'Afghanistan',
@@ -315,3 +336,15 @@ VALID_REGIONS = {'UK_ENG': ('United Kingdom', 'England'),
 
 COUNTRY_CODES = set(VALID_COUNTRIES.keys())
 REGION_CODES = set(VALID_REGIONS.keys())
+
+INV_VALID_COUNTRIES = {(v, ""): k for k, v in VALID_COUNTRIES.items()}
+INV_VALID_REGIONS = {v: k for k, v in VALID_REGIONS.items()}
+REG_C_MAP = {**INV_VALID_COUNTRIES, **INV_VALID_REGIONS}
+#pprint(REG_C_MAP)
+
+def pop_areaname(country_name, region_name):
+    code  = REG_C_MAP(country_name, region_name)
+
+    df = get_pop_df()
+    print(df[df["Code"]==code].values.tolist()[0][2:5])
+    return df[df["Code"]==code].values.tolist()[0][2:5]
