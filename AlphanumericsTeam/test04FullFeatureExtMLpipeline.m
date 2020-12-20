@@ -132,7 +132,9 @@ for k = 219 : 219% 1: NumGeoLocations
     %     lambda_vector = Lambda2';
     %     lambda_vector = Lambda2Smoothed';
     %     y_data = diff([lambda_vector(1) ; lambda_vector]);
-    y_data = lambda_vector;
+    
+    %       y_data = lambda_vector;
+    y_data = NewCases;
     
     % Replace nans in y_data with latest non-nan values
     %         I_nans = find(isnan(y_data) | isinf(y_data));
@@ -226,6 +228,7 @@ for k = 219 : 219% 1: NumGeoLocations
             %lstmLayer(numHiddenUnits)
             %lstmLayer(numHiddenUnits)
             fullyConnectedLayer(numResponses)
+            expLayer(numResponses, 'Exp')
             regressionLayer];
         options = trainingOptions('adam', ...
             'MaxEpochs',250, ...
