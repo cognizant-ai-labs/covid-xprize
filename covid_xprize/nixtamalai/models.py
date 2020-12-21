@@ -2,7 +2,9 @@ import pandas as pd
 import numpy as np
 from .helpers import NPI_COLS, ID_COLS, CASES_COL, DEATHS_COL, STATIC_COLS
 from .helpers import preprocess_npi
+from .helpers import DATA_PATH
 from collections import OrderedDict
+from os import path
 from typing import Union
 
 
@@ -169,7 +171,11 @@ class FeaturesN(Features):
         return super(FeaturesN, self).fit(data)
 
     def update_prediction(self, hy: np.ndarray) -> float:
-        hy = super(FeaturesN, self).update_prediction(hy)
+        # hy = super(FeaturesN, self).update_prediction(hy)
+        hy[hy < 0 ] = 0
+        hy[~ np.isfinite(hy)] = 5000
+        hy = hy[0]
+        self._last_hy = hy
         pop = self.population.get(self._last_key, 1)
         hy = pop * hy / 100000
         return hy
@@ -287,7 +293,21 @@ class KMeans(object):
 
     def transform(self, X):
         _ = np.atleast_2d([self.group.get(x, 0) for x in X.GeoID]).T
-        return np.concatenate((_, X.drop(columns="GeoID").to_numpy()), axis=1)
+        return np.concatenate((_, X.drop(columns="GeoID").to_numpy().astype(np.float)), axis=1)
+
+
+class Oscar(KMeans):
+    def fit(self, X):
+        d = pd.read_csv(path.join(DATA_PATH, "MeanAngleC18.csv"))  
+        self.group = {k: v for k, v in zip(d.GeoID, d.CMeanAngle)}
+        return self    
+
+
+class Elio(KMeans):
+    def fit(self, X):
+        d = pd.read_csv(path.join(DATA_PATH, "X_Cl.csv"))  
+        self.group = {k: v for k, v in zip(d.GeoID, d.cluster_id)}
+        return self   
 
 
 class ARG(object):
