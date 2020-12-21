@@ -2,7 +2,9 @@ import pandas as pd
 import numpy as np
 from .helpers import NPI_COLS, ID_COLS, CASES_COL, DEATHS_COL, STATIC_COLS
 from .helpers import preprocess_npi
+from .helpers import DATA_PATH
 from collections import OrderedDict
+from os import path
 from typing import Union
 
 
@@ -169,7 +171,11 @@ class FeaturesN(Features):
         return super(FeaturesN, self).fit(data)
 
     def update_prediction(self, hy: np.ndarray) -> float:
-        hy = super(FeaturesN, self).update_prediction(hy)
+        # hy = super(FeaturesN, self).update_prediction(hy)
+        hy[hy < 0 ] = 0
+        hy[~ np.isfinite(hy)] = 5000
+        hy = hy[0]
+        self._last_hy = hy
         pop = self.population.get(self._last_key, 1)
         hy = pop * hy / 100000
         return hy
@@ -182,13 +188,13 @@ class AR(object):
 
     def fit(self, X: Union[pd.DataFrame, np.ndarray], y: np.ndarray) -> "AR":
         if isinstance(X, pd.DataFrame):
-            X = X.drop(columns="GeoID").to_numpy()
+            X = X.drop(columns="GeoID").to_numpy().astype(np.float)
         self._model.fit(X, y)
         return self
 
     def predict(self, X: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
         if isinstance(X, pd.DataFrame):
-            X = X.drop(columns="GeoID").to_numpy()
+            X = X.drop(columns="GeoID").to_numpy().astype(np.float)
         hy = self._model.predict(X)
         return hy
 
@@ -234,12 +240,46 @@ class ExtraTrees(AR):
                                           min_samples_leaf=5)
 
 
+class EvoDAG(AR):
+    def __init__(self):
+        from EvoDAG.model import EvoDAGE
+        from multiprocessing import cpu_count
+        self._model = EvoDAGE(classifier=False, max_training_size=10000,
+                              random_generations=1000,
+                              n_jobs=cpu_count(), seed=0,
+                              orthogonal_selection=True)
+
+    # def fit(self, X: Union[pd.DataFrame, np.ndarray], y: np.ndarray) -> "AR":
+    #     from EvoDAG import base
+    #     from tqdm import tqdm
+    #     if isinstance(X, pd.DataFrame):
+    #         X = X.drop(columns="GeoID").to_numpy().astype(np.float)
+    #     index = np.arange(X.shape[0])
+    #     MODELS = []
+    #     for _ in tqdm(range(30)):
+    #         np.random.shuffle(index)
+    #         i = index[:10000]
+    #         _ = base.EvoDAG.init(classifier=False).fit(X[i], y[i]).model()
+    #         MODELS.append(_)
+    #     self._model = MODELS
+    #     return self
+# 
+    # def predict(self, X: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
+    #     if isinstance(X, pd.DataFrame):
+    #         X = X.drop(columns="GeoID").to_numpy().astype(np.float)
+    #     HY = []
+    #     for m in self._model:
+    #         HY.append(m.predict(X))
+    #     hy = np.vstack(HY)
+    #     hy = np.median(hy, axis=0)
+    #     return hy
+# 
 class Identity(object):
     def fit(self, X):
         return self
 
     def transform(self, X):
-        return X.drop(columns="GeoID").to_numpy()
+        return X.drop(columns="GeoID").to_numpy().copy().astype(np.float)
 
 
 class KMeans(object):
@@ -253,7 +293,21 @@ class KMeans(object):
 
     def transform(self, X):
         _ = np.atleast_2d([self.group.get(x, 0) for x in X.GeoID]).T
-        return np.concatenate((_, X.drop(columns="GeoID").to_numpy()), axis=1)
+        return np.concatenate((_, X.drop(columns="GeoID").to_numpy().astype(np.float)), axis=1)
+
+
+class Oscar(KMeans):
+    def fit(self, X):
+        d = pd.read_csv(path.join(DATA_PATH, "MeanAngleC18.csv"))  
+        self.group = {k: v for k, v in zip(d.GeoID, d.CMeanAngle)}
+        return self    
+
+
+class Elio(KMeans):
+    def fit(self, X):
+        d = pd.read_csv(path.join(DATA_PATH, "X_Cl.csv"))  
+        self.group = {k: v for k, v in zip(d.GeoID, d.cluster_id)}
+        return self   
 
 
 class ARG(object):
