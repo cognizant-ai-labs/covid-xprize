@@ -3,11 +3,15 @@ clear
 clc
 
 % parameters
-LSTM = true; % perform LSTM or not
+LSTM = false; % perform LSTM or not
+SVM = false; % perform SVM or not
 plot_figures = true; % plot per-region/country plots or not
+
+start_date_criterion = 'MIN_CASE_BASED'; %'MIN_CASE_BASED'; % 'MIN_CASE_BASED'/'DATE_BASED'/'DATA_OR_MIN_CASE_BASED'
 min_cases = 100; % the minimum cases start date for processing each region/country
 start_date = 20200101; % start date
 end_date = 20201225; % end date
+
 predict_ahead_num_days = 90; % number of days to predict ahead
 Rt_wlen = 7; % Reproduction rate estimation window
 Rt_generation_period = 3; % The generation period used for calculating the reproduction number
@@ -18,7 +22,8 @@ filter_type = 'MOVINGAVERAGE-CAUSAL'; % 'MOVINGAVERAGE-NONCAUSAL' or 'MOVINGAVER
 DiffOrderOrFilterCoefs = 2; % Smoothness filter order
 gamma = 25.0; % Tikhonov roughness penalty
 
-data_file = './../../covid-policy-tracker/data/OxCGRT_latest.csv'; % The data-file cloned from: https://github.com/OxCGRT/covid-policy-tracker/tree/master/data
+% data_file = './../../covid-policy-tracker/data/OxCGRT_latest.csv'; % The data-file cloned from: https://github.com/OxCGRT/covid-policy-tracker/tree/master/data
+data_file = './data/files/OxCGRT_latest_aug.csv'; % The data-file cloned from: https://github.com/OxCGRT/covid-policy-tracker/tree/master/data
 included_IP = {'C1_School closing',... % see full descriptions at: https://github.com/OxCGRT/covid-policy-tracker/blob/master/documentation/codebook.md
     'C1_Flag',...
     'C2_Workplace closing',...
@@ -33,16 +38,14 @@ included_IP = {'C1_School closing',... % see full descriptions at: https://githu
     'C6_Flag',...
     'C7_Restrictions on internal movement',...
     'C7_Flag',...
-    'C8_International travel controls',...
-    'E1_Income support',...
-    'E1_Flag',...
-    'E2_Debt/contract relief',... % 'E3_Fiscal measures', 'E4_International support',...
+    'C8_International travel controls',... %'E1_Income support', 'E1_Flag', 'E2_Debt/contract relief',... % 'E3_Fiscal measures', 'E4_International support',...
     'H1_Public information campaigns',...
     'H1_Flag',...
     'H2_Testing policy',...
     'H3_Contact tracing',... % 'H4_Emergency investment in healthcare', 'H5_Investment in vaccines',...
     'H6_Facial Coverings',...
     'H6_Flag',... % {'H7_Vaccination policy', 'H7_Flag',...
+    'Holidays'...
     };
 
 % Read Oxford time-series data
@@ -66,14 +69,50 @@ GeoID = strcat(string(AllCountryCodes), string(AllRegionCodes));
 NumGeoLocations = length(CountryAndRegionList); % Number of country-region pairs
 
 % FEATURE EXTRACTION (Different methods for calculating the reproduction rate)
-for k = 219 : 219% 1: NumGeoLocations
+for k = 219 : 224% 1: NumGeoLocations
     k
-    %     row_indexes = GeoID == CountryAndRegionList(k) & all_data.ConfirmedCases > min_cases;
-    %     geoid_all_row_indexes = GeoID == CountryAndRegionList(k) & all_data.Date >= start_date & all_data.Date <= end_date;
-    geoid_all_row_indexes = GeoID == CountryAndRegionList(k) & all_data.ConfirmedCases > min_cases & all_data.Date >= start_date & all_data.Date <= end_date;
-    
+    switch start_date_criterion
+        case 'MIN_CASE_BASED'
+            geoid_all_row_indexes = GeoID == CountryAndRegionList(k) & all_data.ConfirmedCases > min_cases & all_data.Date <= end_date;
+        case 'DATE_BASED'
+            geoid_all_row_indexes = GeoID == CountryAndRegionList(k) & all_data.Date >= start_date & all_data.Date <= end_date;
+        case 'DATA_OR_MIN_CASE_BASED'
+            geoid_all_row_indexes = GeoID == CountryAndRegionList(k) & all_data.ConfirmedCases > min_cases & all_data.Date >= start_date & all_data.Date <= end_date;
+    end
     ConfirmedCases = all_data.ConfirmedCases(geoid_all_row_indexes); % Confirmed cases
     ConfirmedDeaths = all_data.ConfirmedDeaths(geoid_all_row_indexes); % Death cases
+    
+    Holidays = all_data.Holidays(geoid_all_row_indexes); % Country/Region holidays
+    
+    % Make long weekends
+    for mm = 2 : length(Holidays)-1
+        if(Holidays(mm-1) ~= 0 && Holidays(mm+1) ~= 0)
+            Holidays(mm-1) = 2;
+            Holidays(mm) = 2;
+            Holidays(mm+1) = 2;
+        end
+    end
+    % Remove normal weekends
+    Holidays(Holidays == 1) = 0;
+    Holidays(Holidays == 2) = -1; % Holidays have reverse impact
+    
+    %     for mm = 2 : length(Holidays)-1
+    %         if(Holidays(mm-1) ~= 0 && Holidays(mm+1) ~= 0)
+    %             Holidays(mm) = 1;
+    %         end
+    %     end
+    %
+    %     % Make long weekends more risky
+    %     for mm = 2 : length(Holidays)-1
+    %         if(Holidays(mm-1) ~= 0 && Holidays(mm) ~= 0 && Holidays(mm+1) ~= 0)
+    %             Holidays(mm-1) = 2;
+    %             Holidays(mm) = 2;
+    %             Holidays(mm+1) = 2;
+    %         end
+    %     end
+    
+    all_data.Holidays(geoid_all_row_indexes) = Holidays;
+    
     InterventionPlans = all_data{geoid_all_row_indexes, included_IP}; % Region/Country intervention plans
     
     InterventionPlans(isnan(InterventionPlans)) = 0; % Replace N/A IP with no IP
@@ -132,9 +171,8 @@ for k = 219 : 219% 1: NumGeoLocations
     %     lambda_vector = Lambda2';
     %     lambda_vector = Lambda2Smoothed';
     %     y_data = diff([lambda_vector(1) ; lambda_vector]);
-    
-    %       y_data = lambda_vector;
-    y_data = NewCases;
+    y_data = lambda_vector;
+    %y_data = NewCases;
     
     % Replace nans in y_data with latest non-nan values
     %         I_nans = find(isnan(y_data) | isinf(y_data));
@@ -164,8 +202,14 @@ for k = 219 : 219% 1: NumGeoLocations
     LambdaHatARX = [y_data_train ; y_pred_ar]';
     %     LambdaHatARX = LambdaHatARX + lambda_vector(numTimeStepsTrain) - LambdaHatARX(numTimeStepsTrain); % correct offset
     
-    AllFeatures = [InterventionPlans, LambdaHatARX'];
-%     AllFeatures = [InterventionPlans, InterventionPlansLagged1, InterventionPlansLagged2, InterventionPlansLagged3, LambdaHatARX', ones(size(InterventionPlans, 1), 1)];
+    % Smooth the intervention plans
+    %     smoothing_wlen = 7;
+    %     InterventionPlans = filter(hamming(smoothing_wlen), 1, InterventionPlans);
+    
+    InterventionPlansZeroMean = InterventionPlans - ones(size(InterventionPlans, 1), 1)*mean(InterventionPlans);
+    AllFeatures = [InterventionPlans cumsum(InterventionPlansZeroMean, 1) ones(size(InterventionPlans, 1), 1)];
+    %     AllFeatures = [InterventionPlansLagged1, LambdaHatARX', ones(size(InterventionPlans, 1), 1)];
+    %     AllFeatures = [InterventionPlans, InterventionPlansLagged1, InterventionPlansLagged2, InterventionPlansLagged3, LambdaHatARX', ones(size(InterventionPlans, 1), 1)];
     %     AllFeatures = [InterventionPlans, InterventionPlansLagged1, InterventionPlansLagged2, InterventionPlansLagged3, randn(size(InterventionPlans, 1), 1), ones(size(InterventionPlans, 1), 1)];
     %         AllFeatures = [cumsum(InterventionPlansLagged1, 1), InterventionPlansLagged1, cumsum(InterventionPlansLagged3, 1), InterventionPlansLagged3, ones(size(InterventionPlans, 1), 1)];
     % Noise, Ones and IP lagged (ones compensates for DC and noise for randomness)
@@ -188,25 +232,28 @@ for k = 219 : 219% 1: NumGeoLocations
     
     % Method: Linear predictor
     % LS_regularization_factor
-    IPtoRateMap = x_data_train\y_data_train;
+    %     IPtoRateMap = x_data_train\y_data_train;
+    beta = 1e-8;
+    IPtoRateMap = (x_data_train'*x_data_train + beta*eye(size(x_data_train,2)))\(x_data_train'*y_data_train);
     y_pred_lin = x_data_test*IPtoRateMap;
     LambdaHatLinear = [y_data_train ; y_pred_lin]';
     %     LambdaHatLinear = LambdaHatLinear + lambda_vector(numTimeStepsTrain) - LambdaHatLinear(numTimeStepsTrain); % correct offset
     
-    % Method: SVM
-    Mdlsvm = fitrsvm(x_data_train, y_data_train);%, , 'KFold', 10);
-    %     Mdlsvm.ConvergenceInfo.Converged
-    y_pred_svm = predict(Mdlsvm, x_data_test);
-    LambdaHatSVM = [y_data_train ; y_pred_svm]';
-    %     LambdaHatSVM = LambdaHatSVM + lambda_vector(numTimeStepsTrain) - LambdaHatSVM(numTimeStepsTrain); % correct offset
-    
-    % Method: SVM with gaussian kernel
-    Mdlsvmgau = fitrsvm(x_data_train, y_data_train,'KernelFunction','gaussian', 'KernelScale','auto', 'Standardize', true);%, 'Standardize', true, 'KFold', 10);
-    %     Mdlsvmgau.ConvergenceInfo.Converged
-    y_pred_svmgau = predict(Mdlsvmgau, x_data_test);
-    LambdaHatSVMGAU = [y_data_train ; y_pred_svmgau]';
-    %     LambdaHatSVMGAU = LambdaHatSVMGAU + lambda_vector(numTimeStepsTrain) - LambdaHatSVMGAU(numTimeStepsTrain); % correct offset
-    
+    if(SVM)
+        % Method: SVM
+        Mdlsvm = fitrsvm(x_data_train, y_data_train);%, , 'KFold', 10);
+        %     Mdlsvm.ConvergenceInfo.Converged
+        y_pred_svm = predict(Mdlsvm, x_data_test);
+        LambdaHatSVM = [y_data_train ; y_pred_svm]';
+        %     LambdaHatSVM = LambdaHatSVM + lambda_vector(numTimeStepsTrain) - LambdaHatSVM(numTimeStepsTrain); % correct offset
+        
+        % Method: SVM with gaussian kernel
+        Mdlsvmgau = fitrsvm(x_data_train, y_data_train,'KernelFunction','gaussian');%, 'KernelScale','auto', 'Standardize', true);%, 'Standardize', true, 'KFold', 10);
+        %     Mdlsvmgau.ConvergenceInfo.Converged
+        y_pred_svmgau = predict(Mdlsvmgau, x_data_test);
+        LambdaHatSVMGAU = [y_data_train ; y_pred_svmgau]';
+        %     LambdaHatSVMGAU = LambdaHatSVMGAU + lambda_vector(numTimeStepsTrain) - LambdaHatSVMGAU(numTimeStepsTrain); % correct offset
+    end
     % Method: Auto optimize parameters
     %     Mdlopt = fitrsvm(x_data_train, y_data_train,'OptimizeHyperparameters','auto',...
     %         'HyperparameterOptimizationOptions',struct('AcquisitionFunctionName',...
@@ -220,25 +267,27 @@ for k = 219 : 219% 1: NumGeoLocations
         numHiddenUnits = 200;
         numResponses = 1;
         layers = [ ...
-            sequenceInputLayer(numFeatures)%, 'Normalization', 'zscore')
-            fullyConnectedLayer(numFeatures)
+            sequenceInputLayer(numFeatures, 'Normalization', 'zscore')
+            lstmLayer(numHiddenUnits)
             %reluLayer
+            fullyConnectedLayer(numFeatures)
             lstmLayer(numHiddenUnits)
-            lstmLayer(numHiddenUnits)
+            %lstmLayer(numHiddenUnits)
             %lstmLayer(numHiddenUnits)
             %lstmLayer(numHiddenUnits)
             fullyConnectedLayer(numResponses)
-            expLayer(numResponses, 'Exp')
+            sigmoidLayer
+            %             expLayer(numResponses, 'Exp')
             regressionLayer];
         options = trainingOptions('adam', ...
-            'MaxEpochs',250, ...
+            'MaxEpochs',100, ...
             'GradientThreshold',1, ...
             'InitialLearnRate',0.005, ...
             'LearnRateSchedule','piecewise', ...
             'LearnRateDropPeriod',125, ...
             'LearnRateDropFactor',0.2, ...
             'Verbose',1, ...
-            'Plots','none');%'training-progress');        
+            'Plots','none');%'training-progress');
         
         MdlLSTM = trainNetwork(x_data_train', y_data_train', layers, options);
         MdlLSTM = predictAndUpdateState(MdlLSTM, x_data_train');
@@ -255,16 +304,17 @@ for k = 219 : 219% 1: NumGeoLocations
     LambdaHatLinear(I_pos) = lambda_threshold;
     LambdaHatLinear(I_neg) = -lambda_threshold;
     
-    I_pos = LambdaHatSVM > lambda_threshold & counter > numTimeStepsTrain;
-    I_neg = LambdaHatSVM < -lambda_threshold & counter > numTimeStepsTrain;
-    LambdaHatSVM(I_pos) = lambda_threshold;
-    LambdaHatSVM(I_neg) = -lambda_threshold;
-    
-    I_pos = LambdaHatSVMGAU > lambda_threshold & counter > numTimeStepsTrain;
-    I_neg = LambdaHatSVMGAU < -lambda_threshold & counter > numTimeStepsTrain;
-    LambdaHatSVMGAU(I_pos) = lambda_threshold;
-    LambdaHatSVMGAU(I_neg) = -lambda_threshold;
-    
+    if(SVM)
+        I_pos = LambdaHatSVM > lambda_threshold & counter > numTimeStepsTrain;
+        I_neg = LambdaHatSVM < -lambda_threshold & counter > numTimeStepsTrain;
+        LambdaHatSVM(I_pos) = lambda_threshold;
+        LambdaHatSVM(I_neg) = -lambda_threshold;
+        
+        I_pos = LambdaHatSVMGAU > lambda_threshold & counter > numTimeStepsTrain;
+        I_neg = LambdaHatSVMGAU < -lambda_threshold & counter > numTimeStepsTrain;
+        LambdaHatSVMGAU(I_pos) = lambda_threshold;
+        LambdaHatSVMGAU(I_neg) = -lambda_threshold;
+    end
     %     I_pos = LambdaHatSVMOPT > lambda_threshold & counter > numTimeStepsTrain;
     %     I_neg = LambdaHatSVMOPT < -lambda_threshold & counter > numTimeStepsTrain;
     %     LambdaHatSVMOPT(I_pos) = lambda_threshold;
@@ -278,7 +328,7 @@ for k = 219 : 219% 1: NumGeoLocations
     end
     
     %     LambdaHatTotal = median([LambdaHatARX ; LambdaHatLinear ; LambdaHatSVM ; LambdaHatSVMGAU ; LambdaHatLSTM], 1);
-    LambdaHatTotal = mean([LambdaHatARX ; LambdaHatLinear ; LambdaHatSVM ; LambdaHatSVMGAU], 1);
+    %     LambdaHatTotal = mean([LambdaHatARX ; LambdaHatLinear ; LambdaHatSVM ; LambdaHatSVMGAU], 1);
     
     % Build an estimate of the new cases
     NewCasesEstimateLastTrainValue = NewCasesSmoothed(numTimeStepsTrain);
@@ -287,14 +337,15 @@ for k = 219 : 219% 1: NumGeoLocations
     CumLambdaHatLinear = cumsum(LambdaHatLinear(numTimeStepsTrain + 1 : end))';
     NewCasesEstimateLinear = [NewCasesSmoothed(1 : numTimeStepsTrain) ; NewCasesEstimateLastTrainValue*exp(CumLambdaHatLinear)];
     
-    CumLambdaHatSVM = cumsum(LambdaHatSVM(numTimeStepsTrain + 1 : end))';
-    NewCasesEstimateSVM = [NewCasesSmoothed(1 : numTimeStepsTrain) ; NewCasesEstimateLastTrainValue*exp(CumLambdaHatSVM)];
-    
-    CumLambdaHatSVMGAU = cumsum(LambdaHatSVMGAU(numTimeStepsTrain + 1 : end))';
-    NewCasesEstimateSVMGAU = [NewCasesSmoothed(1 : numTimeStepsTrain) ; NewCasesEstimateLastTrainValue*exp(CumLambdaHatSVMGAU)];
-    
-    %     CumLambdaHatSVMOPT = cumsum(LambdaHatSVMOPT(numTimeStepsTrain + 1 : end))';
-    %     NewCasesEstimateSVMOPT = [NewCasesSmoothed(1 : numTimeStepsTrain) ; NewCasesEstimateLastTrainValue*exp(CumLambdaHatSVMOPT)];
+    if(SVM)
+        CumLambdaHatSVM = cumsum(LambdaHatSVM(numTimeStepsTrain + 1 : end))';
+        NewCasesEstimateSVM = [NewCasesSmoothed(1 : numTimeStepsTrain) ; NewCasesEstimateLastTrainValue*exp(CumLambdaHatSVM)];
+        
+        CumLambdaHatSVMGAU = cumsum(LambdaHatSVMGAU(numTimeStepsTrain + 1 : end))';
+        NewCasesEstimateSVMGAU = [NewCasesSmoothed(1 : numTimeStepsTrain) ; NewCasesEstimateLastTrainValue*exp(CumLambdaHatSVMGAU)];
+        %     CumLambdaHatSVMOPT = cumsum(LambdaHatSVMOPT(numTimeStepsTrain + 1 : end))';
+        %     NewCasesEstimateSVMOPT = [NewCasesSmoothed(1 : numTimeStepsTrain) ; NewCasesEstimateLastTrainValue*exp(CumLambdaHatSVMOPT)];
+    end
     
     if(LSTM)
         CumLambdaHatLSTM = cumsum(LambdaHatLSTM(numTimeStepsTrain + 1 : end))';
@@ -310,55 +361,66 @@ for k = 219 : 219% 1: NumGeoLocations
         dn = 1 : length(NewCasesSmoothed);
         ind_pos = find(Lambda2 >= 0);
         ind_neg = find(Lambda2 < 0);
+        InterventionPlansAvg= nanmean(InterventionPlans, 2);
         
-        lgn = [];
-        figure
-        hold on;
-        %         plot(dn, InterventionPlans, 'color', 0.8*ones(1, 3)); lgn = cat(2, lgn, {'IP'});
-        plot(dn, mean(InterventionPlans, 2), 'color', 0.4*ones(1, 3)); lgn = cat(2, lgn, {'Mean IP'});
-        plot(dn, Lambda1, 'linewidth', 2); lgn = cat(2, lgn, {'Lambda1'});
-        plot(dn, Lambda2, 'linewidth', 2); lgn = cat(2, lgn, {'Lambda2'});
-        plot(dn, Lambda2Smoothed, 'linewidth', 2); lgn = cat(2, lgn, {'Lambda2Smoothed'});
-        plot(dn, Lambda3, 'linewidth', 2); lgn = cat(2, lgn, {'Lambda3'});
-        plot(dn , LambdaHatARX, 'linewidth', 3); lgn = cat(2, lgn, {'LambdaHatARX'});
-        plot(dn , LambdaHatLinear, 'linewidth', 3); lgn = cat(2, lgn, {'LambdaHatLinear'});
-        plot(dn , LambdaHatSVM, 'linewidth', 3); lgn = cat(2, lgn, {'LambdaHatSVM'});
-        plot(dn , LambdaHatSVMGAU, 'linewidth', 3); lgn = cat(2, lgn, {'LambdaHatSVMGAU'});
-        %         plot(dn , LambdaHatSVMOPT, 'linewidth', 3); lgn = cat(2, lgn, {'LambdaHatSVMOPT'});
-        % % %         plot(dn , (LambdaHatLinear + LambdaHatSVM)/2, 'linewidth', 3); lgn = cat(2, lgn, {'Avg. LambdaHats'});
-        if(LSTM)
-            plot(dn , LambdaHatLSTM, 'linewidth', 3); lgn = cat(2, lgn, {'LambdaHatLSTM'});
+        if(0)
+            lgn = [];
+            figure
+            hold on;
+            %         plot(dn, InterventionPlans, 'color', 0.8*ones(1, 3)); lgn = cat(2, lgn, {'IP'});
+            plot(dn, (InterventionPlansAvg - nanmean(InterventionPlansAvg))/nanstd(InterventionPlansAvg), 'color', 0.4*ones(1, 3)); lgn = cat(2, lgn, {'Mean IP'});
+            plot(dn, Lambda1, 'linewidth', 2); lgn = cat(2, lgn, {'Lambda1'});
+            plot(dn, Lambda2, 'linewidth', 2); lgn = cat(2, lgn, {'Lambda2'});
+            plot(dn, Lambda2Smoothed, 'linewidth', 2); lgn = cat(2, lgn, {'Lambda2Smoothed'});
+            plot(dn, Lambda3, 'linewidth', 2); lgn = cat(2, lgn, {'Lambda3'});
+            plot(dn , LambdaHatARX, 'linewidth', 3); lgn = cat(2, lgn, {'LambdaHatARX'});
+            plot(dn , LambdaHatLinear, 'linewidth', 3); lgn = cat(2, lgn, {'LambdaHatLinear'});
+            if(SVM)
+                plot(dn , LambdaHatSVM, 'linewidth', 3); lgn = cat(2, lgn, {'LambdaHatSVM'});
+                plot(dn , LambdaHatSVMGAU, 'linewidth', 3); lgn = cat(2, lgn, {'LambdaHatSVMGAU'});
+                %         plot(dn , LambdaHatSVMOPT, 'linewidth', 3); lgn = cat(2, lgn, {'LambdaHatSVMOPT'});
+            end
+            % % %         plot(dn , (LambdaHatLinear + LambdaHatSVM)/2, 'linewidth', 3); lgn = cat(2, lgn, {'Avg. LambdaHats'});
+            if(LSTM)
+                plot(dn , LambdaHatLSTM, 'linewidth', 3); lgn = cat(2, lgn, {'LambdaHatLSTM'});
+            end
+            % % %         plot(dn , LambdaHatTotal, '--', 'linewidth', 3); lgn = cat(2, lgn, {'LambdaHatTotal'});
+            legend(lgn);
+            grid
+            title(CountryAndRegionList(k), 'interpreter', 'none');
+            %     datetick('x','mmm/dd', 'keepticks','keeplimits')
+            axis 'tight'
         end
-        % % %         plot(dn , LambdaHatTotal, '--', 'linewidth', 3); lgn = cat(2, lgn, {'LambdaHatTotal'});
-        legend(lgn);
-        grid
-        title(CountryAndRegionList(k), 'interpreter', 'none');
-        %     datetick('x','mmm/dd', 'keepticks','keeplimits')
-        axis 'tight'
         
-        lgn = [];
-        figure
-        hold on
-        %     plot(dn, ConfirmedCases); lgn = cat(2, lgn, {'ConfirmedCases'});
-        %     plot(dn, ConfirmedDeaths); lgn = cat(2, lgn, {'ConfirmedDeaths'});
-        %         plot(dn, NewCases); lgn = cat(2, lgn, {'NewCases'});
-        plot(dn, NewCasesSmoothed, 'Linewidth', 2); lgn = cat(2, lgn, {'NewCasesSmoothed'});
-        plot(dn(ind_pos), NewCasesSmoothed(ind_pos)', 'bo'); lgn = cat(2, lgn, {'NewCasesSmoothed Rising'});
-        plot(dn(ind_neg), NewCasesSmoothed(ind_neg)', 'ro'); lgn = cat(2, lgn, {'NewCasesSmoothed Falling'});
-        %         plot(dn, PointWiseFit1); lgn = cat(2, lgn, {'PointWiseFit1'});
-        %         plot(dn, PointWiseFit3); lgn = cat(2, lgn, {'PointWiseFit3'});
-        plot(dn, NewCasesEstimateLinear, 'Linewidth', 2); lgn = cat(2, lgn, {'NewCasesEstimateLinear'});
-        plot(dn, NewCasesEstimateSVM, 'Linewidth', 2); lgn = cat(2, lgn, {'NewCasesEstimateSVM'});
-        plot(dn, NewCasesEstimateSVMGAU, 'Linewidth', 2); lgn = cat(2, lgn, {'NewCasesEstimateSVMGAU'});
-        %         plot(dn, NewCasesEstimateSVMOPT, 'Linewidth', 2); lgn = cat(2, lgn, {'NewCasesEstimateSVMOPT'});
-        if(LSTM)
-            plot(dn, NewCasesEstimateLSTM, 'Linewidth', 2); lgn = cat(2, lgn, {'NewCasesEstimateLSTM'});
+        if(1)
+            lgn = [];
+            figure
+            hold on
+            %     plot(dn, ConfirmedCases); lgn = cat(2, lgn, {'ConfirmedCases'});
+            %     plot(dn, ConfirmedDeaths); lgn = cat(2, lgn, {'ConfirmedDeaths'});
+%             plot(dn, NewCases); lgn = cat(2, lgn, {'NewCases'});
+%             plot(dn, nanstd(NewCases)*(InterventionPlansAvg - nanmean(InterventionPlansAvg))/nanstd(InterventionPlansAvg)); lgn = cat(2, lgn, {'Mean IP Scaled'});
+            plot(dn, max(NewCases)*InterventionPlansAvg/max(InterventionPlansAvg)); lgn = cat(2, lgn, {'Mean IP Scaled'});
+            plot(dn, NewCasesSmoothed, 'Linewidth', 2); lgn = cat(2, lgn, {'NewCasesSmoothed'});
+            plot(dn(ind_pos), NewCasesSmoothed(ind_pos)', 'bo'); lgn = cat(2, lgn, {'NewCasesSmoothed Rising'});
+            plot(dn(ind_neg), NewCasesSmoothed(ind_neg)', 'ro'); lgn = cat(2, lgn, {'NewCasesSmoothed Falling'});
+            %         plot(dn, PointWiseFit1); lgn = cat(2, lgn, {'PointWiseFit1'});
+            %         plot(dn, PointWiseFit3); lgn = cat(2, lgn, {'PointWiseFit3'});
+            plot(dn, NewCasesEstimateLinear, 'Linewidth', 2); lgn = cat(2, lgn, {'NewCasesEstimateLinear'});
+            if(SVM)
+                plot(dn, NewCasesEstimateSVM, 'Linewidth', 2); lgn = cat(2, lgn, {'NewCasesEstimateSVM'});
+                plot(dn, NewCasesEstimateSVMGAU, 'Linewidth', 2); lgn = cat(2, lgn, {'NewCasesEstimateSVMGAU'});
+                %         plot(dn, NewCasesEstimateSVMOPT, 'Linewidth', 2); lgn = cat(2, lgn, {'NewCasesEstimateSVMOPT'});
+            end
+            if(LSTM)
+                plot(dn, NewCasesEstimateLSTM, 'Linewidth', 2); lgn = cat(2, lgn, {'NewCasesEstimateLSTM'});
+            end
+            % % %         plot(dn, NewCasesEstimateTotal, '--', 'Linewidth', 2); lgn = cat(2, lgn, {'NewCasesEstimateTotal'});
+%             plot(dn, Amp1, 'Linewidth', 2); lgn = cat(2, lgn, {'Amp1'});
+            legend(lgn);
+            grid
+            title(CountryAndRegionList(k), 'interpreter', 'none');
+            axis 'tight'
         end
-        % % %         plot(dn, NewCasesEstimateTotal, '--', 'Linewidth', 2); lgn = cat(2, lgn, {'NewCasesEstimateTotal'});
-        plot(dn, Amp1, 'Linewidth', 2); lgn = cat(2, lgn, {'Amp1'});
-        legend(lgn);
-        grid
-        title(CountryAndRegionList(k), 'interpreter', 'none');
-        axis 'tight'
     end
 end
