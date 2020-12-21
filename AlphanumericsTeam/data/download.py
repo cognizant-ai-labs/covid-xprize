@@ -7,7 +7,10 @@ import urllib.request
 
 LATEST_DATA_URL = 'https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv'
 
-ROOT_DIRECTORY = os.path.abspath(os.path.join(".", os.pardir))
+
+ROOT_DIRECTORY = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                              os.pardir)
+ROOT_DIRECTORY = os.path.abspath(ROOT_DIRECTORY)
 DATA_FILE_PATH = os.path.join(ROOT_DIRECTORY, "data", "files")
 CSV_PATH = os.path.join(DATA_FILE_PATH, "OxCGRT_latest.csv")
 

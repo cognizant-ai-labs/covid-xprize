@@ -3,6 +3,7 @@ from pprint import pprint
 import pandas as pd
 from pandas.io.parsers import read_csv
 import csv
+import numpy as np
 
 ROOT_DIRECTORY = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                               os.pardir)
@@ -39,19 +40,6 @@ def get_pop_df():
     pop_df = pd.read_csv(DATA_URL)
     return pop_df
 
-
-def filter_df_regions(oxford_df):
-
-    ## code for filtering out rows that dont belong to set of countries and region we care
-
-    countries = list(oxford_df.CountryName.unique())
-    regions = list(oxford_df.RegionName.unique())
-    oxford_df = oxford_df[(oxford_df.CountryName.isin(countries)) &
-                          (oxford_df.RegionName.isin(regions))]
-
-    return oxford_df
-
-
 def get_valid_areas():
 
     DATA_URL = os.path.join(DATA_FILE_PATH, "countries_regions.csv")
@@ -61,6 +49,8 @@ def get_valid_areas():
     with open(DATA_URL) as csv_file:
         csv_reader = csv.DictReader(csv_file, delimiter=',')
         for row in csv_reader:
+            if not row["CountryCode"] and not row["RegionCode"]:
+                continue
             if row["CountryCode"]:
                 code_dict[row["CountryCode"]] = (row['CountryName'],"")
             if row["RegionCode"]:
@@ -94,5 +84,20 @@ def pop_areaname(country_name, region_name):
     code  = REG_C_MAP(country_name, region_name)
 
     df = get_pop_df()
-    print(df[df["Code"]==code].values.tolist()[0][2:5])
+    #print(df[df["Code"]==code].values.tolist()[0][2:5])
     return df[df["Code"]==code].values.tolist()[0][2:5]
+
+
+def filter_df_regions(oxford_df):
+
+    ## code for filtering out rows that dont belong to set of countries and region we care
+
+    #countries = list(VALID_COUNTRIES.values())
+    #regions = VALID_REGIONS
+    #oxford_df = oxford_df[(oxford_df.CountryName.isin(countries)) &
+    #                      (oxford_df.RegionName.isin(regions))]
+
+    areas = list(VALID_AREAS.values())
+    #pprint(areas)
+    mask = oxford_df[["CountryName", "RegionName"]].agg(tuple, 1).isin(areas)
+    return oxford_df[mask]

@@ -6,7 +6,7 @@ import urllib.request
 # Suppress noisy Tensorflow debug logging
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-
+# for training on GPU with tf backend
 import tensorflow as tf
 physical_devices = tf.config.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(physical_devices[0], enable=True)
@@ -22,9 +22,6 @@ from keras.layers import Input
 from keras.layers import LSTM
 from keras.layers import Lambda
 from keras.models import Model
-
-# See https://github.com/OxCGRT/covid-policy-tracker
-DATA_URL = "https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv"
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(ROOT_DIR, 'data')
@@ -59,12 +56,11 @@ NB_TEST_DAYS = 14
 WINDOW_SIZE = 7
 US_PREFIX = "United States / "
 NUM_TRIALS = 1
-LSTM_SIZE = 32
+LSTM_SIZE = 50
 MAX_NB_COUNTRIES = 20
 
 
 class Positive(Constraint):
-
     def __call__(self, w):
         return K.abs(w)
 
@@ -92,9 +88,6 @@ class XPrizePredictor(object):
                                                       nb_lookback_days=NB_LOOKBACK_DAYS)
             self.predictor.load_weights(path_to_model_weights)
 
-            # Make sure data is available to make predictions
-            if not os.path.exists(DATA_FILE_PATH):
-                urllib.request.urlretrieve(DATA_URL, DATA_FILE_PATH)
 
         self.df = self._prepare_dataframe(data_url)
         geos = self.df.GeoID.unique()
@@ -507,7 +500,7 @@ class XPrizePredictor(object):
         return X_context, X_action, y
 
     # Construct model
-    def _construct_model(self, nb_context, nb_action, lstm_size=32, nb_lookback_days=21):
+    def _construct_model(self, nb_context, nb_action, lstm_size=LSTM_SIZE, nb_lookback_days=21):
 
         # Create context encoder
         context_input = Input(shape=(nb_lookback_days, nb_context),

@@ -1,8 +1,10 @@
 import os, sys
 
 # add the parent directory to see the other atc library dependencies
+# NOTE: the change to sys.path is not needed if the virtual env has been
+# installed using script run.sh at root directory of repo
 FILE_PATH = os.getcwd()
-sys.path.append(FILE_PATH + '//..//..//') 
+sys.path.append(FILE_PATH + '//..//..//')
 # print(sys.path) # echo the system path
 
 from AlphanumericsTeam.data.util import VALID_COUNTRIES, VALID_REGIONS, get_orig_oxford_df, get_pop_df, DATA_FILE_PATH
