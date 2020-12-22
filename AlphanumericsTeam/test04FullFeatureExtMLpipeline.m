@@ -3,19 +3,19 @@ clear
 clc
 
 % parameters
-LSTM = false; % perform LSTM or not
+LSTM = true; % perform LSTM or not
 SVM = false; % perform SVM or not
 plot_figures = true; % plot per-region/country plots or not
 
 start_date_criterion = 'MIN_CASE_BASED'; %'MIN_CASE_BASED'; % 'MIN_CASE_BASED'/'DATE_BASED'/'DATA_OR_MIN_CASE_BASED'
 min_cases = 100; % the minimum cases start date for processing each region/country
-start_date = 20200101; % start date
+start_date = 20200401; % start date
 end_date = 20201225; % end date
 
-predict_ahead_num_days = 90; % number of days to predict ahead
+predict_ahead_num_days = 5; % number of days to predict ahead
 Rt_wlen = 7; % Reproduction rate estimation window
 Rt_generation_period = 3; % The generation period used for calculating the reproduction number
-lambda_threshold = 10.06; % The threshold for the maximum absolute value of the reproduction rates exponent lambda
+lambda_threshold = 0.06; % The threshold for the maximum absolute value of the reproduction rates exponent lambda
 filter_type = 'MOVINGAVERAGE-CAUSAL'; % 'MOVINGAVERAGE-NONCAUSAL' or 'MOVINGAVERAGE-CAUSAL' ' or 'MOVINGMEDIAN' or 'TIKHONOV'; % The last two call functions from the OSET package (oset.ir). Note: 'MOVINGAVERAGE-CAUSAL' is the contest standard and only evaluation algorithm
 % Tikhonov regularization params (if selected by filter_type):
 % DiffOrderOrFilterCoefs = [1 -2 1]; % Smoothness filter coefs
@@ -69,7 +69,7 @@ GeoID = strcat(string(AllCountryCodes), string(AllRegionCodes));
 NumGeoLocations = length(CountryAndRegionList); % Number of country-region pairs
 
 % FEATURE EXTRACTION (Different methods for calculating the reproduction rate)
-for k = 219 : 224% 1: NumGeoLocations
+for k = 122 : 125%225 %1 : NumGeoLocations
     k
     switch start_date_criterion
         case 'MIN_CASE_BASED'
@@ -85,16 +85,18 @@ for k = 219 : 224% 1: NumGeoLocations
     Holidays = all_data.Holidays(geoid_all_row_indexes); % Country/Region holidays
     
     % Make long weekends
-    for mm = 2 : length(Holidays)-1
-        if(Holidays(mm-1) ~= 0 && Holidays(mm+1) ~= 0)
-            Holidays(mm-1) = 2;
-            Holidays(mm) = 2;
-            Holidays(mm+1) = 2;
+    Holidays(isnan(Holidays)) = 0;
+    if(1)
+        for mm = 2 : length(Holidays)-1
+            if(Holidays(mm-1) ~= 0 && Holidays(mm+1) ~= 0)
+                Holidays(mm-1) = -2; % Long holidays have reverse impact
+                Holidays(mm) = -2;
+                Holidays(mm+1) = -2;
+            end
         end
+        % Remove normal weekends
+        % Holidays(Holidays == 1) = 0;
     end
-    % Remove normal weekends
-    Holidays(Holidays == 1) = 0;
-    Holidays(Holidays == 2) = -1; % Holidays have reverse impact
     
     %     for mm = 2 : length(Holidays)-1
     %         if(Holidays(mm-1) ~= 0 && Holidays(mm+1) ~= 0)
@@ -115,11 +117,24 @@ for k = 219 : 224% 1: NumGeoLocations
     
     InterventionPlans = all_data{geoid_all_row_indexes, included_IP}; % Region/Country intervention plans
     
-    InterventionPlans(isnan(InterventionPlans)) = 0; % Replace N/A IP with no IP
+    % Replace all N/A IP with previous IP
+    for j = 1 : size(InterventionPlans, 2)
+        for i = 2 : size(InterventionPlans, 1)
+            if(isnan(InterventionPlans(i, j)) && not(isnan(InterventionPlans(i - 1, j))))
+                InterventionPlans(i, j) = InterventionPlans(i - 1, j);
+            end
+        end
+    end
+    InterventionPlans(isnan(InterventionPlans)) = 0; % Replace any remaining N/A IP with no IP
     
     % Calculate the number of new cases
     NewCases = [nan; diff(ConfirmedCases)]; % calculate the new daily cases
     NewCases(NewCases < 0) = 0;
+    
+    if(length(NewCases) < 2)
+        warning(strcat("Insufficient data for ", CountryAndRegionList(k), ". Skipping the country/region."));
+        continue;
+    end
     
     % Replace nans with 0 and the last one with the previous number
     NewCasesFilled = NewCases;
@@ -155,14 +170,14 @@ for k = 219 : 224% 1: NumGeoLocations
     
     % Lagged intervention plans
     lag1 = 3;
-    %     InterventionPlansLagged1 = [zeros(lag1, size(InterventionPlans, 2)) ; InterventionPlans(1 : end - lag1, :)];
-    InterventionPlansLagged1 = filter(ones(1, lag1), lag1, InterventionPlans);
+    InterventionPlansLagged1 = [zeros(lag1, size(InterventionPlans, 2)) ; InterventionPlans(1 : end - lag1, :)];
+    %     InterventionPlansLagged1 = filter(ones(1, lag1), lag1, InterventionPlans);
     lag2 = 5;
-    %     InterventionPlansLagged2 = [zeros(lag2, size(InterventionPlans, 2)) ; InterventionPlans(1 : end - lag2, :)];
-    InterventionPlansLagged2 = filter(ones(1, lag2), lag2, InterventionPlans);
+    InterventionPlansLagged2 = [zeros(lag2, size(InterventionPlans, 2)) ; InterventionPlans(1 : end - lag2, :)];
+    %     InterventionPlansLagged2 = filter(ones(1, lag2), lag2, InterventionPlans);
     lag3 = 7;
-    %     InterventionPlansLagged3 = [zeros(lag3, size(InterventionPlans, 2)) ; InterventionPlans(1 : end - lag3, :)];
-    InterventionPlansLagged3 = filter(ones(1, lag3), lag3, InterventionPlans);
+    InterventionPlansLagged3 = [zeros(lag3, size(InterventionPlans, 2)) ; InterventionPlans(1 : end - lag3, :)];
+    %     InterventionPlansLagged3 = filter(ones(1, lag3), lag3, InterventionPlans);
     
     % Regression/Classification Phase
     % Y Data
@@ -172,7 +187,7 @@ for k = 219 : 224% 1: NumGeoLocations
     %     lambda_vector = Lambda2Smoothed';
     %     y_data = diff([lambda_vector(1) ; lambda_vector]);
     y_data = lambda_vector;
-    %y_data = NewCases;
+    y_data2 = NewCasesSmoothed;
     
     % Replace nans in y_data with latest non-nan values
     %         I_nans = find(isnan(y_data) | isinf(y_data));
@@ -185,9 +200,24 @@ for k = 219 : 224% 1: NumGeoLocations
     I_non_nans = ~isnan(y_data);
     y_data = y_data(I_non_nans);
     
+    for jj = 2 : length(y_data2)
+        if(isnan(y_data2(jj)) || isinf(y_data2(jj)))
+            y_data2(jj) = y_data2(jj -1);
+        end
+    end
+    % Remove any remaining nans
+    I_non_nans2 = ~isnan(y_data2);
+    y_data2 = y_data2(I_non_nans2);
+    y_max = 3.0 * max(y_data2);
+    y_data2 = y_data2/y_max;
+    
     % y_data train and test sets
     y_data_train = y_data(1 : numTimeStepsTrain);
     y_data_test = y_data(numTimeStepsTrain + 1 : end);
+    
+    % y_data2 train and test sets
+    y_data2_train = y_data2(1 : numTimeStepsTrain);
+    y_data2_test = y_data2(numTimeStepsTrain + 1 : end);
     
     % Autoregressive model
     ar_order = 30;
@@ -206,8 +236,9 @@ for k = 219 : 224% 1: NumGeoLocations
     %     smoothing_wlen = 7;
     %     InterventionPlans = filter(hamming(smoothing_wlen), 1, InterventionPlans);
     
-    InterventionPlansZeroMean = InterventionPlans - ones(size(InterventionPlans, 1), 1)*mean(InterventionPlans);
-    AllFeatures = [InterventionPlans cumsum(InterventionPlansZeroMean, 1) ones(size(InterventionPlans, 1), 1)];
+    %     InterventionPlansZeroMean = InterventionPlans - ones(size(InterventionPlans, 1), 1)*mean(InterventionPlans);
+    %     AllFeatures = [InterventionPlans cumsum(InterventionPlansZeroMean, 1) ones(size(InterventionPlans, 1), 1)];
+    AllFeatures = [InterventionPlans InterventionPlansLagged1 InterventionPlansLagged2 InterventionPlansLagged3];%, InterventionPlansLagged1, InterventionPlansLagged2, InterventionPlansLagged3, ones(size(InterventionPlans, 1), 1)];
     %     AllFeatures = [InterventionPlansLagged1, LambdaHatARX', ones(size(InterventionPlans, 1), 1)];
     %     AllFeatures = [InterventionPlans, InterventionPlansLagged1, InterventionPlansLagged2, InterventionPlansLagged3, LambdaHatARX', ones(size(InterventionPlans, 1), 1)];
     %     AllFeatures = [InterventionPlans, InterventionPlansLagged1, InterventionPlansLagged2, InterventionPlansLagged3, randn(size(InterventionPlans, 1), 1), ones(size(InterventionPlans, 1), 1)];
@@ -226,6 +257,11 @@ for k = 219 : 224% 1: NumGeoLocations
     x_data = AllFeatures;
     x_data = x_data(I_non_nans, :);
     
+    % Normalize X data
+    x_mx = max(abs(x_data));
+    x_mx(x_mx == 0) = 1;
+    x_data = x_data ./ (ones(size(x_data, 1), 1) * x_mx);
+    
     % x_data train and test sets
     x_data_train = x_data(1 : numTimeStepsTrain, :);
     x_data_test = x_data(numTimeStepsTrain + 1 : end, :);
@@ -233,7 +269,7 @@ for k = 219 : 224% 1: NumGeoLocations
     % Method: Linear predictor
     % LS_regularization_factor
     %     IPtoRateMap = x_data_train\y_data_train;
-    beta = 1e-8;
+    beta = 1e-6;
     IPtoRateMap = (x_data_train'*x_data_train + beta*eye(size(x_data_train,2)))\(x_data_train'*y_data_train);
     y_pred_lin = x_data_test*IPtoRateMap;
     LambdaHatLinear = [y_data_train ; y_pred_lin]';
@@ -263,36 +299,71 @@ for k = 219 : 224% 1: NumGeoLocations
     
     % Method: LSTM
     if(LSTM)
-        numFeatures = size(x_data, 2);
-        numHiddenUnits = 200;
+        numFeatures = size(x_data, 2) + 1; % The IP features plus previous time series
+        numHiddenUnits = 50;
         numResponses = 1;
         layers = [ ...
-            sequenceInputLayer(numFeatures, 'Normalization', 'zscore')
-            lstmLayer(numHiddenUnits)
+            sequenceInputLayer(numFeatures)%, 'Normalization', 'zscore')
             %reluLayer
-            fullyConnectedLayer(numFeatures)
             lstmLayer(numHiddenUnits)
-            %lstmLayer(numHiddenUnits)
-            %lstmLayer(numHiddenUnits)
-            %lstmLayer(numHiddenUnits)
+            %             fullyConnectedLayer(numHiddenUnits)
+            lstmLayer(numHiddenUnits)
+            %             lstmLayer(numHiddenUnits)
+            %             lstmLayer(numHiddenUnits)
+            %             lstmLayer(numHiddenUnits)
+            %             lstmLayer(numHiddenUnits)
+            %             lstmLayer(numHiddenUnits)
+            %             lstmLayer(numHiddenUnits)
+            %             fullyConnectedLayer(numFeatures)
+            %             lstmLayer(numHiddenUnits)
+            %             lstmLayer(numHiddenUnits)
+            %             lstmLayer(numHiddenUnits)
+            %             lstmLayer(numHiddenUnits)
             fullyConnectedLayer(numResponses)
-            sigmoidLayer
+            %             MyTanhLayer(numResponses, 'Tanh', 0.06) %tanhLayer
             %             expLayer(numResponses, 'Exp')
             regressionLayer];
         options = trainingOptions('adam', ...
-            'MaxEpochs',100, ...
+            'MaxEpochs',250, ...
             'GradientThreshold',1, ...
-            'InitialLearnRate',0.005, ...
+            'InitialLearnRate',0.001, ...
             'LearnRateSchedule','piecewise', ...
             'LearnRateDropPeriod',125, ...
             'LearnRateDropFactor',0.2, ...
             'Verbose',1, ...
             'Plots','none');%'training-progress');
         
-        MdlLSTM = trainNetwork(x_data_train', y_data_train', layers, options);
-        MdlLSTM = predictAndUpdateState(MdlLSTM, x_data_train');
-        [MdlLSTM, y_pred_lstm] = predictAndUpdateState(MdlLSTM, x_data_test');
-        LambdaHatLSTM = [y_data_train ; y_pred_lstm']';
+        x_data_train_augmented = [x_data_train, [y_data_train(1, :) ; y_data_train(1 : end - 1, :)]];
+        % % %         x_data_train_augmented = (x_data_train_augmented - ones(size(x_data_train_augmented, 1), 1)*nanmean(x_data_train_augmented));
+        % % %         x_data_train_augmented = x_data_train_augmented./(ones(size(x_data_train_augmented, 1), 1)*nanstd(x_data_train_augmented));
+        
+        MdlLSTM = trainNetwork(x_data_train_augmented', y_data_train', layers, options);
+        [MdlLSTM, y_pred] = predictAndUpdateState(MdlLSTM, x_data_train_augmented');
+        
+        y_pred_last = y_data_train(end);%y_pred(end);
+        y_pred_lstm = zeros(numTimeStepsTest, 1);
+        for ii = 1 : numTimeStepsTest
+            x_data_test_augmented = [x_data_test(ii, :), y_pred_last];
+            [MdlLSTM, y_pred_last] = predictAndUpdateState(MdlLSTM, x_data_test_augmented','ExecutionEnvironment','cpu');
+            % Clip the max incline/decline
+            if(y_pred_last > lambda_threshold)
+                y_pred_last = lambda_threshold;
+            elseif(y_pred_last < -lambda_threshold)
+                y_pred_last = -lambda_threshold;
+            end
+            
+            if(1)
+                y_pred_lstm(ii, :) = y_pred_last;
+            else
+                y_pred_lstm(ii, :) = y_pred_last * y_max;
+            end
+        end
+        
+        %         MdlLSTM = predictAndUpdateState(MdlLSTM, [x_data_train(2 : end, :) y_data_train(1 : end - 1, :)]');
+        %
+        %         [MdlLSTM, y_pred_lstm] = predictAndUpdateState(MdlLSTM, x_data_test');
+        %         LambdaHatLSTM = [y_data_train ; y_pred_lstm]';
+        LambdaHatLSTM = [y_pred' ; y_pred_lstm]';
         %         LambdaHatLSTM = LambdaHatLSTM + lambda_vector(numTimeStepsTrain) - LambdaHatLSTM(numTimeStepsTrain); % correct offset
     end
     
@@ -320,11 +391,13 @@ for k = 219 : 224% 1: NumGeoLocations
     %     LambdaHatSVMOPT(I_pos) = lambda_threshold;
     %     LambdaHatSVMOPT(I_neg) = -lambda_threshold;
     
-    if(LSTM)
-        I_pos = LambdaHatLSTM > lambda_threshold & counter > numTimeStepsTrain;
-        I_neg = LambdaHatLSTM < -lambda_threshold & counter > numTimeStepsTrain;
-        LambdaHatLSTM(I_pos) = lambda_threshold;
-        LambdaHatLSTM(I_neg) = -lambda_threshold;
+    if(0)
+        if(LSTM)
+            I_pos = LambdaHatLSTM > lambda_threshold & counter > numTimeStepsTrain;
+            I_neg = LambdaHatLSTM < -lambda_threshold & counter > numTimeStepsTrain;
+            LambdaHatLSTM(I_pos) = lambda_threshold;
+            LambdaHatLSTM(I_neg) = -lambda_threshold;
+        end
     end
     
     %     LambdaHatTotal = median([LambdaHatARX ; LambdaHatLinear ; LambdaHatSVM ; LambdaHatSVMGAU ; LambdaHatLSTM], 1);
@@ -348,8 +421,12 @@ for k = 219 : 224% 1: NumGeoLocations
     end
     
     if(LSTM)
-        CumLambdaHatLSTM = cumsum(LambdaHatLSTM(numTimeStepsTrain + 1 : end))';
-        NewCasesEstimateLSTM = [NewCasesSmoothed(1 : numTimeStepsTrain) ; NewCasesEstimateLastTrainValue*exp(CumLambdaHatLSTM)];
+        if(1)
+            CumLambdaHatLSTM = cumsum(LambdaHatLSTM(numTimeStepsTrain + 1 : end))';
+            NewCasesEstimateLSTM = [NewCasesSmoothed(1 : numTimeStepsTrain) ; NewCasesEstimateLastTrainValue*exp(CumLambdaHatLSTM)];
+        else
+            NewCasesEstimateLSTM = [NewCasesSmoothed(1 : numTimeStepsTrain) ; LambdaHatLSTM(numTimeStepsTrain + 1 : end)'];
+        end
     end
     
     %     CumLambdaHatTotal = cumsum(LambdaHatTotal(numTimeStepsTrain + 1 : end))';
@@ -398,8 +475,8 @@ for k = 219 : 224% 1: NumGeoLocations
             hold on
             %     plot(dn, ConfirmedCases); lgn = cat(2, lgn, {'ConfirmedCases'});
             %     plot(dn, ConfirmedDeaths); lgn = cat(2, lgn, {'ConfirmedDeaths'});
-%             plot(dn, NewCases); lgn = cat(2, lgn, {'NewCases'});
-%             plot(dn, nanstd(NewCases)*(InterventionPlansAvg - nanmean(InterventionPlansAvg))/nanstd(InterventionPlansAvg)); lgn = cat(2, lgn, {'Mean IP Scaled'});
+            %             plot(dn, NewCases); lgn = cat(2, lgn, {'NewCases'});
+            %             plot(dn, nanstd(NewCases)*(InterventionPlansAvg - nanmean(InterventionPlansAvg))/nanstd(InterventionPlansAvg)); lgn = cat(2, lgn, {'Mean IP Scaled'});
             plot(dn, max(NewCases)*InterventionPlansAvg/max(InterventionPlansAvg)); lgn = cat(2, lgn, {'Mean IP Scaled'});
             plot(dn, NewCasesSmoothed, 'Linewidth', 2); lgn = cat(2, lgn, {'NewCasesSmoothed'});
             plot(dn(ind_pos), NewCasesSmoothed(ind_pos)', 'bo'); lgn = cat(2, lgn, {'NewCasesSmoothed Rising'});
@@ -416,7 +493,7 @@ for k = 219 : 224% 1: NumGeoLocations
                 plot(dn, NewCasesEstimateLSTM, 'Linewidth', 2); lgn = cat(2, lgn, {'NewCasesEstimateLSTM'});
             end
             % % %         plot(dn, NewCasesEstimateTotal, '--', 'Linewidth', 2); lgn = cat(2, lgn, {'NewCasesEstimateTotal'});
-%             plot(dn, Amp1, 'Linewidth', 2); lgn = cat(2, lgn, {'Amp1'});
+            %             plot(dn, Amp1, 'Linewidth', 2); lgn = cat(2, lgn, {'Amp1'});
             legend(lgn);
             grid
             title(CountryAndRegionList(k), 'interpreter', 'none');

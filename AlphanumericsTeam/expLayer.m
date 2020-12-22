@@ -22,7 +22,7 @@ classdef expLayer < nnet.layer.Layer
             layer.Description = "Exp with " + numChannels + " channels";
             
             % Initialize scaling coefficient.
-            layer.Alpha = rand([1 1 numChannels]);
+            layer.Alpha = randn([1 1 numChannels]);
         end
         
         function Z = predict(layer, X)
