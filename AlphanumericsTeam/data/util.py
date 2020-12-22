@@ -40,6 +40,24 @@ def get_pop_df():
     pop_df = pd.read_csv(DATA_URL)
     return pop_df
 
+
+def transform_pop_df():
+    DATA_URL_INPUT = os.path.join(DATA_FILE_PATH, "pop.csv")
+    DATA_URL_OUTPUT = os.path.join(DATA_FILE_PATH, "pop_t.csv")
+
+    with open(DATA_URL_INPUT, mode='r') as infile:
+        reader = csv.DictReader(infile)
+        with open(DATA_URL_OUTPUT, mode='w') as outfile:
+            fnames = ["CountryName", "RegionName", "density_perkm2"]
+            writer = csv.DictWriter(outfile, delimiter=',', fieldnames=fnames)
+            writer.writerow(dict((fn,fn) for fn in fnames))
+            for row in reader:
+                cname, rname = VALID_AREAS[row["Code"]]
+                density = row['density_perkm2']
+                writer.writerow(dict({"CountryName": cname,
+                                      "RegionName": rname,
+                                      "density_perkm2":density}))
+
 def get_valid_areas():
 
     DATA_URL = os.path.join(DATA_FILE_PATH, "countries_regions.csv")
@@ -101,3 +119,7 @@ def filter_df_regions(oxford_df):
     #pprint(areas)
     mask = oxford_df[["CountryName", "RegionName"]].agg(tuple, 1).isin(areas)
     return oxford_df[mask]
+
+
+# Uncomment to generate new transformefd pop_t.csv
+#transform_pop_df()

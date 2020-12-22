@@ -1,9 +1,7 @@
-import os, sys
+import os
 import pandas as pd
 import argparse
 import datetime
-import holidays
-from collections import defaultdict
 from dateutil.parser import parse
 from AlphanumericsTeam.data.util import get_region_codes, get_country_codes, get_orig_oxford_df
 from AlphanumericsTeam.data.holiday import holiday_country, holiday_region

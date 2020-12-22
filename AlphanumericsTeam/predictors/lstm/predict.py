@@ -3,7 +3,7 @@
 import argparse
 import os
 
-from covid_xprize.examples.predictors.lstm.xprize_predictor import XPrizePredictor
+from xprize_predictor import XPrizePredictor
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -11,7 +11,7 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 # or change this MODEL_FILE path to point to your model.
 MODEL_WEIGHTS_FILE = os.path.join(ROOT_DIR, "models", "trained_model_weights.h5")
 
-DATA_FILE = os.path.join(ROOT_DIR, 'data', "OxCGRT_latest.csv")
+DATA_FILE = os.path.join(ROOT_DIR, 'data', "OxCGRT_latest_aug.csv")
 
 
 def predict(start_date: str,
