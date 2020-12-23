@@ -14,6 +14,7 @@ logging.basicConfig(
 )
 LOGGER = logging.getLogger('predictor_validation')
 
+DATE = "Date"
 PREDICTED_DAILY_NEW_CASES = "PredictedDailyNewCases"
 
 COLUMNS = {"CountryName",
@@ -68,12 +69,18 @@ def _check_columns(expected_columns, pred_df):
     missing_columns = expected_columns - set(pred_df.columns)
     if missing_columns:
         errors.append(f"Missing columns: {missing_columns}")
+        # Columns are not there, can't check anything more
         return errors
+
+    # Make sure column Date contains dates
+    date_column_type = pred_df[DATE].dtype
+    if not np.issubdtype(date_column_type, np.datetime64):
+        errors.append(f"Column {DATE} contains non date values: {date_column_type}")
+
     # Make sure column PredictedDailyNewCases contains numbers
-    column_type = pred_df[PREDICTED_DAILY_NEW_CASES].dtype
-    if not np.issubdtype(column_type, np.number):
-        errors.append(f"Column {PREDICTED_DAILY_NEW_CASES} contains non numerical values: {column_type}")
-        return errors
+    cases_column_type = pred_df[PREDICTED_DAILY_NEW_CASES].dtype
+    if not np.issubdtype(cases_column_type, np.number):
+        errors.append(f"Column {PREDICTED_DAILY_NEW_CASES} contains non numerical values: {cases_column_type}")
 
     return errors
 
