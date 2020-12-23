@@ -82,7 +82,7 @@ def applyFunc(row, pop_df):
     rname = row["RegionName"]
     pop_df["RegionName"] = pop_df["RegionName"].fillna(value="")
 
-    print( cname, rname, date , "---")
+    #print( cname, rname, date , "---")
     # print( pop_df["CountryName"], pop_df["RegionName"] , "---")
 
     pop = pop_df[(pop_df["CountryName"] == cname) &
@@ -375,6 +375,7 @@ REG_C_MAP = {('Afghanistan', ''): 'AFG',
              ('Zambia', ''): 'ZMB',
              ('Zimbabwe', ''): 'ZWE'}
 
+
 VALID_AREAS = {v: k for k, v in REG_C_MAP.items()}
 VALID_COUNTRIES = {k:v[0] for k,v in VALID_AREAS.items() if "_" not in k}
 VALID_REGIONS =  {k:v for k,v in VALID_AREAS.items() if "_" in k}
@@ -388,6 +389,7 @@ INV_VALID_REGIONS = {v: k for k, v in VALID_AREAS.items() if "_" in k}
 from pprint import pprint
 #pprint(list(VALID_COUNTRIES.values()))
 #pprint(list(VALID_REGIONS.values()))
+
 def filter_df_regions(oxford_df):
 
     ## code for filtering out rows that dont belong to set of countries and region we care

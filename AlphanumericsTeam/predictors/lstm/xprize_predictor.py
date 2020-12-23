@@ -62,9 +62,9 @@ NB_TEST_DAYS = 50
 WINDOW_SIZE = 7
 US_PREFIX = "United States / "
 NUM_TRIALS = 1
-LSTM_SIZE = 500
-MAX_NB_COUNTRIES = 236
-BATCH_SIZE = 512
+LSTM_SIZE = 256
+MAX_NB_COUNTRIES = 236  #sum of all countries and regions
+BATCH_SIZE = 256
 
 class Positive(Constraint):
     def __call__(self, w):
@@ -107,7 +107,9 @@ class XPrizePredictor(object):
         start_date = pd.to_datetime(start_date_str, format='%Y-%m-%d')
         end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
         nb_days = (end_date - start_date).days + 1
-
+        
+        print("Start and end date", start_date, end_date)
+        print("days", nb_days)
         # Load the npis into a DataFrame, handling regions
         npis_df = self._load_original_data(path_to_ips_file)
         npis_df = filter_df_regions(npis_df)
@@ -118,7 +120,8 @@ class XPrizePredictor(object):
         back_up = add_features_df(back_up)
 
         npis_df[ADDITIONAL_FEATURES] =  back_up[ADDITIONAL_FEATURES]
-
+        
+        print(npis_df.columns)
         # Prepare the output
         forecast = {"CountryName": [],
                     "RegionName": [],
@@ -152,6 +155,7 @@ class XPrizePredictor(object):
                 forecast["PredictedDailyNewCases"].append(pred)
 
         forecast_df = pd.DataFrame.from_dict(forecast)
+        print(forecast_df.columns)
         # Return only the requested predictions
         return forecast_df[(forecast_df.Date >= start_date) & (forecast_df.Date <= end_date)]
 
@@ -321,10 +325,12 @@ class XPrizePredictor(object):
             action_samples = []
             outcome_samples = []
             nb_total_days = outcome_data.shape[0]
+
             for d in range(NB_LOOKBACK_DAYS, nb_total_days):
                 context_samples.append(context_data[d - NB_LOOKBACK_DAYS:d])
                 action_samples.append(action_data[d - NB_LOOKBACK_DAYS:d])
                 outcome_samples.append(outcome_data[d])
+
             if len(outcome_samples) > 0:
                 X_context = np.expand_dims(np.stack(context_samples, axis=0), axis=2)
                 X_action = np.stack(action_samples, axis=0)
@@ -419,6 +425,9 @@ class XPrizePredictor(object):
         # Clip outliers
         MIN_VALUE = 0.
         MAX_VALUE = 2.
+
+        from pprint import pprint
+        pprint(y)
         X_context = np.clip(X_context, MIN_VALUE, MAX_VALUE)
         y = np.clip(y, MIN_VALUE, MAX_VALUE)
 
