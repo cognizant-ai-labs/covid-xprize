@@ -75,7 +75,6 @@ def prescribe(start_date_str: str,
     for country_name in hist_df['CountryName'].unique():
         country_df = hist_df[hist_df['CountryName'] == country_name]
         for region_name in country_df['RegionName'].unique():
-            print('Prescribing for', country_name, region_name)
 
             # Sort IPs for this geo by weight
             geo_weights_df = weights_df[(weights_df['CountryName'] == country_name) &
