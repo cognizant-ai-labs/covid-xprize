@@ -5,7 +5,7 @@ from typing import List
 import pandas as pd
 
 from covid_xprize.validation.scenario_generator import ID_COLS, NPI_COLUMNS
-from covid_xprize.validation.predictor_validation import _check_columns, _check_geos, _check_days
+from covid_xprize.validation.predictor_validation import _check_geos, _check_days
 
 PRESCRIPTION_INDEX_COL = "PrescriptionIndex"
 COLUMNS = ID_COLS + NPI_COLUMNS + ["PrescriptionIndex"]
@@ -68,6 +68,15 @@ def validate_submission(start_date: str,
             all_errors += _check_days(start_date, end_date, i_presc_df)
 
     return all_errors
+
+
+def _check_columns(expected_columns, pred_df):
+    errors = []
+    # Make sure each column is present
+    missing_columns = expected_columns - set(pred_df.columns)
+    if missing_columns:
+        errors.append(f"Missing columns: {missing_columns}")
+    return errors
 
 
 def _check_prescription_values(df):
