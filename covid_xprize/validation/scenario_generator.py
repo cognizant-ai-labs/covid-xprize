@@ -1,9 +1,21 @@
 # Copyright 2020 (c) Cognizant Digital Business, Evolutionary AI. All rights reserved. Issued under the Apache 2.0 License.
+import argparse
+import logging.config
 import os
 import urllib.request
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
+
+from covid_xprize.scoring.predictor_scoring import load_dataset
+
+logging.basicConfig(
+    format='%(asctime)s %(name)-20s %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+LOGGER = logging.getLogger('scenario_generator')
 
 # See https://github.com/OxCGRT/covid-policy-tracker
 DATA_URL = "https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv"
@@ -151,3 +163,57 @@ def generate_scenario(start_date_str, end_date_str, raw_df, countries=None, scen
                 ips_df.sort_values(by=ID_COLS, inplace=True)
 
     return ips_df
+
+
+def do_main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-s", "--start_date",
+                        dest="start_date",
+                        type=str,
+                        required=False,
+                        default="2020-12-22",
+                        help="Start date from which to apply the scenario"
+                             "Format YYYY-MM-DD. For example 2020-12-22")
+    parser.add_argument("-e", "--end_date",
+                        dest="end_date",
+                        type=str,
+                        required=False,
+                        default="2021-06-19",
+                        help="Last date of the scenario"
+                             "Format YYYY-MM-DD. For example 2021-06-19")
+    parser.add_argument("-o", "--output_path",
+                        dest="output_path",
+                        type=str,
+                        required=True,
+                        help="The path to where the generated scenario CSV file should be written "
+                             "including the filename. For example: /tmp/my_scenario.csv")
+    args = parser.parse_args()
+    LOGGER.info("Generating scenario...")
+    # Load the latest dataset from Oxford, for the fixed list of countries and regions
+    latest_df = load_dataset()
+    LOGGER.info("Dataset loaded.")
+    LOGGER.info(f"Start date: {args.start_date}")
+    LOGGER.info(f"End date: {args.end_date}")
+    LOGGER.info("Generating...")
+    scenario_df = generate_scenario(args.start_date,
+                                    args.end_date,
+                                    latest_df,
+                                    countries=None,
+                                    scenario="Freeze")
+    LOGGER.info("Scenario created.")
+    nb_countries = len(scenario_df.CountryName.unique())
+    nb_regions = len(scenario_df.RegionName.unique()) - 1  # Ignore the 'nan' region
+    nb_rows = len(scenario_df)
+    nb_days = nb_rows / (nb_countries + nb_regions)
+    LOGGER.info(f"{nb_countries} countries")
+    LOGGER.info(f"{nb_regions} regions")
+    LOGGER.info(f"{nb_rows} rows in generated file, which corresponds to {nb_days} days")
+    # Save
+    output_path = args.output_path
+    LOGGER.info(f"Saving to: {output_path}")
+    scenario_df.to_csv(output_path, index=False)
+    LOGGER.info(f"Done!")
+
+
+if __name__ == '__main__':
+    do_main()
