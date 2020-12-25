@@ -68,7 +68,6 @@ def prepare_historical_df():
                   parse_dates=['Date'],
                   encoding="ISO-8859-1",
                   error_bad_lines=False)
-    df['RegionName'] = df['RegionName'].fillna("")
 
     # Add GeoID column for easier manipulation
     df = add_geo_id(df)
@@ -86,6 +85,15 @@ def prepare_historical_df():
 
     return df
 
+
+# Function to load an IPs file, e.g., passed to prescribe.py
+def load_ips_file(path_to_ips_file):
+    df = pd.read_csv(path_to_ips_file,
+                     parse_dates=['Date'],
+                     encoding="ISO-8859-1",
+                     error_bad_lines=False)
+    df = add_geo_id(df)
+    return df
 
 # Function that wraps predictor in order to query
 # predictor when prescribing.

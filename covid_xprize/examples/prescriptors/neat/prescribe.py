@@ -6,21 +6,33 @@ import numpy as np
 import pandas as pd
 
 from copy import deepcopy
+from datetime import datetime
 
 import neat
+
+# Function imports from utils
+from covid_xprize.examples.prescriptors.neat.utils import add_geo_id
+from covid_xprize.examples.prescriptors.neat.utils import get_predictions
+from covid_xprize.examples.prescriptors.neat.utils import load_ips_file
+from covid_xprize.examples.prescriptors.neat.utils import prepare_historical_df
+
+# Constant imports from utils
+from covid_xprize.examples.prescriptors.neat.utils import CASES_COL
+from covid_xprize.examples.prescriptors.neat.utils import IP_COLS
+from covid_xprize.examples.prescriptors.neat.utils import IP_MAX_VALUES
+from covid_xprize.examples.prescriptors.neat.utils import PRED_CASES_COL
+
 
 # Path to file containing neat prescriptors. Here we simply use a
 # recent checkpoint of the population from train_prescriptor.py,
 # but this is likely not the most complementary set of prescriptors.
 # Many approaches can be taken to generate/collect more diverse sets.
 # Note: this set can contain up to 10 prescriptors for evaluation.
-from covid_xprize.examples.prescriptors.neat.utils import prepare_historical_df, CASES_COL, IP_COLS, IP_MAX_VALUES, \
-    add_geo_id, get_predictions, PRED_CASES_COL
-
 PRESCRIPTORS_FILE = 'neat-checkpoint-0'
 
 # Number of days the prescriptors look at in the past.
 NB_LOOKBACK_DAYS = 14
+
 
 
 def prescribe(start_date_str: str,
@@ -32,6 +44,11 @@ def prescribe(start_date_str: str,
     start_date = pd.to_datetime(start_date_str, format='%Y-%m-%d')
     end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
 
+    # Load the past IPs data
+    print("Loading past IPs data...")
+    past_ips_df = load_ips_file(path_to_prior_ips_file)
+    geos = past_ips_df['GeoID'].unique()
+
     # Load historical data with basic preprocessing
     print("Loading historical data...")
     df = prepare_historical_df()
@@ -39,17 +56,44 @@ def prescribe(start_date_str: str,
     # Restrict it to dates before the start_date
     df = df[df['Date'] <= start_date]
 
-    # Fill in any missing case data using predictor given ips_df.
-    # todo: ignore ips_df for now, and instead assume we have case
-    # data for all days and geos up until the start_date.
-
-    # Create historical data arrays for all geos
+    # Create past case data arrays for all geos
     past_cases = {}
-    past_ips = {}
-    for geo in df['GeoID'].unique():
+    for geo in geos:
         geo_df = df[df['GeoID'] == geo]
         past_cases[geo] = np.maximum(0, np.array(geo_df[CASES_COL]))
+
+    # Create past ip data arrays for all geos
+    past_ips = {}
+    for geo in geos:
+        geo_df = past_ips_df[past_ips_df['GeoID'] == geo]
         past_ips[geo] = np.array(geo_df[IP_COLS])
+
+    # Fill in any missing case data before start_date
+    # using predictor given past_ips_df.
+    # Note that the following assumes that the df returned by prepare_historical_df()
+    # has the same final date for all regions. This has been true so far, but relies
+    # on it being true for the Oxford data csv loaded by prepare_historical_df().
+    last_historical_data_date_str = df['Date'].max()
+    last_historical_data_date = pd.to_datetime(last_historical_data_date_str,
+                                               format='%Y-%m-%d')
+    if last_historical_data_date + pd.Timedelta(days=1) < start_date:
+        print("Filling in missing data...")
+        missing_data_start_date = last_historical_data_date + pd.Timedelta(days=1)
+        missing_data_start_date_str = datetime.strftime(missing_data_start_date,
+                                                           format='%Y-%m-%d')
+        missing_data_end_date = start_date - pd.Timedelta(days=1)
+        missing_data_end_date_str = datetime.strftime(missing_data_end_date,
+                                                           format='%Y-%m-%d')
+        pred_df = get_predictions(missing_data_start_date_str,
+                                  missing_data_end_date_str,
+                                  past_ips_df)
+        pred_df = add_geo_id(pred_df)
+        for geo in geos:
+            geo_df = pred_df[pred_df['GeoID'] == geo].sort_values(by='Date')
+            pred_cases_arr = np.array(geo_df[PRED_CASES_COL])
+            past_cases[geo] = np.append(past_cases[geo], pred_cases_arr)
+    else:
+        print("No missing data.")
 
     # Gather values for scaling network output
     ip_max_values_arr = np.array([IP_MAX_VALUES[ip] for ip in IP_COLS])
@@ -63,10 +107,9 @@ def prescribe(start_date_str: str,
 
     # Load IP costs to condition prescriptions
     cost_df = pd.read_csv(path_to_cost_file)
-    cost_df['RegionName'] = cost_df['RegionName'].fillna("")
     cost_df = add_geo_id(cost_df)
     geo_costs = {}
-    for geo in cost_df['GeoID'].unique():
+    for geo in geos:
         costs = cost_df[cost_df['GeoID'] == geo]
         cost_arr = np.array(costs[IP_COLS])[0]
         geo_costs[geo] = cost_arr
@@ -94,7 +137,7 @@ def prescribe(start_date_str: str,
             date_str = date.strftime("%Y-%m-%d")
 
             # Get prescription for all regions
-            for geo in df['GeoID'].unique():
+            for geo in geos:
 
                 # Prepare input data. Here we use log to place cases
                 # on a reasonable scale; many other approaches are possible.
@@ -128,15 +171,13 @@ def prescribe(start_date_str: str,
             pred_df = get_predictions(start_date_str, date_str, pres_df)
 
             # Update past data with new day of prescriptions and predictions
-            pres_df['GeoID'] = pres_df['CountryName'] + '__' + pres_df['RegionName'].astype(str)
-            pred_df['RegionName'] = pred_df['RegionName'].fillna("")
-            pred_df['GeoID'] = pred_df['CountryName'] + '__' + pred_df['RegionName'].astype(str)
+            pres_df = add_geo_id(pres_df)
+            pred_df = add_geo_id(pred_df)
             new_pres_df = pres_df[pres_df['Date'] == date_str]
             new_pred_df = pred_df[pred_df['Date'] == date_str]
-            for geo in df['GeoID'].unique():
+            for geo in geos:
                 geo_pres = new_pres_df[new_pres_df['GeoID'] == geo]
                 geo_pred = new_pred_df[new_pred_df['GeoID'] == geo]
-
                 # Append array of prescriptions
                 pres_arr = np.array([geo_pres[ip_col].values[0] for ip_col in IP_COLS]).reshape(1,-1)
                 eval_past_ips[geo] = np.concatenate([eval_past_ips[geo], pres_arr])
@@ -155,9 +196,12 @@ def prescribe(start_date_str: str,
 
     # Combine dfs for all prescriptions into a single df for the submission
     prescription_df = pd.concat(prescription_dfs)
+    prescription_df = prescription_df.drop(columns='GeoID')
 
-    # Create the output path
-    os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
+    # Create the output directory if necessary.
+    output_dir = os.path.dirname(output_file_path)
+    if output_dir != '':
+        os.makedirs(output_dir, exist_ok=True)
 
     # Save to a csv file
     prescription_df.to_csv(output_file_path, index=False)
