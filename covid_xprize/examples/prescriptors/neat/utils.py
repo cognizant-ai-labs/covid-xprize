@@ -68,6 +68,7 @@ def prepare_historical_df():
                   parse_dates=['Date'],
                   encoding="ISO-8859-1",
                   error_bad_lines=False)
+    df['RegionName'] = df['RegionName'].fillna("")
 
     # Add GeoID column for easier manipulation
     df = add_geo_id(df)
