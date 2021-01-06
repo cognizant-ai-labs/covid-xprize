@@ -105,10 +105,12 @@ class TestScenarioGenerator(unittest.TestCase):
         pd.testing.assert_frame_equal(after_day_npis_truth, after_day_npis_df, "Not the expected unfrozen NPIs")
 
     def test_generate_scenario_future_freeze(self):
-        # Simulate Italy froze it's NPIS for the second part of the year
+        # Simulate Italy froze it's NPIS for 1 week after last known date
         countries = ["Italy"]
         start_date_str = "2020-07-01"
-        end_date_str = "2020-12-31"
+        # Set end date to 1 week from last known date
+        last_known_date = self.latest_df[self.latest_df.CountryName == "Italy"].Date.max()
+        end_date_str = (last_known_date + pd.DateOffset(7)).strftime(DATE_FORMAT)
         scenario = "Freeze"
 
         before_day = pd.to_datetime("2020-06-30", format=DATE_FORMAT)
@@ -127,10 +129,12 @@ class TestScenarioGenerator(unittest.TestCase):
                            country=countries[0])
 
     def test_generate_scenario_future_min(self):
-        # Simulate Italy lifted all NPIs for a period
+        # Simulate Italy lifted all NPIs for 1 week after last known date
         countries = ["Italy"]
         start_date_str = "2020-07-01"
-        end_date_str = "2020-12-31"
+        # Set end date to 1 week from last known date
+        last_known_date = self.latest_df[self.latest_df.CountryName == "Italy"].Date.max()
+        end_date_str = (last_known_date + pd.DateOffset(7)).strftime(DATE_FORMAT)
         scenario = "MIN"
         scenario_npis = MIN_NPIS
 
@@ -145,10 +149,12 @@ class TestScenarioGenerator(unittest.TestCase):
                            country=countries[0])
 
     def test_generate_scenario_future_max(self):
-        # Simulate Italy maxed out all NPIs for a period
+        # Simulate Italy maxed out all NPIs for 1 week after last known date
         countries = ["Italy"]
         start_date_str = "2020-07-01"
-        end_date_str = "2020-12-31"
+        # Set end date to 1 week from last known date
+        last_known_date = self.latest_df[self.latest_df.CountryName == "Italy"].Date.max()
+        end_date_str = (last_known_date + pd.DateOffset(7)).strftime(DATE_FORMAT)
         scenario = "MAX"
         scenario_npis = MAX_NPIS
 
@@ -163,10 +169,12 @@ class TestScenarioGenerator(unittest.TestCase):
                            country=countries[0])
 
     def test_generate_scenario_future_custom(self):
-        # Simulate Italy used custom NPIs for a period: each NPI set to 1 for 7 consecutive days
+        # Simulate Italy used custom NPIs for 1 week after last known date
         countries = ["Italy"]
         start_date_str = "2020-07-01"
-        end_date_str = "2020-12-31"
+        # Set end date to 1 week from last known date
+        last_known_date = self.latest_df[self.latest_df.CountryName == "Italy"].Date.max()
+        end_date_str = (last_known_date + pd.DateOffset(7)).strftime(DATE_FORMAT)
         start_date = pd.to_datetime(start_date_str, format=DATE_FORMAT)
         end_date = pd.to_datetime(end_date_str, format=DATE_FORMAT)
         nb_days = (end_date - start_date).days + 1  # +1 to include start date
@@ -182,12 +190,13 @@ class TestScenarioGenerator(unittest.TestCase):
                            country=countries[0])
 
     def test_generate_scenario_future_from_last_known_date_freeze(self):
-        # Simulate Italy freezes NPIS for the rest of the year
+        # Simulate Italy freezes NPIS for 1 week after last known date
         countries = ["Italy"]
         start_date_str = None
-        end_date_str = "2020-12-31"
         scenario = "Freeze"
+        # Set end date to 1 week from last known date
         last_known_date = self.latest_df[self.latest_df.CountryName == "Italy"].Date.max()
+        end_date_str = (last_known_date + pd.DateOffset(7)).strftime(DATE_FORMAT)
         frozen_npis_df = self.latest_df[(self.latest_df.CountryName == "Italy") &
                                         (self.latest_df.Date == last_known_date)][NPI_COLUMNS].reset_index(drop=True)
         scenario_npis = list(frozen_npis_df.values[0])
@@ -203,10 +212,13 @@ class TestScenarioGenerator(unittest.TestCase):
                            country=countries[0])
 
     def test_generate_scenario_future_from_last_known_date_min(self):
-        # Simulate Italy lifts all NPIs for the rest of the year
+        # Simulate Italy lifts all NPIs for 1 week after last known date
         countries = ["Italy"]
         start_date_str = None
-        end_date_str = "2020-12-31"
+        # Set end date to 1 week from last known date
+        last_known_date = self.latest_df[self.latest_df.CountryName == "Italy"].Date.max()
+        end_date_str = (last_known_date + pd.DateOffset(7)).strftime(DATE_FORMAT)
+
         scenario = "MIN"
         scenario_npis = MIN_NPIS
 
@@ -221,10 +233,13 @@ class TestScenarioGenerator(unittest.TestCase):
                            country=countries[0])
 
     def test_generate_scenario_future_from_last_known_date_max(self):
-        # Simulate Italy maxes out NPIs for the rest of the year
+        # Simulate Italy maxes out NPIs for 1 week after last known date
         countries = ["Italy"]
         start_date_str = None
-        end_date_str = "2020-12-31"
+        # Set end date to 1 week from last known date
+        last_known_date = self.latest_df[self.latest_df.CountryName == "Italy"].Date.max()
+        end_date_str = (last_known_date + pd.DateOffset(7)).strftime(DATE_FORMAT)
+
         scenario = "MAX"
         scenario_npis = MAX_NPIS
 
@@ -239,11 +254,12 @@ class TestScenarioGenerator(unittest.TestCase):
                            country=countries[0])
 
     def test_generate_scenario_future_from_last_known_date_custom(self):
-        # Simulate Italy uses custom NPIs for the rest of the year
+        # Simulate Italy uses custom NPIs for 1 week after last known date
         countries = ["Italy"]
         last_known_date = self.latest_df[self.latest_df.CountryName == "Italy"].Date.max()
         start_date = last_known_date + np.timedelta64(1, 'D')
-        end_date_str = "2020-12-31"
+        # Set end date to 1 week from last known date
+        end_date_str = (last_known_date + pd.DateOffset(7)).strftime(DATE_FORMAT)
         end_date = pd.to_datetime(end_date_str, format=DATE_FORMAT)
         nb_days = (end_date - start_date).days + 1  # +1 to include start date
         scenario = [ONE_NPIS] * nb_days
@@ -259,11 +275,15 @@ class TestScenarioGenerator(unittest.TestCase):
                            country=countries[0])
 
     def test_generate_scenario_all_countries_future_from_last_known_date_freeze(self):
-        # Simulate ALL countries uses custom NPIs for the rest of the year
+        # Simulate ALL countries uses custom NPIs for 1 week after last known date
         countries = None
-        end_date_str = "2020-12-31"
+
+        # Set end date to 1 week from last known date
+        last_known_date = self.latest_df.Date.max()
+        end_date_str = (last_known_date + pd.DateOffset(7)).strftime(DATE_FORMAT)
+
         # Make sure we generate scenarios for enough days
-        nb_days = 180
+        nb_days = 14
         scenario = [ONE_NPIS] * nb_days
 
         # Generate the scenarios
