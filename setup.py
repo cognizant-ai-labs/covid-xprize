@@ -7,7 +7,7 @@ import os
 import sys
 from setuptools import setup, find_packages
 
-LIBRARY_VERSION = '1.0.9'
+LIBRARY_VERSION = '1.1.0'
 
 CURRENT_PYTHON = sys.version_info[:2]
 REQUIRED_PYTHON = (3, 6)
@@ -64,7 +64,8 @@ setup(
         'scikit-learn==0.23.2',
         'scipy==1.5.2',
         'setuptools==41.0.0',
-        'tensorflow==2.2.1'
+        'tensorflow==2.2.2',
+        'h5py==2.10.0'
     ],
     description='Contains sample code and notebooks '
                 'for developing and validating entries for the Cognizant COVID X-Prize.',
