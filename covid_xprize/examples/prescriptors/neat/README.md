@@ -18,14 +18,6 @@ Ensure that `covid-xprize` is in your PYTHONPATH:
 export PYTHONPATH=$PYTHONPATH:<workspace>/covid-xprize/
 ```
 
-Setup pretrained LSTM predictor by copying the sample trained weights file to the
-location that it loads weights from:
-```
-cd <workspace>/covid-xprize/covid_xprize/examples/predictors/lstm/
-mkdir models
-cp /tests/fixtures/trained_model_weights_for_tests.h5 models/trained_model_weights.h5
-```
-
 ### Training Prescriptors
 
 The script `train_prescriptors.py` gives an example of how to train prescriptors.
