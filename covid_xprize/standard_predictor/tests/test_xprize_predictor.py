@@ -19,11 +19,6 @@ END_DATE = "2020-08-04"
 
 class TestXPrizePredictor(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        # Data is shipped in the repo, so do not need to download it here.
-        pass
-
     def test_predict(self):
         predictor = XPrizePredictor(PREDICTOR_WEIGHTS, DATA_FILE)
         pred_df = predictor.predict(START_DATE, END_DATE, EXAMPLE_INPUT_FILE)
