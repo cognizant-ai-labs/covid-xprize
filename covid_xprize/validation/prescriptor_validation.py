@@ -1,5 +1,7 @@
 # Copyright 2020 (c) Cognizant Digital Business, Evolutionary AI. All rights reserved. Issued under the Apache 2.0 License.
 
+import argparse
+import logging
 from typing import List
 
 import pandas as pd
@@ -24,6 +26,13 @@ IP_MAX_VALUES = {
     'H3_Contact tracing': 2,
     'H6_Facial Coverings': 4
 }
+
+logging.basicConfig(
+    format='%(asctime)s %(name)-20s %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+LOGGER = logging.getLogger('predictor_validation')
 
 
 def validate_submission(start_date: str,
@@ -90,3 +99,52 @@ def _check_prescription_values(df):
         if df[ip_name].max() > ip_max_value:
             errors.append(f"Column {ip_name} contains values higher than max possible value")
     return errors
+
+
+def do_main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-s", "--start_date",
+                        dest="start_date",
+                        type=str,
+                        required=False,
+                        default="2020-12-22",
+                        help="First date of prescriptions"
+                             "Format YYYY-MM-DD. For example 2021-02-15")
+    parser.add_argument("-e", "--end_date",
+                        dest="end_date",
+                        type=str,
+                        required=False,
+                        default="2021-06-19",
+                        help="Last date of prescriptions"
+                             "Format YYYY-MM-DD. For example 2021-05-15")
+    parser.add_argument("-ip", "--interventions_plan",
+                        dest="ip_file",
+                        type=str,
+                        required=True,
+                        help="The path to an intervention plan .csv file")
+    parser.add_argument("-f", "--submission_file",
+                        dest="submission_file",
+                        type=str,
+                        required=True,
+                        help="Path to the filename containing the submission (prescriptions) to be validated.")
+    args = parser.parse_args()
+
+    submission_file = args.submission_file
+    start_date = args.start_date
+    end_date = args.end_date
+    ip_file = args.ip_file
+    LOGGER.info(f"Validating submission file {submission_file} "
+                f"start date {start_date} end date {end_date} intervention plan {ip_file}")
+
+    errors = validate_submission(start_date, end_date, ip_file, submission_file)
+    if not errors:
+        LOGGER.info(f'{submission_file} submission passes validation')
+    else:
+        LOGGER.warning(f'Submission {submission_file} has errors: ')
+        LOGGER.warning('\n'.join(errors))
+
+    LOGGER.info(f"Done!")
+
+
+if __name__ == '__main__':
+    do_main()
