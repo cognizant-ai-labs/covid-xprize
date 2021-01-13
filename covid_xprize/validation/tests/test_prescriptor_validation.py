@@ -19,6 +19,8 @@ INVALID_RANGE_SUBMISSION = os.path.join(PRESCRIPTIONS_PATH, "invalid_range_submi
 MISSING_COUNTRY_SUBMISSION = os.path.join(PRESCRIPTIONS_PATH, "missing_country_submission.csv")
 BAD_DATES_SUBMISSION = os.path.join(PRESCRIPTIONS_PATH, "bad_dates_submission.csv")
 MULTI_PRESC_INDEX = os.path.join(PRESCRIPTIONS_PATH, "multi_presc_index_submission.csv")
+STRING_DATE_SUBMISSION = os.path.join(PRESCRIPTIONS_PATH, "string_date_submission.csv")
+STRING_NPI_SUBMISSION = os.path.join(PRESCRIPTIONS_PATH, "string_npi_submission.csv")
 
 MISSING_COLUMNS = ["C1_School closing", "PrescriptionIndex"]
 
@@ -73,3 +75,13 @@ class TestPrescriptionValidation(unittest.TestCase):
     def test_multi_prescription_index(self):
         errors = validate_submission("2020-08-01", "2020-08-05", IP_FILE_FEW_COUNTRIES, MULTI_PRESC_INDEX)
         self.assertTrue(not errors, f"Unexpected errors: {errors}")
+
+    def test_string_date(self):
+        errors = validate_submission("2020-08-01", "2020-08-04", IP_FILE_FEW_COUNTRIES, STRING_DATE_SUBMISSION)
+        self.assertIsNotNone(errors)
+        self.assertTrue("non date" in errors[0], f"Expected 'non date' in errors, but got {errors}")
+
+    def test_string_npi(self):
+        errors = validate_submission("2020-08-01", "2020-08-04", IP_FILE_FEW_COUNTRIES, STRING_NPI_SUBMISSION)
+        self.assertIsNotNone(errors)
+        self.assertTrue("non numerical" in errors[0], f"Expected 'non numerical' in errors, but got {errors}")
