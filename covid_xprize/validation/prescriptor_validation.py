@@ -4,6 +4,7 @@ import argparse
 import logging
 from typing import List
 
+import numpy as np
 import pandas as pd
 
 from covid_xprize.validation.scenario_generator import ID_COLS, NPI_COLUMNS
@@ -11,6 +12,7 @@ from covid_xprize.validation.predictor_validation import _check_geos, _check_day
 
 PRESCRIPTION_INDEX_COL = "PrescriptionIndex"
 COLUMNS = ID_COLS + NPI_COLUMNS + ["PrescriptionIndex"]
+DATE = "Date"
 
 IP_MAX_VALUES = {
     'C1_School closing': 3,
@@ -32,7 +34,7 @@ logging.basicConfig(
     level=logging.INFO,
     datefmt='%Y-%m-%d %H:%M:%S'
 )
-LOGGER = logging.getLogger('predictor_validation')
+LOGGER = logging.getLogger('prescriptor_validation')
 
 
 def validate_submission(start_date: str,
@@ -85,6 +87,20 @@ def _check_columns(expected_columns, pred_df):
     missing_columns = expected_columns - set(pred_df.columns)
     if missing_columns:
         errors.append(f"Missing columns: {missing_columns}")
+        # Columns are not there, can't check anything more
+        return errors
+
+    # Make sure column Date contains dates
+    date_column_type = pred_df[DATE].dtype
+    if not np.issubdtype(date_column_type, np.datetime64):
+        errors.append(f"Column {DATE} contains non date values: {date_column_type}")
+
+    # Make sure each NPI columns contains numbers
+    for npi_column in IP_MAX_VALUES.keys():
+        npi_column_type = pred_df[npi_column].dtype
+        if not np.issubdtype(npi_column_type, np.number):
+            errors.append(f"Column {npi_column} contains non numerical values: {npi_column_type}")
+
     return errors
 
 
