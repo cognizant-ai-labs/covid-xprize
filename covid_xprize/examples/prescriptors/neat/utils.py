@@ -93,6 +93,7 @@ def load_ips_file(path_to_ips_file):
                      parse_dates=['Date'],
                      encoding="ISO-8859-1",
                      error_bad_lines=False)
+    df['RegionName'] = df['RegionName'].fillna("")
     df = add_geo_id(df)
     return df
 
