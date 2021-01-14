@@ -107,6 +107,7 @@ def prescribe(start_date_str: str,
 
     # Load IP costs to condition prescriptions
     cost_df = pd.read_csv(path_to_cost_file)
+    cost_df['RegionName'] = cost_df['RegionName'].fillna("")
     cost_df = add_geo_id(cost_df)
     geo_costs = {}
     for geo in geos:
