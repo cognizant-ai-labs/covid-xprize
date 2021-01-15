@@ -3,6 +3,20 @@
 This example implements the prescription API using NEAT.
 This example will not achieve high performance out-of-the-box.
 
+The goal of this example is to provide an example of how the various
+scaffolding can fit together to produce a valid prescriptor.
+
+In particular, the prescriptor uses the input historical IPs file,
+the input weights file, along with historical case data to make prescriptions.
+
+This example is unoptimized.
+For example, it uses default NEAT parameters,
+uses a naiive fitness function,
+and provides no method for selecting a tradeoff of evolved solutions.
+
+It also uses a computationally inefficient method of iteratively calling the predictor
+that scales quadratically with the number of calls.
+
 ### Setup
 
 These assume the `covid-xprize` repo is located at `<workspace>/covid-xprize`.
@@ -57,14 +71,11 @@ and store the results in `test_prescriptions.csv`:
 cd <workspace>/covid-xprize/covid_xprize/examples/prescriptors/neat/
 python prescribe.py --start_date 2020-08-01 --end_date 2020-08-05 -ip ../../../validation/data/2020-09-30_historical_ip.csv -c ../../../validation/data/uniform_random_costs.csv -o test_prescriptions.csv
 ```
-Currently, the `-ip` argument is required but ignored, so can be set to anything.
-This is because the code currently loads historical IPs from the Oxford data directly.
-However, after submission to the real competition, there will not be internet access,
-so there may be a gap between the Oxford data and the start_date, in which case the IPs
-passed as `-ip` should be used.
 
 In general, it will be more useful to assemble a set of prescriptors for submission
 in a more discerning way, and store and load them in a different way as well.
+
+See the constants defined at the top of `prescribe.py` for other parameters that can be adjusted.
 
 
 ### Evaluating prescription performance
