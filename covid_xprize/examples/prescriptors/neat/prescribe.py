@@ -36,7 +36,7 @@ NB_LOOKBACK_DAYS = 14
 # Number of prescriptions to make per country.
 # This can be set based on how many solutions in PRESCRIPTORS_FILE
 # we want to run and on time constraints.
-NB_PRESCRIPTIONS = 1
+NB_PRESCRIPTIONS = 3
 
 # Number of days to fix prescribed IPs before changing them.
 # This could be a useful toggle for decision makers, who may not
