@@ -205,8 +205,7 @@ def prescribe(start_date_str: str,
 
                     # It is possible that the predictor does not return values for some regions.
                     # To make sure we generate full prescriptions, this script continues anyway.
-                    # Geos that are ignored in this way by the predictor will not be used in
-                    # quantitative evaluation. A list of such geos can be found in unused_geos.txt.
+                    # This should not happen, but is included here for robustness.
                     if len(geo_pred) != 0:
                         eval_past_cases[geo] = np.append(eval_past_cases[geo],
                                                          geo_pred[PRED_CASES_COL].values[0])
