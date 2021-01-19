@@ -89,8 +89,6 @@ class XPrizePredictor(object):
                     f"Data file not found at {DATA_FILE_PATH}"
 
         self.df = self._prepare_dataframe(data_url)
-        geos = self.df.GeoID.unique()
-        self.country_samples = self._create_country_samples(self.df, geos)
 
     def predict(self,
                 start_date_str: str,
@@ -109,10 +107,15 @@ class XPrizePredictor(object):
                     "Date": [],
                     "PredictedDailyNewCases": []}
 
+        # Fix for past predictions
+        geos = npis_df.GeoID.unique()
+        truncated_df = self.df[self.df.Date < start_date_str]
+        country_samples = self._create_country_samples(truncated_df, geos, False)
+
         # For each requested geo
         geos = npis_df.GeoID.unique()
         for g in geos:
-            cdf = self.df[self.df.GeoID == g]
+            cdf = truncated_df[truncated_df.GeoID == g]
             if len(cdf) == 0:
                 # we don't have historical data for this geo: return zeroes
                 pred_new_cases = [0] * nb_days
@@ -123,7 +126,7 @@ class XPrizePredictor(object):
                 geo_start_date = min(last_known_date + np.timedelta64(1, 'D'), start_date)
                 npis_gdf = npis_df[(npis_df.Date >= geo_start_date) & (npis_df.Date <= end_date)]
 
-                pred_new_cases = self._get_new_cases_preds(cdf, g, npis_gdf)
+                pred_new_cases = self._get_new_cases_preds(cdf, g, npis_gdf, country_samples)
 
             # Append forecast data to results to return
             country = npis_df[npis_df.GeoID == g].iloc[0].CountryName
@@ -139,10 +142,10 @@ class XPrizePredictor(object):
         # Return only the requested predictions
         return forecast_df[(forecast_df.Date >= start_date) & (forecast_df.Date <= end_date)]
 
-    def _get_new_cases_preds(self, c_df, g, npis_df):
+    def _get_new_cases_preds(self, c_df, g, npis_df, country_samples):
         cdf = c_df[c_df.ConfirmedCases.notnull()]
-        initial_context_input = self.country_samples[g]['X_test_context'][-1]
-        initial_action_input = self.country_samples[g]['X_test_action'][-1]
+        initial_context_input = country_samples[g]['X_test_context'][-1]
+        initial_action_input = country_samples[g]['X_test_action'][-1]
         # Predictions with passed npis
         cnpis_df = npis_df[npis_df.GeoID == g]
         npis_sequence = np.array(cnpis_df[NPI_COLUMNS])
@@ -284,11 +287,12 @@ class XPrizePredictor(object):
         return additional_context_df
 
     @staticmethod
-    def _create_country_samples(df: pd.DataFrame, geos: list) -> dict:
+    def _create_country_samples(df: pd.DataFrame, geos: list, is_training: bool) -> dict:
         """
         For each country, creates numpy arrays for Keras
         :param df: a Pandas DataFrame with historical data for countries (the "Oxford" dataset)
         :param geos: a list of geo names
+        :param is_training: True if the data will be used for training, False if it's used for predicting
         :return: a dictionary of train and test sets, for each specified country
         """
         context_column = 'PredictionRatio'
@@ -300,30 +304,35 @@ class XPrizePredictor(object):
             cdf = cdf[cdf.ConfirmedCases.notnull()]
             context_data = np.array(cdf[context_column])
             action_data = np.array(cdf[action_columns])
-            outcome_data = np.array(cdf[outcome_column])
             context_samples = []
             action_samples = []
-            outcome_samples = []
-            nb_total_days = outcome_data.shape[0]
+            if is_training:
+                outcome_data = np.array(cdf[outcome_column])
+                outcome_samples = []
+                nb_total_days = context_data.shape[0]
+            else:
+                nb_total_days = context_data.shape[0] + 1
             for d in range(NB_LOOKBACK_DAYS, nb_total_days):
                 context_samples.append(context_data[d - NB_LOOKBACK_DAYS:d])
                 action_samples.append(action_data[d - NB_LOOKBACK_DAYS:d])
-                outcome_samples.append(outcome_data[d])
-            if len(outcome_samples) > 0:
+                if is_training:
+                    outcome_samples.append(outcome_data[d])
+            if len(context_samples) > 0:
                 X_context = np.expand_dims(np.stack(context_samples, axis=0), axis=2)
                 X_action = np.stack(action_samples, axis=0)
-                y = np.stack(outcome_samples, axis=0)
                 country_samples[g] = {
                     'X_context': X_context,
                     'X_action': X_action,
-                    'y': y,
                     'X_train_context': X_context[:-NB_TEST_DAYS],
                     'X_train_action': X_action[:-NB_TEST_DAYS],
-                    'y_train': y[:-NB_TEST_DAYS],
                     'X_test_context': X_context[-NB_TEST_DAYS:],
                     'X_test_action': X_action[-NB_TEST_DAYS:],
-                    'y_test': y[-NB_TEST_DAYS:],
                 }
+                if is_training:
+                    y = np.stack(outcome_samples, axis=0)
+                    country_samples[g]['y'] = y
+                    country_samples[g]['y_train'] = y[:-NB_TEST_DAYS]
+                    country_samples[g]['y_test'] = y[-NB_TEST_DAYS:]
         return country_samples
 
     # Function for performing roll outs into the future
@@ -384,7 +393,7 @@ class XPrizePredictor(object):
     def train(self):
         print("Creating numpy arrays for Keras for each country...")
         geos = self._most_affected_geos(self.df, MAX_NB_COUNTRIES, NB_LOOKBACK_DAYS)
-        country_samples = self._create_country_samples(self.df, geos)
+        country_samples = self._create_country_samples(self.df, geos, True)
         print("Numpy arrays created")
 
         # Aggregate data for training
