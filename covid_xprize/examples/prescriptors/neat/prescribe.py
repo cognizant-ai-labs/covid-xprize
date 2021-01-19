@@ -11,6 +11,8 @@ from datetime import datetime
 import neat
 
 # Function imports from utils
+from pathlib import Path
+
 from covid_xprize.examples.prescriptors.neat.utils import add_geo_id
 from covid_xprize.examples.prescriptors.neat.utils import get_predictions
 from covid_xprize.examples.prescriptors.neat.utils import load_ips_file
@@ -22,6 +24,11 @@ from covid_xprize.examples.prescriptors.neat.utils import IP_COLS
 from covid_xprize.examples.prescriptors.neat.utils import IP_MAX_VALUES
 from covid_xprize.examples.prescriptors.neat.utils import PRED_CASES_COL
 
+# Path to where this script lives
+ROOT_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
+
+# Config file for running NEAT (expected to reside in same dir as this script)
+NEAT_CONFIG_FILE = ROOT_DIR / 'config-prescriptor'
 
 # Path to file containing neat prescriptors. Here we simply use a
 # recent checkpoint of the population from train_prescriptor.py,
@@ -114,7 +121,7 @@ def prescribe(start_date_str: str,
     prescriptors = list(checkpoint.population.values())[:NB_PRESCRIPTIONS]
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                          neat.DefaultSpeciesSet, neat.DefaultStagnation,
-                         'config-prescriptor')
+                         NEAT_CONFIG_FILE)
 
     # Load IP costs to condition prescriptions
     cost_df = pd.read_csv(path_to_cost_file)

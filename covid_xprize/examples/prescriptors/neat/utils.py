@@ -4,17 +4,29 @@ import os
 import subprocess
 import urllib.request
 import pandas as pd
+from pathlib import Path
+
+from tempfile import NamedTemporaryFile
 
 from covid_xprize.validation.scenario_generator import get_raw_data, generate_scenario
 
+# URL for Oxford data
 DATA_URL = "https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv"
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_PATH = os.path.join(ROOT_DIR, 'data')
-HIST_DATA_FILE_PATH = os.path.join(DATA_PATH, 'OxCGRT_latest.csv')
 
-PREDICT_MODULE = 'covid_xprize/standard_predictor/predict.py'
-TMP_PRED_FILE_NAME = 'tmp_predictions_for_prescriptions/preds.csv'
-TMP_PRESCRIPTION_FILE = 'tmp_prescription.csv'
+# Path to where this script lives
+ROOT_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
+
+# Data directory (we will download the Oxford data to here)
+DATA_PATH = ROOT_DIR / 'data'
+
+# Path to Oxford data file
+HIST_DATA_FILE_PATH = DATA_PATH / 'OxCGRT_latest.csv'
+
+# Path to predictor module
+PREDICT_MODULE = ROOT_DIR.parent.parent.parent / 'standard_predictor' / 'predict.py'
+
+TMP_PRED_FILE_NAME = NamedTemporaryFile().name
+TMP_PRESCRIPTION_FILE_NAME = NamedTemporaryFile().name
 
 
 CASES_COL = ['NewCases']
@@ -110,14 +122,10 @@ def get_predictions(start_date_str, end_date_str, pres_df, countries=None):
     ips_df = pd.concat([hist_df, pres_df])
 
     # Write ips_df to file
-    ips_df.to_csv(TMP_PRESCRIPTION_FILE)
+    ips_df.to_csv(TMP_PRESCRIPTION_FILE_NAME)
 
     # Use full path of the local file passed as ip_file
-    ip_file_full_path = os.path.abspath(TMP_PRESCRIPTION_FILE)
-
-    # Go to covid-xprize root dir to access predict script
-    wd = os.getcwd()
-    os.chdir("../../../..")
+    ip_file_full_path = os.path.abspath(TMP_PRESCRIPTION_FILE_NAME)
 
     # Run script to generate predictions
     output_str = subprocess.check_output(
@@ -136,8 +144,5 @@ def get_predictions(start_date_str, end_date_str, pres_df, countries=None):
 
     # Load predictions to return
     df = pd.read_csv(TMP_PRED_FILE_NAME)
-
-    # Return to prescriptor dir
-    os.chdir(wd)
 
     return df
