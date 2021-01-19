@@ -33,6 +33,17 @@ PRESCRIPTORS_FILE = 'neat-checkpoint-0'
 # Number of days the prescriptors look at in the past.
 NB_LOOKBACK_DAYS = 14
 
+# Number of prescriptions to make per country.
+# This can be set based on how many solutions in PRESCRIPTORS_FILE
+# we want to run and on time constraints.
+NB_PRESCRIPTIONS = 3
+
+# Number of days to fix prescribed IPs before changing them.
+# This could be a useful toggle for decision makers, who may not
+# want to change policy every day. Increasing this value also
+# can speed up the prescriptor, at the cost of potentially less
+# interesting prescriptions.
+ACTION_DURATION = 15
 
 
 def prescribe(start_date_str: str,
@@ -100,13 +111,14 @@ def prescribe(start_date_str: str,
 
     # Load prescriptors
     checkpoint = neat.Checkpointer.restore_checkpoint(PRESCRIPTORS_FILE)
-    prescriptors = checkpoint.population.values()
+    prescriptors = list(checkpoint.population.values())[:NB_PRESCRIPTIONS]
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                          neat.DefaultSpeciesSet, neat.DefaultStagnation,
                          'config-prescriptor')
 
     # Load IP costs to condition prescriptions
     cost_df = pd.read_csv(path_to_cost_file)
+    cost_df['RegionName'] = cost_df['RegionName'].fillna("")
     cost_df = add_geo_id(cost_df)
     geo_costs = {}
     for geo in geos:
@@ -131,10 +143,10 @@ def prescribe(start_date_str: str,
         eval_past_cases = deepcopy(past_cases)
         eval_past_ips = deepcopy(past_ips)
 
-        # Generate prescriptions one day at a time, feeding resulting
+        # Generate prescriptions iteratively, feeding resulting
         # predictions from the predictor back into the prescriptor.
-        for date in pd.date_range(start_date, end_date):
-            date_str = date.strftime("%Y-%m-%d")
+        action_start_date = start_date
+        while action_start_date <= end_date:
 
             # Get prescription for all regions
             for geo in geos:
@@ -154,15 +166,19 @@ def prescribe(start_date_str: str,
                 # Map prescription to integer outputs
                 prescribed_ips = (prescribed_ips * ip_max_values_arr).round()
 
-                # Add it to prescription dictionary
+                # Add it to prescription dictionary for the full ACTION_DURATION
                 country_name, region_name = geo.split('__')
                 if region_name == 'nan':
                     region_name = np.nan
-                df_dict['CountryName'].append(country_name)
-                df_dict['RegionName'].append(region_name)
-                df_dict['Date'].append(date_str)
-                for ip_col, prescribed_ip in zip(IP_COLS, prescribed_ips):
-                    df_dict[ip_col].append(prescribed_ip)
+                for date in pd.date_range(action_start_date, periods=ACTION_DURATION):
+                    if date > end_date:
+                        break
+                    date_str = date.strftime("%Y-%m-%d")
+                    df_dict['CountryName'].append(country_name)
+                    df_dict['RegionName'].append(region_name)
+                    df_dict['Date'].append(date_str)
+                    for ip_col, prescribed_ip in zip(IP_COLS, prescribed_ips):
+                        df_dict[ip_col].append(prescribed_ip)
 
             # Create dataframe from prescriptions
             pres_df = pd.DataFrame(df_dict)
@@ -170,25 +186,32 @@ def prescribe(start_date_str: str,
             # Make prediction given prescription for all countries
             pred_df = get_predictions(start_date_str, date_str, pres_df)
 
-            # Update past data with new day of prescriptions and predictions
+            # Update past data with new days of prescriptions and predictions
             pres_df = add_geo_id(pres_df)
             pred_df = add_geo_id(pred_df)
-            new_pres_df = pres_df[pres_df['Date'] == date_str]
-            new_pred_df = pred_df[pred_df['Date'] == date_str]
-            for geo in geos:
-                geo_pres = new_pres_df[new_pres_df['GeoID'] == geo]
-                geo_pred = new_pred_df[new_pred_df['GeoID'] == geo]
-                # Append array of prescriptions
-                pres_arr = np.array([geo_pres[ip_col].values[0] for ip_col in IP_COLS]).reshape(1,-1)
-                eval_past_ips[geo] = np.concatenate([eval_past_ips[geo], pres_arr])
+            for date in pd.date_range(action_start_date, periods=ACTION_DURATION):
+                if date > end_date:
+                    break
+                date_str = date.strftime("%Y-%m-%d")
+                new_pres_df = pres_df[pres_df['Date'] == date_str]
+                new_pred_df = pred_df[pred_df['Date'] == date_str]
+                for geo in geos:
+                    geo_pres = new_pres_df[new_pres_df['GeoID'] == geo]
+                    geo_pred = new_pred_df[new_pred_df['GeoID'] == geo]
+                    # Append array of prescriptions
+                    pres_arr = np.array([geo_pres[ip_col].values[0] for
+                                         ip_col in IP_COLS]).reshape(1,-1)
+                    eval_past_ips[geo] = np.concatenate([eval_past_ips[geo], pres_arr])
 
-                # It is possible that the predictor does not return values for some regions.
-                # To make sure we generate full prescriptions, this script continues anyway.
-                # Geos that are ignored in this way by the predictor, will not be used in
-                # quantitative evaluation. A list of such geos can be found in unused_geos.txt.
-                if len(geo_pred) != 0:
-                    eval_past_cases[geo] = np.append(eval_past_cases[geo],
-                                                     geo_pred[PRED_CASES_COL].values[0])
+                    # It is possible that the predictor does not return values for some regions.
+                    # To make sure we generate full prescriptions, this script continues anyway.
+                    # This should not happen, but is included here for robustness.
+                    if len(geo_pred) != 0:
+                        eval_past_cases[geo] = np.append(eval_past_cases[geo],
+                                                         geo_pred[PRED_CASES_COL].values[0])
+
+            # Move on to next action date
+            action_start_date += pd.DateOffset(days=ACTION_DURATION)
 
         # Add prescription df to list of all prescriptions for this submission
         pres_df['PrescriptionIndex'] = prescription_idx
