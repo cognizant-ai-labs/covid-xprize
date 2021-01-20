@@ -40,7 +40,9 @@ Here's how it's used. Run this from the root of your cloned repository:
 python covid_xprize/examples/prescriptors/neat/train_prescriptor.py
 ```
 Periodically, this script saves the current population to `neat-checkpoint-*`.
-These saved networks can then be used in prescriptor submissions as explained below.
+These saved networks can then be used in prescriptor submissions as explained below. The training script can run for
+a long time (potentially indefinitely -- see comments in the script) so you will likely want to kill it with CTRL-C
+once it has generated one or more checkpoints for you to test with.
 
 There are MANY ways to improve `train_prescriptors.py`.
 See the comments in the file for some example directions for improvement.
@@ -72,7 +74,7 @@ python covid_xprize/examples/prescriptors/neat/prescribe.py \
     --end_date 2020-08-05 \
     --interventions_past ./covid_xprize/validation/data/2020-09-30_historical_ip.csv \
     --intervention_costs ./covid_xprize/validation/data/uniform_random_costs.csv \
-    --output_file predictions/test_prescriptions.csv
+    --output_file prescriptions/test_prescriptions.csv
 ```
 
 You can validate the prescriptions generated in the above step using the validator module as follows:
@@ -81,11 +83,11 @@ You can validate the prescriptions generated in the above step using the validat
     --start_date 2020-08-01 \
     --end_date 2020-08-05 \
     --interventions_plan ./covid_xprize/validation/data/2020-09-30_historical_ip.csv \
-    --submission_file predictions/test_prescriptions.csv
+    --submission_file prescriptions/test_prescriptions.csv
 ``` 
 Expected output:
 ```shell script
-2021-01-19 19:35:48 prescriptor_validation INFO     Validating submission file test_prescriptions.csv start date 2020-08-01 end date 2020-08-05 intervention plan ./covid_xprize/validation/data/2020-09-30_historical_ip.csv
+2021-01-19 19:35:48 prescriptor_validation INFO     Validating submission file prescriptions/test_prescriptions.csv start date 2020-08-01 end date 2020-08-05 intervention plan ./covid_xprize/validation/data/2020-09-30_historical_ip.csv
 2021-01-19 19:35:49 prescriptor_validation INFO     test_prescriptions.csv submission passes validation
 2021-01-19 19:35:49 prescriptor_validation INFO     Done!
 ```
