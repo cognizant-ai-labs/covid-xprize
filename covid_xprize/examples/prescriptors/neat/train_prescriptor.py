@@ -4,20 +4,25 @@
 # Example script for training neat-based prescriptors
 # Uses neat-python: pip install neat-python
 #
-
+import os
 from copy import deepcopy
 
 import neat
 import numpy as np
 import pandas as pd
-
-
+from pathlib import Path
 
 from covid_xprize.examples.prescriptors.neat.utils import PRED_CASES_COL, prepare_historical_df, CASES_COL, IP_COLS, \
     IP_MAX_VALUES, add_geo_id, get_predictions
 
 # Cutoff date for training data
 from covid_xprize.validation.cost_generator import generate_costs
+
+# Path where this script lives
+ROOT_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
+
+# Config file for running NEAT (expected to reside in same dir as this script)
+NEAT_CONFIG_FILE = ROOT_DIR / 'config-prescriptor'
 
 CUTOFF_DATE = '2020-07-31'
 
@@ -184,7 +189,7 @@ def eval_genomes(genomes, config):
 # Load configuration.
 config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                      neat.DefaultSpeciesSet, neat.DefaultStagnation,
-                     'config-prescriptor')
+                     NEAT_CONFIG_FILE)
 
 # Create the population, which is the top-level object for a NEAT run.
 p = neat.Population(config)

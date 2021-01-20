@@ -18,6 +18,8 @@ NAN_SUBMISSION = os.path.join(PREDS_PATH, "nan_submission.csv")
 NEGATIVE_SUBMISSION = os.path.join(PREDS_PATH, "negative_submission.csv")
 MISSING_COUNTRY_SUBMISSION = os.path.join(PREDS_PATH, "missing_country_submission.csv")
 BAD_DATES_SUBMISSION = os.path.join(PREDS_PATH, "bad_dates_submission.csv")
+STRING_DAILY_CASES_SUBMISSION = os.path.join(PREDS_PATH, "string_daily_cases_submission.csv")
+STRING_DATE_SUBMISSION = os.path.join(PREDS_PATH, "string_date_submission.csv")
 
 
 class TestPredictionValidation(unittest.TestCase):
@@ -66,3 +68,12 @@ class TestPredictionValidation(unittest.TestCase):
                            'Aruba: Expected prediction for date 2020-08-04 but got None']
         self.assertEqual(expected_errors, errors)
 
+    def test_string_daily_cases(self):
+        errors = validate_submission("2020-08-01", "2020-08-04", IP_FILE_FEW_COUNTRIES, STRING_DAILY_CASES_SUBMISSION)
+        self.assertIsNotNone(errors)
+        self.assertTrue("non numerical" in errors[0], f"Expected 'non numerical' in errors, but got {errors}")
+
+    def test_string_date(self):
+        errors = validate_submission("2020-08-01", "2020-08-04", IP_FILE_FEW_COUNTRIES, STRING_DATE_SUBMISSION)
+        self.assertIsNotNone(errors)
+        self.assertTrue("non date" in errors[0], f"Expected 'non date' in errors, but got {errors}")

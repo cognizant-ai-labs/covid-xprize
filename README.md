@@ -120,15 +120,13 @@ Example prescriptors can be found under `covid_xprize/examples/prescriptors/`.
 For more details on this API, consult the Competition Guidelines or the support Slack channel.
 
 
-#### Sample trained predictor
+#### Trained standard predictor
 
-The repo also provides a sample trained predictor to train prescriptors against.
-To use it, copy `covid_xprize/examples/predictors/lstm/tests/fixtures/trained_model_weights_for_tests.h5` 
-to `covid_xprize/examples/predictors/lstm/models/trained_model_weights.h5`,
-and call `covid_xprize/examples/predictors/lstm/predict.py` to make predictions.
+The repo also provides a trained standard predictor to train prescriptors against.
+To use it, call `covid_xprize/standard_predictor/predict.py` to make predictions.
 See `get_predictions` in `covid_xprize/examples/prescriptors/neat/utils.py` and
-`generate_cases_and_stringency_for_prescriptions` in `prescriptor_robojudge.ipynb` for examples of how to make 
-this call.
+`generate_cases_and_stringency_for_prescriptions` in `prescriptor_robojudge.ipynb`
+for examples of how to make this call.
 
 
 ## More information/Support

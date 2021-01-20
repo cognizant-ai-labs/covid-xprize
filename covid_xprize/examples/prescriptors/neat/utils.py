@@ -2,20 +2,27 @@
 
 import os
 import subprocess
+import tempfile
 import urllib.request
 import pandas as pd
+from pathlib import Path
 
 from covid_xprize.validation.scenario_generator import get_raw_data, generate_scenario
 
+# URL for Oxford data
 DATA_URL = "https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv"
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_PATH = os.path.join(ROOT_DIR, 'data')
-HIST_DATA_FILE_PATH = os.path.join(DATA_PATH, 'OxCGRT_latest.csv')
 
-PREDICT_MODULE = 'covid_xprize/examples/predictors/lstm/predict.py'
-TMP_PRED_FILE_NAME = 'tmp_predictions_for_prescriptions/preds.csv'
-TMP_PRESCRIPTION_FILE = 'tmp_prescription.csv'
+# Path to where this script lives
+ROOT_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
 
+# Data directory (we will download the Oxford data to here)
+DATA_PATH = ROOT_DIR / 'data'
+
+# Path to Oxford data file
+HIST_DATA_FILE_PATH = DATA_PATH / 'OxCGRT_latest.csv'
+
+# Path to predictor module
+PREDICT_MODULE = ROOT_DIR.parent.parent.parent / 'standard_predictor' / 'predict.py'
 
 CASES_COL = ['NewCases']
 
@@ -87,6 +94,17 @@ def prepare_historical_df():
     return df
 
 
+# Function to load an IPs file, e.g., passed to prescribe.py
+def load_ips_file(path_to_ips_file):
+    df = pd.read_csv(path_to_ips_file,
+                     parse_dates=['Date'],
+                     encoding="ISO-8859-1",
+                     error_bad_lines=False)
+    df['RegionName'] = df['RegionName'].fillna("")
+    df = add_geo_id(df)
+    return df
+
+
 # Function that wraps predictor in order to query
 # predictor when prescribing.
 def get_predictions(start_date_str, end_date_str, pres_df, countries=None):
@@ -99,35 +117,27 @@ def get_predictions(start_date_str, end_date_str, pres_df, countries=None):
     hist_df = hist_df[hist_df.Date < start_date]
     ips_df = pd.concat([hist_df, pres_df])
 
-    # Write ips_df to file
-    ips_df.to_csv(TMP_PRESCRIPTION_FILE)
+    with tempfile.NamedTemporaryFile() as tmp_ips_file:
+        # Write ips_df to file
+        ips_df.to_csv(tmp_ips_file.name)
 
-    # Use full path of the local file passed as ip_file
-    ip_file_full_path = os.path.abspath(TMP_PRESCRIPTION_FILE)
+        with tempfile.NamedTemporaryFile() as tmp_pred_file:
+            # Run script to generate predictions
+            output_str = subprocess.check_output(
+                [
+                    'python', PREDICT_MODULE,
+                    '--start_date', start_date_str,
+                    '--end_date', end_date_str,
+                    '--interventions_plan', tmp_ips_file.name,
+                    '--output_file', tmp_pred_file.name
+                ],
+                stderr=subprocess.STDOUT
+            )
 
-    # Go to covid-xprize root dir to access predict script
-    wd = os.getcwd()
-    os.chdir("../../../..")
+            # Print output from running script
+            print(output_str.decode("utf-8"))
 
-    # Run script to generate predictions
-    output_str = subprocess.check_output(
-        [
-            'python', PREDICT_MODULE,
-            '--start_date', start_date_str,
-            '--end_date', end_date_str,
-            '--interventions_plan', ip_file_full_path,
-            '--output_file', TMP_PRED_FILE_NAME
-        ],
-        stderr=subprocess.STDOUT
-    )
-
-    # Print output from running script
-    print(output_str.decode("utf-8"))
-
-    # Load predictions to return
-    df = pd.read_csv(TMP_PRED_FILE_NAME)
-
-    # Return to prescriptor dir
-    os.chdir(wd)
+            # Load predictions to return
+            df = pd.read_csv(tmp_pred_file)
 
     return df
