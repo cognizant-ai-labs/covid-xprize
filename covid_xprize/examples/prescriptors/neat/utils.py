@@ -2,11 +2,10 @@
 
 import os
 import subprocess
+import tempfile
 import urllib.request
 import pandas as pd
 from pathlib import Path
-
-from tempfile import NamedTemporaryFile
 
 from covid_xprize.validation.scenario_generator import get_raw_data, generate_scenario
 
@@ -24,10 +23,6 @@ HIST_DATA_FILE_PATH = DATA_PATH / 'OxCGRT_latest.csv'
 
 # Path to predictor module
 PREDICT_MODULE = ROOT_DIR.parent.parent.parent / 'standard_predictor' / 'predict.py'
-
-TMP_PRED_FILE_NAME = NamedTemporaryFile().name
-TMP_PRESCRIPTION_FILE_NAME = NamedTemporaryFile().name
-
 
 CASES_COL = ['NewCases']
 
@@ -109,6 +104,7 @@ def load_ips_file(path_to_ips_file):
     df = add_geo_id(df)
     return df
 
+
 # Function that wraps predictor in order to query
 # predictor when prescribing.
 def get_predictions(start_date_str, end_date_str, pres_df, countries=None):
@@ -121,28 +117,27 @@ def get_predictions(start_date_str, end_date_str, pres_df, countries=None):
     hist_df = hist_df[hist_df.Date < start_date]
     ips_df = pd.concat([hist_df, pres_df])
 
-    # Write ips_df to file
-    ips_df.to_csv(TMP_PRESCRIPTION_FILE_NAME)
+    with tempfile.NamedTemporaryFile() as tmp_ips_file:
+        # Write ips_df to file
+        ips_df.to_csv(tmp_ips_file.name)
 
-    # Use full path of the local file passed as ip_file
-    ip_file_full_path = os.path.abspath(TMP_PRESCRIPTION_FILE_NAME)
+        with tempfile.NamedTemporaryFile() as tmp_pred_file:
+            # Run script to generate predictions
+            output_str = subprocess.check_output(
+                [
+                    'python', PREDICT_MODULE,
+                    '--start_date', start_date_str,
+                    '--end_date', end_date_str,
+                    '--interventions_plan', tmp_ips_file.name,
+                    '--output_file', tmp_pred_file.name
+                ],
+                stderr=subprocess.STDOUT
+            )
 
-    # Run script to generate predictions
-    output_str = subprocess.check_output(
-        [
-            'python', PREDICT_MODULE,
-            '--start_date', start_date_str,
-            '--end_date', end_date_str,
-            '--interventions_plan', ip_file_full_path,
-            '--output_file', TMP_PRED_FILE_NAME
-        ],
-        stderr=subprocess.STDOUT
-    )
+            # Print output from running script
+            print(output_str.decode("utf-8"))
 
-    # Print output from running script
-    print(output_str.decode("utf-8"))
-
-    # Load predictions to return
-    df = pd.read_csv(TMP_PRED_FILE_NAME)
+            # Load predictions to return
+            df = pd.read_csv(tmp_pred_file)
 
     return df
