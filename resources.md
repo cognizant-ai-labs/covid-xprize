@@ -39,6 +39,9 @@ EpidemiOptim: A Toolbox for the Optimization of Control Policies in Epidemiologi
 1. Mohammad-H. Tayarani N., Applications of artificial intelligence in battling against covid-19: A literature review, Chaos, Solitons & Fractals, 2020, 110338, https://doi.org/10.1016/j.chaos.2020.110338.(http://www.sciencedirect.com/science/article/pii/S0960077920307335)
 1. Shinde, G.R., Kalamkar, A.B., Mahalle, P.N. et al. Forecasting Models for Coronavirus Disease (COVID-19): A Survey of the State-of-the-Art. SN COMPUT. SCI. 1, 197 (2020). https://doi.org/10.1007/s42979-020-00209-9
 1. Chowdhury, R., Heng, K., Shawon, M.S.R. et al. Dynamic interventions to control COVID-19 pandemic: a multivariate prediction modelling study comparing 16 worldwide countries. Eur J Epidemiol 35, 389–399 (2020). https://doi.org/10.1007/s10654-020-00649-w https://rdcu.be/ccUsw
+1. C. K. Sruthi,  Malay Ranjan Biswal, Brijesh Saraswat, Himanshu Joshi, and Meher K Prakash. Predicting and interpreting COVID-19 transmission rates from the ensemble of government policies. medRxiv 2020.08.27.20179853; doi: https://doi.org/10.1101/2020.08.27.20179853.
+1. Nils Haug, Lukas Geyrhofer, Alessandro Londei, Elma Dervic, Amélie Desvars-Larrive, Vittorio Loreto, Beate Pinior, Stefan Thurner & Peter Klimek. Ranking the effectiveness of worldwide COVID-19 government interventions,  Nat Hum Behav 4, 1303–1312 (2020). https://doi.org/10.1038/s41562-020-01009-0
+1. Daniel Duque, David P. Morton, Bismark Singh, Zhanwei Du, Remy Pasco, and Lauren Ancel Meyers. Timing social distancing to avert unmanageable COVID-19 hospital surges. Proceedings of the National Academy of Sciences Aug 2020, 117 (33) 19873-19878; DOI: https://doi.org/10.1073/pnas.2009033117.
 
 ## Data
 1. Desvars-Larrive, A., Dervic, E., Haug, N. et al. A structured open dataset of government interventions in response to COVID-19. Sci Data 7, 285 (2020). https://doi.org/10.1038/s41597-020-00609-9 https://rdcu.be/ccUrD
