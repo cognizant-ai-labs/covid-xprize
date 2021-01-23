@@ -1,3 +1,5 @@
+import time
+
 import pandas as pd
 
 from covid_xprize.standard_predictor.xprize_predictor import XPrizePredictor
@@ -15,12 +17,13 @@ def weight_prescriptions_by_cost(pres_df, cost_df):
 
 
 def generate_cases_and_stringency_for_prescriptions(start_date, end_date, prescription_file, costs_file):
+    start_time = time.time()
     # Load the prescriptions, handling Date and regions
     pres_df = XPrizePredictor.load_original_data(prescription_file)
 
     # Generate predictions for all prescriptions
     predictor = XPrizePredictor()
-    pred_dfs = []
+    pred_dfs = {}
     for idx in pres_df['PrescriptionIndex'].unique():
         idx_df = pres_df[pres_df['PrescriptionIndex'] == idx]
         idx_df = idx_df.drop(columns='PrescriptionIndex')  # Predictor doesn't need this
@@ -28,8 +31,8 @@ def generate_cases_and_stringency_for_prescriptions(start_date, end_date, prescr
         pred_df = predictor.predict_from_df(start_date, end_date, idx_df)
         print(f"Generated predictions for PrescriptionIndex {idx}")
         pred_df['PrescriptionIndex'] = idx
-        pred_dfs.append(pred_df)
-    pred_df = pd.concat(pred_dfs)
+        pred_dfs[idx] = pred_df
+    pred_df = pd.concat(list(pred_dfs.values()))
 
     # Aggregate cases by prescription index and geo
     agg_pred_df = pred_df.groupby(['CountryName',
@@ -65,8 +68,12 @@ def generate_cases_and_stringency_for_prescriptions(start_date, end_date, prescr
              'PrescriptionIndex',
              'PredictedDailyNewCases',
              'Stringency']]
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    elapsed_time_tring = time.strftime("%H:%M:%S", time.gmtime(elapsed_time))
+    print(f"Evaluated {len(pred_dfs)} PrescriptionIndex in {elapsed_time_tring} seconds")
 
-    return df
+    return df, pred_dfs
 
 
 # Compute domination relationship for each pair of prescriptors for each geo
