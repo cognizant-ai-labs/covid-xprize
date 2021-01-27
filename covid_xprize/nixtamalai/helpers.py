@@ -171,11 +171,16 @@ def hampel_filter_column(df: pd.DataFrame, col: str, k: int=7, threshold: int=3)
     return filtered
 
 
+def add_geo_id(df: pd.DataFrame):
+    df['GeoID'] = np.where(df["RegionName"].isnull(),
+                           df["CountryName"],
+                           df["CountryName"] + ' / ' + df["RegionName"])
+    return df
+
+
 def preprocess_npi(df: pd.DataFrame):
     # Add GeoID
-    df['GeoID'] = np.where(df["RegionName"].isnull(),
-                                      df["CountryName"],
-                                      df["CountryName"] + ' / ' + df["RegionName"])
+    add_geo_id(df)
     # Missing data in NPIs assuming they are the same as previous day
     for npi_col in NPI_COLS:
         df.update(df.groupby('GeoID')[npi_col].ffill().fillna(0))
