@@ -17,15 +17,24 @@ trade-off space between total IP cost and cases.
 Note this file has significant overlap with ../random/prescribe.py.
 """
 
-import os
-import argparse
 import numpy as np
 import pandas as pd
 from covid_xprize.standard_predictor.xprize_predictor import XPrizePredictor
+from covid_xprize.scoring.predictor_scoring import load_dataset
+from covid_xprize.validation.scenario_generator import generate_scenario
+from covid_xprize.examples.prescriptors.neat.utils import add_geo_id
+from covid_xprize.nixtamalai.helpers import add_geo_id
 import tempfile
+from tqdm import tqdm
+import datetime
+import os
 from typing import Union, Callable, Any
 
-NUM_PRESCRIPTIONS = 10
+
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+OxCGRT = os.path.join(ROOT_DIR, "..", "standard_predictor/data/OxCGRT_latest.csv")
+REGIONS = os.path.join(ROOT_DIR, "..", "data_sources/countries_regions.csv")
+
 
 IP_MAX_VALUES = {
     'C1_School closing': 3,
@@ -43,6 +52,25 @@ IP_MAX_VALUES = {
 }
 
 IP_COLS = list(IP_MAX_VALUES.keys())
+IP_COLS.sort()
+
+
+def cases(start_date_str: Union[str, Any], timedelta: int,
+          prescription: list) -> pd.DataFrame:
+    start_date = pd.to_datetime(start_date_str, format="%Y-%m-%d")
+    end_date = datetime.timedelta(timedelta) + start_date
+    latest_df = load_dataset(OxCGRT, REGIONS)
+    scenario_df = generate_scenario(start_date.strftime("%Y-%m-%d"),
+                                    end_date.strftime("%Y-%m-%d"),
+                                    latest_df, None,
+                                    scenario="Freeze")
+    func = {k: v for k, v in zip(IP_COLS, prescription)}
+    _ = predict(start_date, end_date, scenario_df,
+                   prescription=lambda x: func[x])
+    add_geo_id(_)
+    _.set_index("Date", inplace=True)
+    _ = {k: v.PredictedDailyNewCases for k, v in _.groupby("GeoID")}
+    return pd.DataFrame(_)
 
 
 def predict(start_date_str: Union[str, Any], end_date_str: Union[str, Any],
