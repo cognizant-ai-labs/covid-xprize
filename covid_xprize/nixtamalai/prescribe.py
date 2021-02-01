@@ -24,7 +24,13 @@ import pandas as pd
 # from covid_xprize.examples.prescriptors.neat.utils import PRED_CASES_COL, prepare_historical_df, CASES_COL, IP_COLS, \
 #    IP_MAX_VALUES, add_geo_id, get_predictions
 from covid_xprize.standard_predictor.xprize_predictor import XPrizePredictor
+from covid_xprize.nixtamalai import surrogate_model
+from covid_xprize.nixtamalai.helpers import add_geo_id
+from microtc.utils import load_model
 import tempfile
+from os import path
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+
 
 NUM_PRESCRIPTIONS = 10
 
@@ -44,6 +50,34 @@ IP_MAX_VALUES = {
 }
 
 IP_COLS = list(IP_MAX_VALUES.keys())
+IP_COLS.sort()
+
+
+def prescriptions(dd):
+    prescriptions_path = path.join(ROOT_DIR,
+                                   "2021-01-28-prescriptions", 
+                                   "%s.pickle.gz")
+    add_geo_id(dd)
+    dd.set_index("GeoID", inplace=True)
+    dd.sort_index(inplace=True)
+    regions_id = {v: k for k, v in enumerate(dd.index)}
+    output = dict()
+    for geoid in dd.index:
+        w = dd.loc[geoid, IP_COLS].values
+        prescriptions = load_model(prescriptions_path % regions_id[geoid])
+        cost = {k: [v, (np.array([int(i) for i in k]) * w).sum()] for k, v in prescriptions.items()}
+        npis = list(cost.keys())
+        npis.sort(key=lambda x: cost[x][0])
+        _ = np.array([cost[k] for k in npis])
+        index = surrogate_model.is_pareto_efficient(_, return_mask=False)
+        if index.shape[0] > 10:
+            ind2 = np.linspace(1, index.shape[0] - 2, 10).round().astype(np.int)
+            ind2 = index[ind2]
+        else:
+            ind2 = index
+        _ = [npis[x] for x in ind2]
+        output.update({geoid: _})
+    return output
 
 
 def prescribe(start_date_str: str,
@@ -59,10 +93,12 @@ def prescribe(start_date_str: str,
                           encoding="ISO-8859-1",
                           keep_default_na=False,
                           error_bad_lines=True)
+    add_geo_id(hist_df)
 
     # Load the IP weights, so that we can use them
     # greedily for each geo.
     weights_df = pd.read_csv(path_to_cost_file, keep_default_na=False)
+    presc = prescriptions(weights_df)
 
     # Generate prescriptions
     start_date = pd.to_datetime(start_date_str, format='%Y-%m-%d')
@@ -70,47 +106,35 @@ def prescribe(start_date_str: str,
     prescription_dict = {
         'CountryName': [],
         'RegionName': [],
-        'Date': []
+        'Date': [],
+        'PrescriptionIndex': []
     }
     for ip in IP_COLS:
         prescription_dict[ip] = []
 
-    #Max prescription
-    for country_name in hist_df['CountryName'].unique():
-        country_df = hist_df[hist_df['CountryName'] == country_name]
-        for region_name in country_df['RegionName'].unique():
-                for k, date in enumerate(pd.date_range(start_date, end_date)):
-                    prescription_dict['CountryName'].append(country_name)
-                    prescription_dict['RegionName'].append(region_name)
-                    prescription_dict['Date'].append(date)
-                    for ip in IP_COLS:
-                        if k < 14:
-                            prescription_dict[ip].append(IP_MAX_VALUES[ip])
-                        elif k < 21:
-                            prescription_dict[ip].append(0)
-                        else:
-                            prescription_dict[ip].append(IP_MAX_VALUES[ip])
+    for geoid, df in hist_df.groupby("GeoID"):
+        country_name = df.iloc[0].CountryName
+        region_name = df.iloc[0].RegionName
+        data = presc[geoid]
+        if len(data) < NUM_PRESCRIPTIONS:
+            data += [data[0] for _ in range(len(data), NUM_PRESCRIPTIONS)]
+        for prescription_idx, prescriptor in enumerate(data):
+            for date in pd.date_range(start_date, end_date):
+                date_str = date.strftime("%Y-%m-%d")
+                prescription_dict['CountryName'].append(country_name)
+                prescription_dict['RegionName'].append(region_name)
+                prescription_dict['Date'].append(date_str)
+                prescription_dict['PrescriptionIndex'].append(prescription_idx)
+                for npi, value in zip(IP_COLS, prescriptor):
+                    prescription_dict[npi].append(int(value))
 
-    # print(prescription_dict)
-    # Create dataframe from dictionary.
     prescription_df = pd.DataFrame(prescription_dict)
-
-    # Make predictions given all countries
-
-    hist_df = hist_df[hist_df.Date < start_date]
-    ips_df = pd.concat([hist_df, prescription_df])
-    predictor = XPrizePredictor()
-    with tempfile.NamedTemporaryFile() as tmp_ips_file:
-        ips_df.to_csv(tmp_ips_file.name)
-        preds_df = predictor.predict(start_date, end_date, tmp_ips_file.name)
 
     # Create the directory for writing the output file, if necessary.
     os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
 
     # Save output csv file.
     prescription_df.to_csv(output_file_path, index=False)
-    preds_df.to_csv(output_file_path + ".csv", index=False)
-
     return
 
 
