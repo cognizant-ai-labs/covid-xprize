@@ -341,13 +341,14 @@ class TestScenarioGenerator(unittest.TestCase):
     def test_generate_scenario_mind_the_gap_freeze(self):
         # Scenario = Freeze
         nb_days = 31
-        start_date = datetime.now() + timedelta(days=7)
+        countries = ["Italy"]
+        last_known_date = self.latest_df[self.latest_df.CountryName == countries[0]].Date.max()
+        start_date = last_known_date + timedelta(days=7)
         start_date_str = start_date.strftime(DATE_FORMAT)
         end_date = start_date + timedelta(days=nb_days)
         end_date_str = end_date.strftime(DATE_FORMAT)
         inception_date = pd.to_datetime(INCEPTION_DATE, format=DATE_FORMAT)
 
-        countries = ["Italy"]
         scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario="Freeze")
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
@@ -362,13 +363,14 @@ class TestScenarioGenerator(unittest.TestCase):
     def test_generate_scenario_mind_the_gap_min(self):
         # Scenario = MIN
         nb_days = 31
-        start_date = datetime.now() + timedelta(days=7)
+        countries = ["Italy"]
+        last_known_date = self.latest_df[self.latest_df.CountryName == countries[0]].Date.max()
+        start_date = last_known_date + timedelta(days=7)
         start_date_str = start_date.strftime(DATE_FORMAT)
         end_date = start_date + timedelta(days=nb_days)
         end_date_str = end_date.strftime(DATE_FORMAT)
         inception_date = pd.to_datetime(INCEPTION_DATE, format=DATE_FORMAT)
 
-        countries = ["Italy"]
         scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario="MIN")
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
@@ -383,13 +385,14 @@ class TestScenarioGenerator(unittest.TestCase):
     def test_generate_scenario_mind_the_gap_max(self):
         # Scenario = MAX
         nb_days = 31
-        start_date = datetime.now() + timedelta(days=7)
+        countries = ["Italy"]
+        last_known_date = self.latest_df[self.latest_df.CountryName == countries[0]].Date.max()
+        start_date = last_known_date + timedelta(days=7)
         start_date_str = start_date.strftime(DATE_FORMAT)
         end_date = start_date + timedelta(days=nb_days)
         end_date_str = end_date.strftime(DATE_FORMAT)
         inception_date = pd.to_datetime(INCEPTION_DATE, format=DATE_FORMAT)
 
-        countries = ["Italy"]
         scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario="MAX")
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
@@ -405,15 +408,14 @@ class TestScenarioGenerator(unittest.TestCase):
         # Scenario = Custom
         nb_days = 31
         start_lag = 7
-        country = "Italy"
-        last_known_date = self.latest_df[self.latest_df.CountryName == country].Date.max()
+        countries = ["Italy"]
+        last_known_date = self.latest_df[self.latest_df.CountryName == countries[0]].Date.max()
         start_date = last_known_date + timedelta(days=start_lag)
         start_date_str = start_date.strftime(DATE_FORMAT)
         end_date = start_date + timedelta(days=nb_days)
         end_date_str = end_date.strftime(DATE_FORMAT)
         inception_date = pd.to_datetime(INCEPTION_DATE, format=DATE_FORMAT)
 
-        countries = [country]
         # Set all the NPIs to one for each day between start date and end date, as well as from last known date.
         scenario = [ONE_NPIS] * (nb_days + start_lag)
         scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=scenario)
@@ -430,6 +432,8 @@ class TestScenarioGenerator(unittest.TestCase):
     def test_generate_scenario_mind_the_gap_freeze_2_countries(self):
         # Check 2 countries
         nb_days = 31
+        # We have 2 countries, and they may have different last know dates.
+        # Set start date to 7 days from now to guarantee a gap
         start_date = datetime.now() + timedelta(days=7)
         start_date_str = start_date.strftime(DATE_FORMAT)
         end_date = start_date + timedelta(days=nb_days)
