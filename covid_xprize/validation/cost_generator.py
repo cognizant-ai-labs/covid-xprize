@@ -13,7 +13,6 @@ import pandas as pd
 from covid_xprize.validation.scenario_generator import NPI_COLUMNS as IP_COLUMNS
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-FIXTURES_PATH = os.path.join(ROOT_DIR, 'data')
 DEFAULT_GEOS = os.path.join(ROOT_DIR, '..', '..', "countries_regions.csv")
 
 
