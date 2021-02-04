@@ -8,18 +8,33 @@ import os
 import argparse
 
 import numpy as np
+import pandas as pd
 
-from covid_xprize.validation.scenario_generator import get_raw_data
 from covid_xprize.validation.scenario_generator import NPI_COLUMNS as IP_COLUMNS
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 FIXTURES_PATH = os.path.join(ROOT_DIR, 'data')
-DATA_FILE = os.path.join(FIXTURES_PATH, "OxCGRT_latest.csv")
+DEFAULT_GEOS = os.path.join(ROOT_DIR, '..', '..', "countries_regions.csv")
 
 
 def generate_costs(distribution='ones'):
     """
-    Returns df of costs for each IP for each geo according to distribution.
+    Returns a df of costs for each IP for default list of geos according to distribution.
+    """
+    return generate_costs_for_geos_file(DEFAULT_GEOS, distribution)
+
+
+def generate_costs_for_geos_file(geos_file, distribution='ones'):
+    """
+    Returns a df of costs for each IP for geos in geos_file according to distribution.
+    """
+    geos_df = load_geos(geos_file)
+    return generate_costs_for_geos_df(geos_df, distribution)
+
+
+def generate_costs_for_geos_df(geos_df, distribution='ones'):
+    """
+    Returns df of costs for each IP for each geo in geos_df according to distribution.
 
     Costs always sum to #IPS (i.e., len(IP_COLUMNS)).
 
@@ -28,17 +43,11 @@ def generate_costs(distribution='ones'):
         - 'uniform': costs are sampled uniformly across IPs independently
                      for each geo.
     """
+    # Copy the countries and regions dataset in order to add IP columns
+    df = geos_df.copy()
+
     assert distribution in ['ones', 'uniform'], \
            f'Unsupported distribution {distribution}'
-
-
-    df = get_raw_data(DATA_FILE, latest=False)
-
-    # Reduce df to one row per geo
-    df = df.groupby(['CountryName', 'RegionName']).mean().reset_index()
-
-    # Reduce to geo id info
-    df = df[['CountryName', 'RegionName']]
 
     if distribution == 'ones':
         df[IP_COLUMNS] = 1
@@ -52,10 +61,18 @@ def generate_costs(distribution='ones'):
         weights = nb_ips * samples / samples.sum(axis=0)
         df[IP_COLUMNS] = weights.T
 
-        # Round weights for better readability with neglible loss of generality.
+        # Round weights for better readability with negligible loss of generality.
         df = df.round(2)
 
     return df
+
+
+def load_geos(path_to_geo_file):
+    print(f"Loading countries and regions from {path_to_geo_file}")
+    geos_df = pd.read_csv(path_to_geo_file,
+                          encoding="ISO-8859-1",
+                          dtype={"RegionName": str})
+    return geos_df
 
 
 if __name__ == '__main__':
@@ -66,6 +83,14 @@ if __name__ == '__main__':
                         required=True,
                         help="Distribution to generate weights from. Current"
                               "options are 'ones', and 'uniform'.")
+    parser.add_argument("-c", "--countries_path",
+                        dest="countries_path",
+                        type=str,
+                        required=False,
+                        default=DEFAULT_GEOS,
+                        help="The path to a csv file containing the list of countries and regions to use. "
+                             "The csv file must contain the following columns: CountryName,RegionName "
+                             "and names must match latest Oxford's ones")
     parser.add_argument("-o", "--output_file",
                         type=str,
                         required=True,
@@ -73,7 +98,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     print(f"Generating weights with distribution {args.distribution}...")
-    weights_df = generate_costs(args.distribution)
+    weights_df = generate_costs_for_geos_file(args.countries_path, args.distribution)
     print("Writing weights to file...")
     weights_df.to_csv(args.output_file, index=False)
     print("Done. Thank you.")
