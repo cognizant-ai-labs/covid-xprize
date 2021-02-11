@@ -3,7 +3,6 @@ import argparse
 import logging.config
 import os
 import urllib.request
-from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -165,6 +164,13 @@ def generate_scenario(start_date_str, end_date_str, raw_df, countries=None, scen
     return ips_df
 
 
+def phase1_update(latest_df):
+    # Feb 2, 2021: Handle US Virgin Islands: was a region of 'United States' for phase 1, but is now a country
+    latest_df.loc[latest_df.CountryName == "United States Virgin Islands", "RegionName"] = "Virgin Islands"
+    latest_df.loc[latest_df.CountryName == "United States Virgin Islands", "CountryName"] = "United States"
+    return latest_df
+
+
 def do_main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--start_date",
@@ -181,16 +187,38 @@ def do_main():
                         default="2021-06-19",
                         help="Last date of the scenario"
                              "Format YYYY-MM-DD. For example 2021-06-19")
+    parser.add_argument("-c", "--countries_path",
+                        dest="countries_path",
+                        type=str,
+                        required=False,
+                        help="The path to a csv file containing the list of countries and regions to use. "
+                             "The csv file must contain the following columns: CountryName,RegionName "
+                             "and names must match latest Oxford's ones")
     parser.add_argument("-o", "--output_path",
                         dest="output_path",
                         type=str,
                         required=True,
                         help="The path to where the generated scenario CSV file should be written "
                              "including the filename. For example: /tmp/my_scenario.csv")
+    parser.add_argument('-p1', '--phase1',
+                        dest='phase1',
+                        help="True to make the generated scenario backward compatible with Phase 1",
+                        default=False, action='store_true')
     args = parser.parse_args()
     LOGGER.info("Generating scenario...")
-    # Load the latest dataset from Oxford, for the fixed list of countries and regions
-    latest_df = load_dataset()
+    # Load the latest dataset from Oxford
+    if args.countries_path:
+        # Use the specified list of countries and regions
+        latest_df = load_dataset(geos_file=args.countries_path)
+    else:
+        # Use the official list of countries and regions
+        latest_df = load_dataset()
+
+    # Fix the DataFrame to make it backward_compatible with phase 1's list of countries and regions
+    if args.phase1:
+        LOGGER.info("Making dataset backward compatible with Phase 1...")
+        latest_df = phase1_update(latest_df)
+
     LOGGER.info("Dataset loaded.")
     LOGGER.info(f"Start date: {args.start_date}")
     LOGGER.info(f"End date: {args.end_date}")

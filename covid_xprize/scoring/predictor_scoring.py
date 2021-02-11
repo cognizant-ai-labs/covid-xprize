@@ -24,12 +24,13 @@ def load_dataset(url=LATEST_DATA_URL,
     # Keep only the fixed list of countries and regions
     geos_df = pd.read_csv(geos_file,
                           encoding="ISO-8859-1")
+    # Use '' instead of nan for region names
+    latest_df["RegionName"] = latest_df["RegionName"].fillna("")
+    geos_df["RegionName"] = geos_df["RegionName"].fillna("")
     countries = list(geos_df.CountryName.unique())
     regions = list(geos_df.RegionName.unique())
     latest_df = latest_df[(latest_df.CountryName.isin(countries)) &
                           (latest_df.RegionName.isin(regions))]
-    # Use '' instead of nan for region names
-    latest_df["RegionName"] = latest_df["RegionName"].fillna("")
     return latest_df
 
 
