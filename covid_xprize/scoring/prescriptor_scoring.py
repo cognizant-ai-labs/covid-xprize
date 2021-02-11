@@ -32,6 +32,7 @@ def generate_cases_and_stringency_for_prescriptions(start_date, end_date, prescr
         # prescriptions start after predictor's dataset ends.
         if past_ips_file:
             past_ips_df = XPrizePredictor.load_original_data(past_ips_file)
+            past_ips_df = past_ips_df[past_ips_df['Date'] < start_date]
             idx_df = past_ips_df.append(idx_df)
 
         # Generate the predictions
