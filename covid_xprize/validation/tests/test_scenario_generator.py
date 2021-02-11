@@ -340,77 +340,115 @@ class TestScenarioGenerator(unittest.TestCase):
 
     def test_generate_scenario_mind_the_gap_freeze(self):
         # Scenario = Freeze
-        start_date_str = "2021-01-01"
-        end_date_str = "2021-01-31"
+        nb_days = 31
         countries = ["Italy"]
+        last_known_date = self.latest_df[self.latest_df.CountryName == countries[0]].Date.max()
+        start_date = last_known_date + timedelta(days=7)
+        start_date_str = start_date.strftime(DATE_FORMAT)
+        end_date = start_date + timedelta(days=nb_days)
+        end_date_str = end_date.strftime(DATE_FORMAT)
+        inception_date = pd.to_datetime(INCEPTION_DATE, format=DATE_FORMAT)
+
         scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario="Freeze")
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
-        # Inception is 2020-01-01. 366 days for 2020 + 31 for Jan 2021
-        self.assertEqual(397, len(scenario_df), "Expected the number of days between inception and end date")
-        # The last 31 rows must be the same
-        self.assertEqual(0, scenario_df.tail(31)[NPI_COLUMNS].diff().sum().sum(),
-                         "Expected the last 31 rows to have the same frozen IP")
+        # Check we get the expected number of days
+        expected_days = (end_date - inception_date).days + 1  # +1 because inception_date and end_date are included
+        self.assertEqual(expected_days, len(scenario_df), "Expected the number of days between inception and end date")
+        # The last nb_days rows must be the same
+        self.assertEqual(0, scenario_df.tail(nb_days)[NPI_COLUMNS].diff().sum().sum(),
+                         f"Expected the last {nb_days} rows to have the same frozen IP")
 
     def test_generate_scenario_mind_the_gap_min(self):
         # Scenario = MIN
-        start_date_str = "2021-01-01"
-        end_date_str = "2021-01-31"
+        nb_days = 31
         countries = ["Italy"]
+        last_known_date = self.latest_df[self.latest_df.CountryName == countries[0]].Date.max()
+        start_date = last_known_date + timedelta(days=7)
+        start_date_str = start_date.strftime(DATE_FORMAT)
+        end_date = start_date + timedelta(days=nb_days)
+        end_date_str = end_date.strftime(DATE_FORMAT)
+        inception_date = pd.to_datetime(INCEPTION_DATE, format=DATE_FORMAT)
+
         scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario="MIN")
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
-        # Inception is 2020-01-01. 366 days for 2020 + 31 for Jan 2021
-        self.assertEqual(397, len(scenario_df), "Expected the number of days between inception and end date")
-        # The last 31 rows must be the same
-        self.assertEqual(0, scenario_df.tail(31)[NPI_COLUMNS].sum().sum(),
-                         "Expected the last 31 rows to have NPIs set to 0")
+        # Check we get the expected number of days
+        expected_days = (end_date - inception_date).days + 1  # +1 because inception_date and end_date are included
+        self.assertEqual(expected_days, len(scenario_df), "Expected the number of days between inception and end date")
+        # The last nb_days rows must be the same
+        self.assertEqual(0, scenario_df.tail(nb_days)[NPI_COLUMNS].sum().sum(),
+                         f"Expected the last {nb_days} rows to have NPIs set to 0")
 
     def test_generate_scenario_mind_the_gap_max(self):
         # Scenario = MAX
-        start_date_str = "2021-01-01"
-        end_date_str = "2021-01-31"
+        nb_days = 31
         countries = ["Italy"]
+        last_known_date = self.latest_df[self.latest_df.CountryName == countries[0]].Date.max()
+        start_date = last_known_date + timedelta(days=7)
+        start_date_str = start_date.strftime(DATE_FORMAT)
+        end_date = start_date + timedelta(days=nb_days)
+        end_date_str = end_date.strftime(DATE_FORMAT)
+        inception_date = pd.to_datetime(INCEPTION_DATE, format=DATE_FORMAT)
+
         scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario="MAX")
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
-        # Inception is 2020-01-01. 366 days for 2020 + 31 for Jan 2021
-        self.assertEqual(397, len(scenario_df), "Expected the number of days between inception and end date")
-        # The last 31 rows must be the same
-        self.assertEqual(sum(MAX_NPIS), scenario_df.tail(31)[NPI_COLUMNS].mean().sum(),
-                         "Expected the last 31 rows to have NPIs set to their max value")
+        # Check we get the expected number of days
+        expected_days = (end_date - inception_date).days + 1  # +1 because inception_date and end_date are included
+        self.assertEqual(expected_days, len(scenario_df), "Expected the number of days between inception and end date")
+        # The last nb_days rows must be the same
+        self.assertEqual(sum(MAX_NPIS), scenario_df.tail(nb_days)[NPI_COLUMNS].mean().sum(),
+                         f"Expected the last {nb_days} rows to have NPIs set to their max value")
 
     def test_generate_scenario_mind_the_gap_custom(self):
         # Scenario = Custom
-        start_date_str = "2021-01-01"
-        end_date_str = "2021-01-31"
+        nb_days = 31
+        start_lag = 7
         countries = ["Italy"]
-        # Set all the NPIs to one for each day between start data and end date.
-        scenario = [ONE_NPIS] * 31
+        last_known_date = self.latest_df[self.latest_df.CountryName == countries[0]].Date.max()
+        start_date = last_known_date + timedelta(days=start_lag)
+        start_date_str = start_date.strftime(DATE_FORMAT)
+        end_date = start_date + timedelta(days=nb_days)
+        end_date_str = end_date.strftime(DATE_FORMAT)
+        inception_date = pd.to_datetime(INCEPTION_DATE, format=DATE_FORMAT)
+
+        # Set all the NPIs to one for each day between start date and end date, as well as from last known date.
+        scenario = [ONE_NPIS] * (nb_days + start_lag)
         scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=scenario)
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
-        # Inception is 2020-01-01. 366 days for 2020 + 31 for Jan 2021
-        self.assertEqual(397, len(scenario_df), "Expected the number of days between inception and end date")
+        # Check we get the expected number of days
+        expected_days = (end_date - inception_date).days + 1  # +1 because inception_date and end_date are included
+        self.assertEqual(expected_days, len(scenario_df), "Expected the number of days between inception and end date")
         # The last 31 rows must be the same
-        self.assertEqual(1, scenario_df.tail(31)[NPI_COLUMNS].mean().mean(),
-                         "Expected the last 31 rows to have all NPIs set to 1")
+        self.assertEqual(1, scenario_df.tail(nb_days)[NPI_COLUMNS].mean().mean(),
+                         f"Expected the last {nb_days} rows to have all NPIs set to 1")
 
     def test_generate_scenario_mind_the_gap_freeze_2_countries(self):
         # Check 2 countries
-        start_date_str = "2021-01-01"
-        end_date_str = "2021-01-31"
+        nb_days = 31
+        # We have 2 countries, and they may have different last know dates.
+        # Set start date to 7 days from now to guarantee a gap
+        start_date = datetime.now() + timedelta(days=7)
+        start_date_str = start_date.strftime(DATE_FORMAT)
+        end_date = start_date + timedelta(days=nb_days)
+        end_date_str = end_date.strftime(DATE_FORMAT)
+        inception_date = pd.to_datetime(INCEPTION_DATE, format=DATE_FORMAT)
+
         countries = ["France", "Italy"]
         scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario="Freeze")
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
-        # Inception is 2020-01-01. 366 days for 2020 + 31 for Jan 2021
-        self.assertEqual(397 * 2, len(scenario_df), "Not the expected number of days between inception and end date")
+        # Check we get the expected number of days
+        expected_days = (end_date - inception_date).days + 1  # +1 because inception_date and end_date are included
+        self.assertEqual(expected_days * 2, len(scenario_df),
+                         "Not the expected number of days between inception and end date")
 
     def test_generate_scenario_mind_the_gap_freeze_all_countries(self):
         # Check all countries, with frozen npis for 180 days, 1 week from today
