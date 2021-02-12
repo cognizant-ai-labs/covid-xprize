@@ -16,7 +16,7 @@ def weight_prescriptions_by_cost(pres_df, cost_df):
     return weighted_df
 
 
-def generate_cases_and_stringency_for_prescriptions(start_date, end_date, prescription_file, costs_file):
+def generate_cases_and_stringency_for_prescriptions(start_date, end_date, prescription_file, costs_file, past_ips_file=None):
     start_time = time.time()
     # Load the prescriptions, handling Date and regions
     pres_df = XPrizePredictor.load_original_data(prescription_file)
@@ -27,6 +27,14 @@ def generate_cases_and_stringency_for_prescriptions(start_date, end_date, prescr
     for idx in pres_df['PrescriptionIndex'].unique():
         idx_df = pres_df[pres_df['PrescriptionIndex'] == idx]
         idx_df = idx_df.drop(columns='PrescriptionIndex')  # Predictor doesn't need this
+
+        # Prepend past ips if provided. This is used to handle the case when
+        # prescriptions start after predictor's dataset ends.
+        if past_ips_file:
+            past_ips_df = XPrizePredictor.load_original_data(past_ips_file)
+            past_ips_df = past_ips_df[past_ips_df['Date'] < start_date]
+            idx_df = past_ips_df.append(idx_df)
+
         # Generate the predictions
         pred_df = predictor.predict_from_df(start_date, end_date, idx_df)
         print(f"Generated predictions for PrescriptionIndex {idx}")
