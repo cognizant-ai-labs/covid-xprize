@@ -7,7 +7,7 @@ import os
 import sys
 from setuptools import setup, find_packages
 
-LIBRARY_VERSION = '1.1.6'
+LIBRARY_VERSION = '1.1.7'
 
 CURRENT_PYTHON = sys.version_info[:2]
 REQUIRED_PYTHON = (3, 6)
@@ -50,6 +50,8 @@ setup(
             'countries_regions.csv',
             'countries_regions_phase1_fix.csv',
             'covid_xprize/examples/predictors/lstm/tests/fixtures/*',
+            'covid_xprize/standard_predictor/data',
+            'covid_xprize/standard_predictor/models',
             'covid_xprize/validation/data',
             'examples/predictors/lstm/data/*',
         ],
