@@ -140,6 +140,6 @@ select among different prescriptors from the Pareto Front to see the effect on p
 in various regions.
 
 For more background information please see also the research paper 
-[From Prediction to Prescription: Evolutionary Optimization of Non-Pharmaceutical Interventions in the COVID-19 Pandemic](https://arxiv.org/abs/2005.13766). 
+[From Prediction to Prescription: Evolutionary Optimization of Non-Pharmaceutical Interventions in the COVID-19 Pandemic](http://nn.cs.utexas.edu/?miikkulainen:ieeetec21). 
 
 Copyright 2020 (c) Cognizant Digital Business, Evolutionary AI. All rights reserved. Issued under the Apache 2.0 License.
