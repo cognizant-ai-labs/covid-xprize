@@ -11,7 +11,7 @@
 1. [Augmenting Human Decision Making - Optimizing COVID-19 Interventions](https://evolution.ml/esp/npi/)
 1. Risto Miikkulainen, Olivier Francon, Elliot Meyerson, Xin Qiu, Elisa Canzani, Babak Hodjat   
 From Prediction to Prescription: Evolutionary Optimization of Non-Pharmaceutical Interventions in the COVID-19 Pandemic  
-[arXiv:2005.13766](https://arxiv.org/abs/2005.13766)
+[IEEE Transactions on Evolutionary Computatation](http://nn.cs.utexas.edu/?miikkulainen:ieeetec21)
 
 ## Blavatnik School of Government / University of Oxford 
 1. Main page: [Coronavirus Government Response Tracker](https://www.bsg.ox.ac.uk/research/research-projects/coronavirus-government-response-tracker)
