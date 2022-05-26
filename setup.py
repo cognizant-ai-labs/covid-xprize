@@ -67,7 +67,7 @@ setup(
         'scikit-learn==0.23.2',
         'scipy==1.5.2',
         'setuptools==41.0.0',
-        'tensorflow==2.2.2',
+        'tensorflow==2.7.2',
         'h5py==2.10.0'
     ],
     description='Contains sample code and notebooks '
