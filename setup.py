@@ -62,7 +62,7 @@ setup(
     install_requires=[
         'keras==2.4.3',
         'neat-python==0.92',
-        'numpy==1.18.5',
+        'numpy==1.22.0',
         'pandas==1.1.2',
         'scikit-learn==0.23.2',
         'scipy==1.5.2',
