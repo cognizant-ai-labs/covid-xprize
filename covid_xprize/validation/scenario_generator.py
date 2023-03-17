@@ -158,7 +158,7 @@ def generate_scenario(start_date_str, end_date_str, raw_df, countries=None, scen
                                       (ips_df.Date.isin(replaced_dates)) == True]
                 ips_df.drop(rows_to_drop.index, axis=0, inplace=True)
                 # Append the new rows
-                ips_df = ips_df.append(new_rows_df)
+                ips_df = pd.concat([ips_df, new_rows_df])
                 # Sort
                 ips_df.sort_values(by=ID_COLS, inplace=True)
 
