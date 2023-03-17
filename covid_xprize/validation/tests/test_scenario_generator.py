@@ -283,7 +283,9 @@ class TestScenarioGenerator(unittest.TestCase):
         end_date_str = (last_known_date + pd.DateOffset(7)).strftime(DATE_FORMAT)
 
         # Make sure we generate scenarios for enough days
-        nb_days = 14
+        official_end_date_str = "2022-12-01"
+        official_end_date = pd.to_datetime(official_end_date_str, format=DATE_FORMAT)
+        nb_days = (last_known_date - official_end_date).days
         scenario = [ONE_NPIS] * nb_days
 
         # Generate the scenarios
@@ -307,7 +309,6 @@ class TestScenarioGenerator(unittest.TestCase):
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual([country], scenario_df.CountryName.unique(), "Not the expected country")
         self.assertCountEqual([region], scenario_df.RegionName.unique(), "Not the requested region")
-        self.assertFalse(scenario_df["Date"].duplicated().any(), "Did not expect duplicated days")
         self.assertFalse(scenario_df["Date"].duplicated().any(), "Expected 1 row per date only")
         end_date = pd.to_datetime(end_date_str, format=DATE_FORMAT)
 
