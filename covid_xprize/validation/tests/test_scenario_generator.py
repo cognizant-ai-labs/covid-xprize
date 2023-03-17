@@ -64,8 +64,8 @@ class TestScenarioGenerator(unittest.TestCase):
         self._check_counterfactual("MAX", MAX_NPIS)
 
     def test_generate_scenario_counterfactual_custom(self):
-        # Simulate Italy used custom NPIs for a period: each NPI set to 1 for 7 consecutive days
-        scenario = [ONE_NPIS] * 7
+        # Simulate Italy used custom NPIs for a period: each NPI set to 1 for 34 consecutive days
+        scenario = [ONE_NPIS] * 34
         self._check_counterfactual(scenario, scenario[0])
 
     def _check_counterfactual(self, scenario, scenario_npis):
