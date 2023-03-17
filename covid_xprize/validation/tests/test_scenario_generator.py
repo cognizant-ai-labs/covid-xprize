@@ -48,8 +48,8 @@ class TestScenarioGenerator(unittest.TestCase):
         cls.latest_df = get_raw_data(DATA_FILE, latest=True)
 
     def test_generate_scenario_counterfactual_freeze(self):
-        # Simulate Italy did not enter full lockdown on Mar 20, but instead waited 1 week before changing its NPIs
-        before_day = pd.to_datetime("2020-03-19", format=DATE_FORMAT)
+        # Simulate Italy did not start increasing NPIs on Feb 22, but instead waited before changing them
+        before_day = pd.to_datetime("2020-02-21", format=DATE_FORMAT)
         frozen_npis_df = self.latest_df[(self.latest_df.CountryName == "Italy") &
                                         (self.latest_df.Date == before_day)][NPI_COLUMNS].reset_index(drop=True)
         frozen_npis = list(frozen_npis_df.values[0])
@@ -69,8 +69,8 @@ class TestScenarioGenerator(unittest.TestCase):
         self._check_counterfactual(scenario, scenario[0])
 
     def _check_counterfactual(self, scenario, scenario_npis):
-        # Simulate Italy lifted all NPI for this period
-        start_date_str = "2020-03-20"
+        # Simulate Italy applied the passed NPIs for this period
+        start_date_str = "2020-02-22"
         end_date_str = "2020-03-26"
         countries = ["Italy"]
         scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=scenario)
