@@ -17,7 +17,8 @@ logging.basicConfig(
 LOGGER = logging.getLogger('scenario_generator')
 
 # See https://github.com/OxCGRT/covid-policy-tracker
-DATA_URL = "https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv"
+DATA_URL =\
+    "https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker-legacy/main/legacy_data_202207/OxCGRT_latest.csv"
 ID_COLS = ['CountryName',
            'RegionName',
            'Date']
@@ -58,7 +59,7 @@ def get_raw_data(cache_file, latest=True):
                             encoding="ISO-8859-1",
                             dtype={"RegionName": str,
                                    "RegionCode": str},
-                            error_bad_lines=False)
+                            on_bad_lines='skip')
     latest_df["RegionName"] = latest_df["RegionName"].fillna("")
     # Fill any missing NPIs by assuming they are the same as previous day, or 0 if none is available
     latest_df.update(latest_df.groupby(['CountryName', 'RegionName'])[NPI_COLUMNS].ffill().fillna(0))
