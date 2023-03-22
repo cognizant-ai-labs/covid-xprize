@@ -7,7 +7,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from covid_xprize.validation.scenario_generator import NPI_COLUMNS, get_raw_data, MIN_NPIS, MAX_NPIS, generate_scenario
+from covid_xprize.validation.scenario_generator import get_raw_data, generate_scenario
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 FIXTURES_PATH = os.path.join(ROOT_DIR, 'fixtures')
@@ -15,6 +15,43 @@ DATA_FILE = os.path.join(FIXTURES_PATH, "OxCGRT_latest.csv")
 # This file contains data for Belgium and Brazil, where Brazil has 1 more day of data than Belgium
 DATES_MISMATCH_DATA_FILE = os.path.join(FIXTURES_PATH, "OxCGRT_dates_mismatch.csv")
 
+MAX_NPIS_DICT = {
+    "C1_School closing": 3,
+    "C2_Workplace closing": 3,
+    "C3_Cancel public events": 2,
+    "C4_Restrictions on gatherings": 4,
+    "C5_Close public transport": 2,
+    "C6_Stay at home requirements": 3,
+    "C7_Restrictions on internal movement": 2,
+    "C8_International travel controls": 4,
+    "E1_Income support": 2,
+    "E2_Debt/contract relief": 2,
+    "E3_Fiscal measures": 1957600000000.00000,  # Max from file
+    "E4_International support": 834353051822.00000,  # Max from file
+    "H1_Public information campaigns": 2,
+    "H2_Testing policy": 3,
+    "H3_Contact tracing": 2,
+    "H4_Emergency investment in healthcare": 242400000000.00000,  # Max from file
+    "H5_Investment in vaccines": 100404615615.00000,  # Max from file
+    "H6_Facial Coverings": 4,
+    "H7_Vaccination policy": 5,
+    "H8_Protection of elderly people": 3,
+    # "M1_Wildcard": "text",  # Contains text
+    "V1_Vaccine Prioritisation (summary)": 2,
+    "V2A_Vaccine Availability (summary)": 3,
+    # "V2B_Vaccine age eligibility/availability age floor (general population summary)": "0-4 yrs",  # Lowest age group
+    # "V2C_Vaccine age eligibility/availability age floor (at risk summary)": "0-4 yrs",  # Lowest age group
+    "V2D_Medically/ clinically vulnerable (Non-elderly)": 3,
+    "V2E_Education": 2,
+    "V2F_Frontline workers  (non healthcare)": 2,
+    "V2G_Frontline workers  (healthcare)": 2,
+    "V3_Vaccine Financial Support (summary)": 5,
+    "V4_Mandatory Vaccination (summary)": 1
+}
+
+NPI_COLUMNS = list(MAX_NPIS_DICT.keys())
+MIN_NPIS = [0] * len(NPI_COLUMNS)
+MAX_NPIS = list(MAX_NPIS_DICT.values())
 # Sets each NPI to level 1
 ONE_NPIS = [1] * len(NPI_COLUMNS)
 
@@ -45,11 +82,11 @@ class TestScenarioGenerator(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Load the csv data only once
-        cls.latest_df = get_raw_data(DATA_FILE, latest=True)
+        cls.latest_df = get_raw_data(DATA_FILE, latest=True, npi_columns=NPI_COLUMNS)
 
     def test_generate_scenario_counterfactual_freeze(self):
-        # Simulate Italy did not enter full lockdown on Mar 20, but instead waited 1 week before changing its NPIs
-        before_day = pd.to_datetime("2020-03-19", format=DATE_FORMAT)
+        # Simulate Italy did not start increasing NPIs on Feb 22, but instead waited before changing them
+        before_day = pd.to_datetime("2020-02-21", format=DATE_FORMAT)
         frozen_npis_df = self.latest_df[(self.latest_df.CountryName == "Italy") &
                                         (self.latest_df.Date == before_day)][NPI_COLUMNS].reset_index(drop=True)
         frozen_npis = list(frozen_npis_df.values[0])
@@ -64,16 +101,21 @@ class TestScenarioGenerator(unittest.TestCase):
         self._check_counterfactual("MAX", MAX_NPIS)
 
     def test_generate_scenario_counterfactual_custom(self):
-        # Simulate Italy used custom NPIs for a period: each NPI set to 1 for 7 consecutive days
-        scenario = [ONE_NPIS] * 7
+        # Simulate Italy used custom NPIs for a period: each NPI set to 1 for 34 consecutive days
+        scenario = [ONE_NPIS] * 34
         self._check_counterfactual(scenario, scenario[0])
 
     def _check_counterfactual(self, scenario, scenario_npis):
-        # Simulate Italy lifted all NPI for this period
-        start_date_str = "2020-03-20"
+        # Simulate Italy applied the passed NPIs for this period
+        start_date_str = "2020-02-22"
         end_date_str = "2020-03-26"
         countries = ["Italy"]
-        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=scenario)
+        scenario_df = generate_scenario(start_date_str,
+                                        end_date_str,
+                                        self.latest_df,
+                                        countries,
+                                        scenario=scenario,
+                                        max_npis_dict=MAX_NPIS_DICT)
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
@@ -119,7 +161,12 @@ class TestScenarioGenerator(unittest.TestCase):
         scenario_npis = list(frozen_npis_df.values[0])
 
         # Generate the scenario
-        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=scenario)
+        scenario_df = generate_scenario(start_date_str,
+                                        end_date_str,
+                                        self.latest_df,
+                                        countries,
+                                        scenario=scenario,
+                                        max_npis_dict=MAX_NPIS_DICT)
 
         # Check it
         self._check_future(start_date_str=start_date_str,
@@ -139,7 +186,12 @@ class TestScenarioGenerator(unittest.TestCase):
         scenario_npis = MIN_NPIS
 
         # Generate the scenario
-        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=scenario)
+        scenario_df = generate_scenario(start_date_str,
+                                        end_date_str,
+                                        self.latest_df,
+                                        countries,
+                                        scenario=scenario,
+                                        max_npis_dict=MAX_NPIS_DICT)
 
         # Check it
         self._check_future(start_date_str=start_date_str,
@@ -159,7 +211,12 @@ class TestScenarioGenerator(unittest.TestCase):
         scenario_npis = MAX_NPIS
 
         # Generate the scenario
-        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=scenario)
+        scenario_df = generate_scenario(start_date_str,
+                                        end_date_str,
+                                        self.latest_df,
+                                        countries,
+                                        scenario=scenario,
+                                        max_npis_dict=MAX_NPIS_DICT)
 
         # Check it
         self._check_future(start_date_str=start_date_str,
@@ -181,7 +238,12 @@ class TestScenarioGenerator(unittest.TestCase):
         scenario = [ONE_NPIS] * nb_days
 
         # Generate the scenario
-        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=scenario)
+        scenario_df = generate_scenario(start_date_str,
+                                        end_date_str,
+                                        self.latest_df,
+                                        countries,
+                                        scenario=scenario,
+                                        max_npis_dict=MAX_NPIS_DICT)
         # Check it
         self._check_future(start_date_str=start_date_str,
                            end_date_str=end_date_str,
@@ -202,7 +264,12 @@ class TestScenarioGenerator(unittest.TestCase):
         scenario_npis = list(frozen_npis_df.values[0])
 
         # Generate the scenario
-        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=scenario)
+        scenario_df = generate_scenario(start_date_str,
+                                        end_date_str,
+                                        self.latest_df,
+                                        countries,
+                                        scenario=scenario,
+                                        max_npis_dict=MAX_NPIS_DICT)
 
         # Check it
         self._check_future(start_date_str=start_date_str,
@@ -223,7 +290,12 @@ class TestScenarioGenerator(unittest.TestCase):
         scenario_npis = MIN_NPIS
 
         # Generate the scenario
-        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=scenario)
+        scenario_df = generate_scenario(start_date_str,
+                                        end_date_str,
+                                        self.latest_df,
+                                        countries,
+                                        scenario=scenario,
+                                        max_npis_dict=MAX_NPIS_DICT)
 
         # Check it
         self._check_future(start_date_str=start_date_str,
@@ -244,7 +316,12 @@ class TestScenarioGenerator(unittest.TestCase):
         scenario_npis = MAX_NPIS
 
         # Generate the scenario
-        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=scenario)
+        scenario_df = generate_scenario(start_date_str,
+                                        end_date_str,
+                                        self.latest_df,
+                                        countries,
+                                        scenario=scenario,
+                                        max_npis_dict=MAX_NPIS_DICT)
 
         # Check it
         self._check_future(start_date_str=start_date_str,
@@ -265,7 +342,12 @@ class TestScenarioGenerator(unittest.TestCase):
         scenario = [ONE_NPIS] * nb_days
 
         # Generate the scenario
-        scenario_df = generate_scenario(None, end_date_str, self.latest_df, countries, scenario=scenario)
+        scenario_df = generate_scenario(None,
+                                        end_date_str,
+                                        self.latest_df,
+                                        countries,
+                                        scenario=scenario,
+                                        max_npis_dict=MAX_NPIS_DICT)
 
         # Check it
         self._check_future(start_date_str=None,
@@ -283,11 +365,18 @@ class TestScenarioGenerator(unittest.TestCase):
         end_date_str = (last_known_date + pd.DateOffset(7)).strftime(DATE_FORMAT)
 
         # Make sure we generate scenarios for enough days
-        nb_days = 14
+        official_end_date_str = "2022-12-01"
+        official_end_date = pd.to_datetime(official_end_date_str, format=DATE_FORMAT)
+        nb_days = (last_known_date - official_end_date).days
         scenario = [ONE_NPIS] * nb_days
 
         # Generate the scenarios
-        scenario_df = generate_scenario(None, end_date_str, self.latest_df, countries, scenario=scenario)
+        scenario_df = generate_scenario(None,
+                                        end_date_str,
+                                        self.latest_df,
+                                        countries,
+                                        scenario=scenario,
+                                        max_npis_dict=MAX_NPIS_DICT)
 
         # Check them
         all_countries = self.latest_df.CountryName.unique()
@@ -307,7 +396,6 @@ class TestScenarioGenerator(unittest.TestCase):
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual([country], scenario_df.CountryName.unique(), "Not the expected country")
         self.assertCountEqual([region], scenario_df.RegionName.unique(), "Not the requested region")
-        self.assertFalse(scenario_df["Date"].duplicated().any(), "Did not expect duplicated days")
         self.assertFalse(scenario_df["Date"].duplicated().any(), "Expected 1 row per date only")
         end_date = pd.to_datetime(end_date_str, format=DATE_FORMAT)
 
@@ -349,7 +437,12 @@ class TestScenarioGenerator(unittest.TestCase):
         end_date_str = end_date.strftime(DATE_FORMAT)
         inception_date = pd.to_datetime(INCEPTION_DATE, format=DATE_FORMAT)
 
-        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario="Freeze")
+        scenario_df = generate_scenario(start_date_str,
+                                        end_date_str,
+                                        self.latest_df,
+                                        countries,
+                                        scenario="Freeze",
+                                        max_npis_dict=MAX_NPIS_DICT)
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
@@ -371,7 +464,12 @@ class TestScenarioGenerator(unittest.TestCase):
         end_date_str = end_date.strftime(DATE_FORMAT)
         inception_date = pd.to_datetime(INCEPTION_DATE, format=DATE_FORMAT)
 
-        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario="MIN")
+        scenario_df = generate_scenario(start_date_str,
+                                        end_date_str,
+                                        self.latest_df,
+                                        countries,
+                                        scenario="MIN",
+                                        max_npis_dict=MAX_NPIS_DICT)
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
@@ -393,7 +491,12 @@ class TestScenarioGenerator(unittest.TestCase):
         end_date_str = end_date.strftime(DATE_FORMAT)
         inception_date = pd.to_datetime(INCEPTION_DATE, format=DATE_FORMAT)
 
-        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario="MAX")
+        scenario_df = generate_scenario(start_date_str,
+                                        end_date_str,
+                                        self.latest_df,
+                                        countries,
+                                        scenario="MAX",
+                                        max_npis_dict=MAX_NPIS_DICT)
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
@@ -418,7 +521,12 @@ class TestScenarioGenerator(unittest.TestCase):
 
         # Set all the NPIs to one for each day between start date and end date, as well as from last known date.
         scenario = [ONE_NPIS] * (nb_days + start_lag)
-        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario=scenario)
+        scenario_df = generate_scenario(start_date_str,
+                                        end_date_str,
+                                        self.latest_df,
+                                        countries,
+                                        scenario=scenario,
+                                        max_npis_dict=MAX_NPIS_DICT)
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
@@ -441,7 +549,12 @@ class TestScenarioGenerator(unittest.TestCase):
         inception_date = pd.to_datetime(INCEPTION_DATE, format=DATE_FORMAT)
 
         countries = ["France", "Italy"]
-        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario="Freeze")
+        scenario_df = generate_scenario(start_date_str,
+                                        end_date_str,
+                                        self.latest_df,
+                                        countries,
+                                        scenario="Freeze",
+                                        max_npis_dict=MAX_NPIS_DICT)
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")
@@ -458,7 +571,12 @@ class TestScenarioGenerator(unittest.TestCase):
         end_date_str = end_date.strftime(DATE_FORMAT)
         inception_date = datetime.strptime(INCEPTION_DATE, DATE_FORMAT)
         countries = None
-        scenario_df = generate_scenario(start_date_str, end_date_str, self.latest_df, countries, scenario="Freeze")
+        scenario_df = generate_scenario(start_date_str,
+                                        end_date_str,
+                                        self.latest_df,
+                                        countries,
+                                        scenario="Freeze",
+                                        max_npis_dict=MAX_NPIS_DICT)
         self.assertIsNotNone(scenario_df)
         nb_days_since_inception = (end_date - inception_date).days + 1
         # For each country, assert the scenario contains the expected number of days
@@ -480,7 +598,12 @@ class TestScenarioGenerator(unittest.TestCase):
         end_date_str = "2021-01-31"
         countries = ["Belgium", "Brazil"]
         dates_mismatch_df = get_raw_data(DATES_MISMATCH_DATA_FILE, latest=False)
-        scenario_df = generate_scenario(start_date_str, end_date_str, dates_mismatch_df, countries, scenario="Freeze")
+        # Not specifying NPIs: can only test the 'default' NPIs that are in DATES_MISMATCH_DATA_FILE
+        scenario_df = generate_scenario(start_date_str,
+                                        end_date_str,
+                                        dates_mismatch_df,
+                                        countries,
+                                        scenario="Freeze")
         self.assertIsNotNone(scenario_df)
         # Misleading name but checks the elements, regardless of order
         self.assertCountEqual(countries, scenario_df.CountryName.unique(), "Not the requested countries")

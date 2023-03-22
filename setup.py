@@ -7,10 +7,10 @@ import os
 import sys
 from setuptools import setup, find_packages
 
-LIBRARY_VERSION = '1.1.7'
+LIBRARY_VERSION = '2.0.0'
 
 CURRENT_PYTHON = sys.version_info[:2]
-REQUIRED_PYTHON = (3, 6)
+REQUIRED_PYTHON = (3, 10)
 
 if CURRENT_PYTHON < REQUIRED_PYTHON:
     sys.stderr.write('''
@@ -60,15 +60,15 @@ setup(
         ]
     },
     install_requires=[
-        'keras==2.4.3',
+        'keras==2.12.0',
         'neat-python==0.92',
-        'numpy==1.18.5',
-        'pandas==1.1.2',
-        'scikit-learn==0.23.2',
-        'scipy==1.5.2',
-        'setuptools==41.0.0',
-        'tensorflow==2.2.2',
-        'h5py==2.10.0'
+        'numpy==1.24.2',
+        'pandas==1.5.3',
+        'scikit-learn==1.2.2',
+        'scipy==1.10.1',
+        'setuptools==67.6.0',
+        'tensorflow==2.11.1',
+        'h5py==3.8.0'
     ],
     description='Contains sample code and notebooks '
                 'for developing and validating entries for the Cognizant COVID X-Prize.',

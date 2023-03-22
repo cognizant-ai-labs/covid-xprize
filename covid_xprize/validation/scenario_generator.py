@@ -17,7 +17,8 @@ logging.basicConfig(
 LOGGER = logging.getLogger('scenario_generator')
 
 # See https://github.com/OxCGRT/covid-policy-tracker
-DATA_URL = "https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv"
+DATA_URL =\
+    "https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker-legacy/main/legacy_data_202207/OxCGRT_latest.csv"
 ID_COLS = ['CountryName',
            'RegionName',
            'Date']
@@ -39,13 +40,14 @@ MAX_NPIS = [3, 3, 2, 4, 2, 3, 2, 4, 2, 3, 2, 4]  # Sum is 34
 INCEPTION_DATE = pd.to_datetime("2020-01-01", format='%Y-%m-%d')
 
 
-def get_raw_data(cache_file, latest=True):
+def get_raw_data(cache_file, latest=True, npi_columns=NPI_COLUMNS):
     """
     Returns the raw data from which to generate scenarios.
     Args:
         cache_file: the file to use to cache the data
         latest: True to force a download of the latest data and update cache_file,
                 False to get the data from cache_file
+        npi_columns: the list of NPIs to retrieve
 
     Returns: a Pandas DataFrame
 
@@ -58,14 +60,19 @@ def get_raw_data(cache_file, latest=True):
                             encoding="ISO-8859-1",
                             dtype={"RegionName": str,
                                    "RegionCode": str},
-                            error_bad_lines=False)
+                            on_bad_lines='skip')
     latest_df["RegionName"] = latest_df["RegionName"].fillna("")
     # Fill any missing NPIs by assuming they are the same as previous day, or 0 if none is available
-    latest_df.update(latest_df.groupby(['CountryName', 'RegionName'])[NPI_COLUMNS].ffill().fillna(0))
+    latest_df.update(latest_df.groupby(['CountryName', 'RegionName'])[npi_columns].ffill().fillna(0))
     return latest_df
 
 
-def generate_scenario(start_date_str, end_date_str, raw_df, countries=None, scenario="Freeze"):
+def generate_scenario(start_date_str,
+                      end_date_str,
+                      raw_df,
+                      countries=None,
+                      scenario="Freeze",
+                      max_npis_dict=None):
     """
     Generates a scenario: a list of intervention plans, with history since 1/1/2020.
     Args:
@@ -81,6 +88,7 @@ def generate_scenario(start_date_str, end_date_str, raw_df, countries=None, scen
             - an array of size "number of days between start_date and end_date"
             containing for each day the array of integers of NPI_COLUMNS lengths to use.
         In case NPIs are not know BEFORE start_date, the last known ones are carried over.
+        max_npis: a dictionary of NPI name to NPI max value
 
     Returns: a Pandas DataFrame
 
@@ -95,14 +103,23 @@ def generate_scenario(start_date_str, end_date_str, raw_df, countries=None, scen
         if start_date < INCEPTION_DATE:
             raise ValueError(f"start_date {start_date} must be on or after inception date {INCEPTION_DATE}")
 
-    ips_df = raw_df[ID_COLS + NPI_COLUMNS].copy()
+    if max_npis_dict:
+        npi_columns = list(max_npis_dict.keys())
+        min_npis = [0] * len(npi_columns)
+        max_npis = list(max_npis_dict.values())
+    else:
+        npi_columns = NPI_COLUMNS
+        min_npis = MIN_NPIS
+        max_npis = MAX_NPIS
+
+    ips_df = raw_df[ID_COLS + npi_columns].copy()
 
     # Filter on countries
     if countries:
         ips_df = ips_df[ips_df.CountryName.isin(countries)]
 
     # Fill any missing "supposedly known" NPIs by assuming they are the same as previous day, or 0 if none is available
-    for npi_col in NPI_COLUMNS:
+    for npi_col in npi_columns:
         ips_df.update(ips_df.groupby(['CountryName', 'RegionName'])[npi_col].ffill().fillna(0))
 
     if scenario == "Historical":
@@ -127,19 +144,19 @@ def generate_scenario(start_date_str, end_date_str, raw_df, countries=None, scen
                 new_row = [country_name, region_name, current_date]
                 if current_date < start_date:
                     # We're before the scenario start date. Carry over last known NPIs
-                    npis = list(ips_gdf[ips_gdf.Date == last_known_date][NPI_COLUMNS].values[0])
+                    npis = list(ips_gdf[ips_gdf.Date == last_known_date][npi_columns].values[0])
                 else:
                     # We are between start_date and end_date: apply the scenario
                     if scenario == "MIN":
-                        npis = MIN_NPIS
+                        npis = min_npis
                     elif scenario == "MAX":
-                        npis = MAX_NPIS
+                        npis = max_npis
                     elif scenario == "Freeze":
                         if start_date <= last_known_date:
                             day_before_start = max(INCEPTION_DATE, start_date - np.timedelta64(1, 'D'))
-                            npis = list(ips_gdf[ips_gdf.Date == day_before_start][NPI_COLUMNS].values[0])
+                            npis = list(ips_gdf[ips_gdf.Date == day_before_start][npi_columns].values[0])
                         else:
-                            npis = list(ips_gdf[ips_gdf.Date == last_known_date][NPI_COLUMNS].values[0])
+                            npis = list(ips_gdf[ips_gdf.Date == last_known_date][npi_columns].values[0])
                     else:
                         npis = scenario[scenario_to_apply]
                         scenario_to_apply = scenario_to_apply + 1
@@ -157,7 +174,7 @@ def generate_scenario(start_date_str, end_date_str, raw_df, countries=None, scen
                                       (ips_df.Date.isin(replaced_dates)) == True]
                 ips_df.drop(rows_to_drop.index, axis=0, inplace=True)
                 # Append the new rows
-                ips_df = ips_df.append(new_rows_df)
+                ips_df = pd.concat([ips_df, new_rows_df])
                 # Sort
                 ips_df.sort_values(by=ID_COLS, inplace=True)
 
