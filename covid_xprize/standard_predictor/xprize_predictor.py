@@ -237,7 +237,7 @@ class XPrizePredictor(object):
                                 encoding="ISO-8859-1",
                                 dtype={"RegionName": str,
                                        "RegionCode": str},
-                                error_bad_lines=False)
+                                on_bad_lines='skip')
         # GeoID is CountryName / RegionName
         # np.where usage: if A then B else C
         latest_df["GeoID"] = np.where(latest_df["RegionName"].isnull(),

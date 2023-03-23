@@ -20,7 +20,7 @@ def load_dataset(url=LATEST_DATA_URL,
                             encoding="ISO-8859-1",
                             dtype={"RegionName": str,
                                    "RegionCode": str},
-                            error_bad_lines=False)
+                            on_bad_lines='skip')
     # Keep only the fixed list of countries and regions
     geos_df = pd.read_csv(geos_file,
                           encoding="ISO-8859-1")
