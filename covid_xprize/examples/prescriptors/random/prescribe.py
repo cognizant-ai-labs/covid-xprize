@@ -35,7 +35,7 @@ def prescribe(start_date_str: str,
                       parse_dates=['Date'],
                       encoding="ISO-8859-1",
                       dtype={"RegionName": str},
-                      error_bad_lines=True)
+                      on_bad_lines='error')
     start_date = pd.to_datetime(start_date_str, format='%Y-%m-%d')
     end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
     prescription_idxs = []
