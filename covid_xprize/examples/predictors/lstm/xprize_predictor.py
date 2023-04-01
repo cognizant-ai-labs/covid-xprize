@@ -19,7 +19,8 @@ from keras.layers import Lambda
 from keras.models import Model
 
 # See https://github.com/OxCGRT/covid-policy-tracker
-DATA_URL = "https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv"
+DATA_URL =\
+    "https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker-legacy/main/legacy_data_202207/OxCGRT_latest.csv"
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(ROOT_DIR, 'data')
@@ -271,18 +272,17 @@ class XPrizePredictor(object):
         # Prefix with country name to match measures_df
         additional_us_states_df['GeoID'] = US_PREFIX + additional_us_states_df['NAME']
 
-        # Append the new data to additional_df
-        additional_context_df = additional_context_df.append(additional_us_states_df)
-
         # UK population
         additional_uk_df = pd.read_csv(ADDITIONAL_UK_CONTEXT)
-        # Append the new data to additional_df
-        additional_context_df = additional_context_df.append(additional_uk_df)
 
         # Brazil population
         additional_brazil_df = pd.read_csv(ADDITIONAL_BRAZIL_CONTEXT)
+
         # Append the new data to additional_df
-        additional_context_df = additional_context_df.append(additional_brazil_df)
+        additional_context_df = pd.concat([additional_context_df,
+                                           additional_us_states_df,
+                                           additional_uk_df,
+                                           additional_brazil_df])
 
         return additional_context_df
 
