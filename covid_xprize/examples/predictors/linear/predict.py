@@ -81,7 +81,8 @@ def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str, ve
     hist_ips_df['GeoID'] = hist_ips_df['CountryName'] + '__' + hist_ips_df['RegionName'].astype(str)
     # Fill any missing NPIs by assuming they are the same as previous day
     for npi_col in NPI_COLS:
-        hist_ips_df.update(hist_ips_df.groupby(['CountryName', 'RegionName'])[npi_col].ffill().fillna(0))
+        hist_ips_df.update(hist_ips_df.groupby(['CountryName', 'RegionName'],
+                                               group_keys=False)[npi_col].ffill().fillna(0))
 
     # Intervention plans to forecast for: those between start_date and end_date
     ips_df = hist_ips_df[(hist_ips_df.Date >= start_date) & (hist_ips_df.Date <= end_date)]
@@ -98,9 +99,9 @@ def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str, ve
     # Add RegionID column that combines CountryName and RegionName for easier manipulation of data
     hist_cases_df['GeoID'] = hist_cases_df['CountryName'] + '__' + hist_cases_df['RegionName'].astype(str)
     # Add new cases column
-    hist_cases_df['NewCases'] = hist_cases_df.groupby('GeoID').ConfirmedCases.diff().fillna(0)
+    hist_cases_df['NewCases'] = hist_cases_df.groupby('GeoID', group_keys=False).ConfirmedCases.diff().fillna(0)
     # Fill any missing case values by interpolation and setting NaNs to 0
-    hist_cases_df.update(hist_cases_df.groupby('GeoID').NewCases.apply(
+    hist_cases_df.update(hist_cases_df.groupby('GeoID', group_keys=False).NewCases.apply(
         lambda group: group.interpolate()).fillna(0))
     # Keep only the id and cases columns
     hist_cases_df = hist_cases_df[ID_COLS + CASES_COL]

@@ -45,7 +45,7 @@ def generate_cases_and_stringency_for_prescriptions(start_date, end_date, prescr
     # Aggregate cases by prescription index and geo
     agg_pred_df = pred_df.groupby(['CountryName',
                                    'RegionName',
-                                   'PrescriptionIndex'], dropna=False).mean().reset_index()
+                                   'PrescriptionIndex'], group_keys=False, dropna=False).mean().reset_index()
 
     # Load IP cost weights
     cost_df = pd.read_csv(costs_file)
@@ -63,7 +63,7 @@ def generate_cases_and_stringency_for_prescriptions(start_date, end_date, prescr
     # Aggregate stringency by prescription index and geo
     agg_pres_df = pres_df.groupby(['CountryName',
                                    'RegionName',
-                                   'PrescriptionIndex'], dropna=False).mean().reset_index()
+                                   'PrescriptionIndex'], group_keys=False, dropna=False).mean().reset_index()
 
     # Combine stringency and cases into a single df
     df = agg_pres_df.merge(agg_pred_df, how='outer', on=['CountryName',

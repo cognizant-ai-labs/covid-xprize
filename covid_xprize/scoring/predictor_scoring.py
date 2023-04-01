@@ -66,7 +66,7 @@ def add_predictor_performance_columns(ranking_df):
 
         # Compute the cumulative sum of 7DMA errors
         ranking_df['CumulDiff7DMA'] = ranking_df.groupby(["GeoID",
-                                                          "PredictorName"])['Diff7DMA'].cumsum()
+                                                          "PredictorName"], group_keys=False)['Diff7DMA'].cumsum()
 
         # Normalize CumulDiff7DMA by geo population size
         ranking_df['Cumul-7DMA-MAE-per-100K'] = ranking_df['CumulDiff7DMA'] / \
@@ -79,7 +79,7 @@ def add_predictor_performance_columns(ranking_df):
         # equality errors when comparing the CumulDiff7DMA of predictors that have
         # predicted the exact same number of daily cases.
         ranking_df['PredictorRank'] = ranking_df.round().groupby(
-            ["GeoID", "Date"])['CumulDiff7DMA'].rank(method='average')
+            ["GeoID", "Date"], group_keys=False)['CumulDiff7DMA'].rank(method='average')
 
         # Sort by 7 days moving average mae per 100K
         ranking_df.sort_values(by=["CountryName",

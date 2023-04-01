@@ -63,7 +63,7 @@ def get_raw_data(cache_file, latest=True, npi_columns=NPI_COLUMNS):
                             on_bad_lines='skip')
     latest_df["RegionName"] = latest_df["RegionName"].fillna("")
     # Fill any missing NPIs by assuming they are the same as previous day, or 0 if none is available
-    latest_df.update(latest_df.groupby(['CountryName', 'RegionName'])[npi_columns].ffill().fillna(0))
+    latest_df.update(latest_df.groupby(['CountryName', 'RegionName'], group_keys=False)[npi_columns].ffill().fillna(0))
     return latest_df
 
 
@@ -120,7 +120,7 @@ def generate_scenario(start_date_str,
 
     # Fill any missing "supposedly known" NPIs by assuming they are the same as previous day, or 0 if none is available
     for npi_col in npi_columns:
-        ips_df.update(ips_df.groupby(['CountryName', 'RegionName'])[npi_col].ffill().fillna(0))
+        ips_df.update(ips_df.groupby(['CountryName', 'RegionName'], group_keys=False)[npi_col].ffill().fillna(0))
 
     if scenario == "Historical":
         return ips_df
