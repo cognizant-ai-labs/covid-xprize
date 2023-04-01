@@ -54,7 +54,7 @@ def prescribe(start_date_str: str,
                           parse_dates=['Date'],
                           encoding="ISO-8859-1",
                           keep_default_na=False,
-                          error_bad_lines=True)
+                          on_bad_lines='error')
 
     # Load the IP weights, so that we can use them
     # greedily for each geo.

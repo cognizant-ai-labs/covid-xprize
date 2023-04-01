@@ -75,7 +75,7 @@ def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str, ve
                               parse_dates=['Date'],
                               encoding="ISO-8859-1",
                               dtype={"RegionName": str},
-                              error_bad_lines=True)
+                              on_bad_lines='error')
 
     # Add GeoID column that combines CountryName and RegionName for easier manipulation of data",
     hist_ips_df['GeoID'] = hist_ips_df['CountryName'] + '__' + hist_ips_df['RegionName'].astype(str)
@@ -94,7 +94,7 @@ def predict_df(start_date_str: str, end_date_str: str, path_to_ips_file: str, ve
                                 encoding="ISO-8859-1",
                                 dtype={"RegionName": str,
                                        "RegionCode": str},
-                                error_bad_lines=False)
+                                on_bad_lines='skip')
     # Add RegionID column that combines CountryName and RegionName for easier manipulation of data
     hist_cases_df['GeoID'] = hist_cases_df['CountryName'] + '__' + hist_cases_df['RegionName'].astype(str)
     # Add new cases column

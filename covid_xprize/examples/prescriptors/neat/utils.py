@@ -72,9 +72,9 @@ def prepare_historical_df():
 
     # Load raw historical data
     df = pd.read_csv(HIST_DATA_FILE_PATH,
-                  parse_dates=['Date'],
-                  encoding="ISO-8859-1",
-                  error_bad_lines=False)
+                     parse_dates=['Date'],
+                     encoding="ISO-8859-1",
+                     on_bad_lines='skip')
     df['RegionName'] = df['RegionName'].fillna("")
 
     # Add GeoID column for easier manipulation
@@ -99,7 +99,7 @@ def load_ips_file(path_to_ips_file):
     df = pd.read_csv(path_to_ips_file,
                      parse_dates=['Date'],
                      encoding="ISO-8859-1",
-                     error_bad_lines=False)
+                     on_bad_lines='skip')
     df['RegionName'] = df['RegionName'].fillna("")
     df = add_geo_id(df)
     return df

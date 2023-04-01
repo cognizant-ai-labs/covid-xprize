@@ -56,12 +56,12 @@ def validate_submission(start_date: str,
                            parse_dates=['Date'],
                            encoding="ISO-8859-1",
                            dtype={"RegionName": str},
-                           error_bad_lines=True)
+                           on_bad_lines='error')
     ip_df = pd.read_csv(ip_file,
                         parse_dates=['Date'],
                         encoding="ISO-8859-1",
                         dtype={"RegionName": str},
-                        error_bad_lines=True)
+                        on_bad_lines='error')
 
     all_errors = []
     # Check we got the expected columns

@@ -237,7 +237,7 @@ class XPrizePredictor(object):
                                 encoding="ISO-8859-1",
                                 dtype={"RegionName": str,
                                        "RegionCode": str},
-                                error_bad_lines=False)
+                                on_bad_lines='skip')
         # GeoID is CountryName / RegionName
         # np.where usage: if A then B else C
         latest_df["GeoID"] = np.where(latest_df["RegionName"].isnull(),
@@ -278,18 +278,17 @@ class XPrizePredictor(object):
         # Prefix with country name to match measures_df
         additional_us_states_df['GeoID'] = US_PREFIX + additional_us_states_df['NAME']
 
-        # Append the new data to additional_df
-        additional_context_df = additional_context_df.append(additional_us_states_df)
-
         # UK population
         additional_uk_df = pd.read_csv(ADDITIONAL_UK_CONTEXT)
-        # Append the new data to additional_df
-        additional_context_df = additional_context_df.append(additional_uk_df)
 
         # Brazil population
         additional_brazil_df = pd.read_csv(ADDITIONAL_BRAZIL_CONTEXT)
+
         # Append the new data to additional_df
-        additional_context_df = additional_context_df.append(additional_brazil_df)
+        additional_context_df = pd.concat([additional_context_df,
+                                           additional_us_states_df,
+                                           additional_uk_df,
+                                           additional_brazil_df])
 
         return additional_context_df
 
