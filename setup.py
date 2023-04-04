@@ -75,5 +75,6 @@ setup(
     long_description=read('README.md'),
     author='Olivier Francon, Darren Sargent, Elliot Meyerson',
     url='https://github.com/leaf-ai/covid-xprize/',
-    license='See LICENSE.md'
+    license='See LICENSE.md',
+    include_package_data=True
 )
