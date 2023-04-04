@@ -203,23 +203,23 @@ class XPrizePredictor(object):
         self._fill_missing_values(df)
 
         # Compute number of new cases and deaths each day
-        df['NewCases'] = df.groupby('GeoID').ConfirmedCases.diff().fillna(0)
-        df['NewDeaths'] = df.groupby('GeoID').ConfirmedDeaths.diff().fillna(0)
+        df['NewCases'] = df.groupby('GeoID', group_keys=False).ConfirmedCases.diff().fillna(0)
+        df['NewDeaths'] = df.groupby('GeoID', group_keys=False).ConfirmedDeaths.diff().fillna(0)
 
         # Replace negative values (which do not make sense for these columns) with 0
         df['NewCases'] = df['NewCases'].clip(lower=0)
         df['NewDeaths'] = df['NewDeaths'].clip(lower=0)
 
         # Compute smoothed versions of new cases and deaths each day
-        df['SmoothNewCases'] = df.groupby('GeoID')['NewCases'].rolling(
+        df['SmoothNewCases'] = df.groupby('GeoID', group_keys=False)['NewCases'].rolling(
             WINDOW_SIZE, center=False).mean().fillna(0).reset_index(0, drop=True)
-        df['SmoothNewDeaths'] = df.groupby('GeoID')['NewDeaths'].rolling(
+        df['SmoothNewDeaths'] = df.groupby('GeoID', group_keys=False)['NewDeaths'].rolling(
             WINDOW_SIZE, center=False).mean().fillna(0).reset_index(0, drop=True)
 
         # Compute percent change in new cases and deaths each day
-        df['CaseRatio'] = df.groupby('GeoID').SmoothNewCases.pct_change(
+        df['CaseRatio'] = df.groupby('GeoID', group_keys=False).SmoothNewCases.pct_change(
         ).fillna(0).replace(np.inf, 0) + 1
-        df['DeathRatio'] = df.groupby('GeoID').SmoothNewDeaths.pct_change(
+        df['DeathRatio'] = df.groupby('GeoID', group_keys=False).SmoothNewDeaths.pct_change(
         ).fillna(0).replace(np.inf, 0) + 1
 
         # Add column for proportion of population infected
@@ -251,16 +251,16 @@ class XPrizePredictor(object):
         # Fill missing values by interpolation, ffill, and filling NaNs
         :param df: Dataframe to be filled
         """
-        df.update(df.groupby('GeoID').ConfirmedCases.apply(
+        df.update(df.groupby('GeoID', group_keys=False).ConfirmedCases.apply(
             lambda group: group.interpolate(limit_area='inside')))
         # Drop country / regions for which no number of cases is available
         df.dropna(subset=['ConfirmedCases'], inplace=True)
-        df.update(df.groupby('GeoID').ConfirmedDeaths.apply(
+        df.update(df.groupby('GeoID', group_keys=False).ConfirmedDeaths.apply(
             lambda group: group.interpolate(limit_area='inside')))
         # Drop country / regions for which no number of deaths is available
         df.dropna(subset=['ConfirmedDeaths'], inplace=True)
         for npi_column in NPI_COLUMNS:
-            df.update(df.groupby('GeoID')[npi_column].ffill().fillna(0))
+            df.update(df.groupby('GeoID', group_keys=False)[npi_column].ffill().fillna(0))
 
     @staticmethod
     def _load_additional_context_df():
@@ -499,7 +499,7 @@ class XPrizePredictor(object):
         country names that have at least min_look_back_days data points.
         """
         # By default use most affected geos with enough history
-        gdf = df.groupby('GeoID')['ConfirmedDeaths'].agg(['max', 'count']).sort_values(by='max', ascending=False)
+        gdf = df.groupby('GeoID', group_keys=False)['ConfirmedDeaths'].agg(['max', 'count']).sort_values(by='max', ascending=False)
         filtered_gdf = gdf[gdf["count"] > min_historical_days]
         geos = list(filtered_gdf.head(nb_geos).index)
         return geos

@@ -81,15 +81,15 @@ def prepare_historical_df():
     df = add_geo_id(df)
 
     # Add new cases column
-    df['NewCases'] = df.groupby('GeoID').ConfirmedCases.diff().fillna(0)
+    df['NewCases'] = df.groupby('GeoID', group_keys=False).ConfirmedCases.diff().fillna(0)
 
     # Fill any missing case values by interpolation and setting NaNs to 0
-    df.update(df.groupby('GeoID').NewCases.apply(
+    df.update(df.groupby('GeoID', group_keys=False).NewCases.apply(
         lambda group: group.interpolate()).fillna(0))
 
     # Fill any missing IPs by assuming they are the same as previous day
     for ip_col in IP_MAX_VALUES:
-        df.update(df.groupby('GeoID')[ip_col].ffill().fillna(0))
+        df.update(df.groupby('GeoID', group_keys=False)[ip_col].ffill().fillna(0))
 
     return df
 

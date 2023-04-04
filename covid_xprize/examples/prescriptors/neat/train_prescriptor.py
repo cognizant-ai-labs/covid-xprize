@@ -56,7 +56,7 @@ df = df[df['Date'] <= cutoff_date]
 
 # As a heuristic, use the top NB_EVAL_COUNTRIES w.r.t. ConfirmedCases
 # so far as the geos for evaluation.
-eval_geos = list(df.groupby('GeoID').max()['ConfirmedCases'].sort_values(
+eval_geos = list(df.groupby('GeoID', group_keys=False).max()['ConfirmedCases'].sort_values(
                 ascending=False).head(NB_EVAL_COUNTRIES).index)
 print("Nets will be evaluated on the following geos:", eval_geos)
 
