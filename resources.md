@@ -16,7 +16,7 @@ From Prediction to Prescription: Evolutionary Optimization of Non-Pharmaceutical
 ## Blavatnik School of Government / University of Oxford 
 1. Main page: [Coronavirus Government Response Tracker](https://www.bsg.ox.ac.uk/research/research-projects/coronavirus-government-response-tracker)
 1. Intervention plans: [Codebook for the Oxford Covid-19 Government Response Tracker](https://github.com/OxCGRT/covid-policy-tracker/blob/master/documentation/codebook.md)
-1. Intervention plans data: [OxCGRT_latest.csv](https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv)
+1. Intervention plans data: [OxCGRT_latest.csv](https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker-legacy/main/legacy_data_202207/OxCGRT_latest.csv)
 1. Anna Petherick, Beatriz Kira, Thomas Hale, Toby Phillips, Samuel Webster, Emily Cameron-Blake, Laura Hallas, Saptarshi Majumdar, Helen Tatlow  
 Variation in government responses to covid-19  
 [BSG-WP-2020/032](https://www.bsg.ox.ac.uk/research/publications/variation-government-responses-covid-19)
