@@ -4,7 +4,7 @@ steps:
   start_clean:
     title: Clean up CodeFresh volume
     # Images come from hierarchy at: https://github.com/docker-library/python
-    image: python:3.6-slim
+    image: python:3.10-slim
     commands:
       - rm -rf '${{CF_REPO_NAME}}'
 
@@ -15,7 +15,7 @@ steps:
     revision: '${{CF_REVISION}}'
     git: github
 
-  covid-prize-build:
+  covid-xprize-build:
     title: Build covid-xprize Docker image
     image_name: intermediate
     type: build
@@ -25,7 +25,7 @@ steps:
 
   tests:
     title: Run unit tests
-    image: ${{covid-prize-build}}
+    image: ${{covid-xprize-build}}
     description: Run unit tests (nosetests)
     working_directory: ${{CF_REPO_NAME}}
     commands:
@@ -33,6 +33,6 @@ steps:
 
   end_clean:
     title: Clean up CodeFresh volume
-    image: python:3.6-slim
+    image: python:3.10-slim
     commands:
       - rm -rf '${{CF_REPO_NAME}}'
