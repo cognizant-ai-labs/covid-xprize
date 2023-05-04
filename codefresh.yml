@@ -11,7 +11,7 @@ steps:
   clone_main_repo:
     type: git-clone
     title: "Clone repo"
-    repo: leaf-ai/covid-xprize
+    repo: cognizant-ai-labs/covid-xprize
     revision: '${{CF_REVISION}}'
     git: github
 
