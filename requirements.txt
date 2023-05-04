@@ -13,3 +13,6 @@ h5py==3.8.0
 # plotting
 plotly==5.13.1
 matplotlib==3.7.1
+
+# tests
+pytest==7.3.1

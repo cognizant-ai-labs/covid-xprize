@@ -29,7 +29,7 @@ steps:
     description: Run unit tests (nosetests)
     working_directory: ${{CF_REPO_NAME}}
     commands:
-      - nosetests -v
+      - pytest --verbose
 
   end_clean:
     title: Clean up CodeFresh volume
