@@ -2,7 +2,7 @@
 # DESCRIPTION: Docker file for covid-xprize
 # Created to make CI with Codefresh easier
 
-FROM python:3.6-slim
+FROM python:3.10-slim
 
 ENV APPS_HOME /usr/local/cognizant
 ENV COVID_APP_HOME ${APPS_HOME}/covid-xprize
