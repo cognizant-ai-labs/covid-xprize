@@ -5,7 +5,8 @@ import pandas as pd
 
 from covid_xprize.examples.predictors.lstm.xprize_predictor import XPrizePredictor
 
-LATEST_DATA_URL = 'https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv'
+LATEST_DATA_URL = \
+    'https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker-legacy/main/legacy_data_202207/OxCGRT_latest.csv'
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 COUNTRIES_REGIONS_FILE = os.path.join(ROOT_DIR, "..", "..", "countries_regions.csv")
 
