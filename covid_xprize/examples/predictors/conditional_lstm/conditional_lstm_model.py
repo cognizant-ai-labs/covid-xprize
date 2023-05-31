@@ -1,3 +1,5 @@
+# Copyright 2020 (c) Cognizant Digital Business, Evolutionary AI. All rights reserved. Issued under the Apache 2.0 License.
+
 """
 This model implements a generalization of the positivity constraint of the effects of NPIS
 by cascading the context LSTM into the action LSTM instead of running them in parallel.
@@ -23,7 +25,6 @@ from keras.constraints import Constraint
 from keras import backend as K
 
 class Positive(Constraint):
-
     def __call__(self, w):
         return K.abs(w)
 
@@ -46,7 +47,6 @@ def construct_conditional_lstm_model(nb_context: int,
                                      weight_decay: float = 0.,
                                      input_dropout: float = 0.,
                                      recurrent_dropout: float = 0.) -> Model:
-
     # Create context encoder
     context_input = Input(shape=(nb_lookback_days, nb_context),
                           name='context_input')

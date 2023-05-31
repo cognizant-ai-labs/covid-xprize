@@ -18,38 +18,10 @@ from keras.layers import LSTM
 from keras.layers import Lambda
 from keras.models import Model
 
-# See https://github.com/OxCGRT/covid-policy-tracker
-DATA_URL =\
-    "https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker-legacy/main/legacy_data_202207/OxCGRT_latest.csv"
+from covid_xprize.oxford_data import prepare_cases_dataframe, load_ips_file, create_country_samples, NPI_COLUMNS, \
+                                     create_prediction_initial_context_and_action_vectors
 
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_PATH = os.path.join(ROOT_DIR, 'data')
-DATA_FILE_PATH = os.path.join(DATA_PATH, 'OxCGRT_latest.csv')
-ADDITIONAL_CONTEXT_FILE = os.path.join(DATA_PATH, "Additional_Context_Data_Global.csv")
-ADDITIONAL_US_STATES_CONTEXT = os.path.join(DATA_PATH, "US_states_populations.csv")
-ADDITIONAL_UK_CONTEXT = os.path.join(DATA_PATH, "uk_populations.csv")
-ADDITIONAL_BRAZIL_CONTEXT = os.path.join(DATA_PATH, "brazil_populations.csv")
-
-NPI_COLUMNS = ['C1_School closing',
-               'C2_Workplace closing',
-               'C3_Cancel public events',
-               'C4_Restrictions on gatherings',
-               'C5_Close public transport',
-               'C6_Stay at home requirements',
-               'C7_Restrictions on internal movement',
-               'C8_International travel controls',
-               'H1_Public information campaigns',
-               'H2_Testing policy',
-               'H3_Contact tracing',
-               'H6_Facial Coverings']
-
-CONTEXT_COLUMNS = ['CountryName',
-                   'RegionName',
-                   'GeoID',
-                   'Date',
-                   'ConfirmedCases',
-                   'ConfirmedDeaths',
-                   'Population']
+CONTEXT_COLUMN = 'PredictionRatio'
 NB_LOOKBACK_DAYS = 21
 NB_TEST_DAYS = 14
 WINDOW_SIZE = 7
@@ -88,13 +60,7 @@ class XPrizePredictor(object):
                                                       nb_lookback_days=NB_LOOKBACK_DAYS)
             self.predictor.load_weights(path_to_model_weights)
 
-            # Make sure data is available to make predictions
-            if not os.path.exists(DATA_FILE_PATH):
-                urllib.request.urlretrieve(DATA_URL, DATA_FILE_PATH)
-
-        self.df = self._prepare_dataframe(data_url)
-        geos = self.df.GeoID.unique()
-        self.country_samples = self._create_country_samples(self.df, geos)
+        self.df = prepare_cases_dataframe(data_url)
 
     def predict(self,
                 start_date_str: str,
@@ -105,7 +71,7 @@ class XPrizePredictor(object):
         nb_days = (end_date - start_date).days + 1
 
         # Load the npis into a DataFrame, handling regions
-        npis_df = self._load_original_data(path_to_ips_file)
+        npis_df = load_ips_file(path_to_ips_file)
 
         # Prepare the output
         forecast = {"CountryName": [],
@@ -115,6 +81,15 @@ class XPrizePredictor(object):
 
         # For each requested geo
         geos = npis_df.GeoID.unique()
+
+        # Prepare context vectors.
+        initial_context, initial_action = create_prediction_initial_context_and_action_vectors(
+            self.df,
+            geos,
+            CONTEXT_COLUMN,
+            start_date,
+            NB_LOOKBACK_DAYS,
+        )
         for g in geos:
             cdf = self.df[self.df.GeoID == g]
             if len(cdf) == 0:
@@ -126,8 +101,7 @@ class XPrizePredictor(object):
                 # Start predicting from start_date, unless there's a gap since last known date
                 geo_start_date = min(last_known_date + np.timedelta64(1, 'D'), start_date)
                 npis_gdf = npis_df[(npis_df.Date >= geo_start_date) & (npis_df.Date <= end_date)]
-
-                pred_new_cases = self._get_new_cases_preds(cdf, g, npis_gdf)
+                pred_new_cases = self._get_new_cases_preds(cdf, g, npis_gdf, initial_context[g], initial_action[g])
 
             # Append forecast data to results to return
             country = npis_df[npis_df.GeoID == g].iloc[0].CountryName
@@ -143,10 +117,8 @@ class XPrizePredictor(object):
         # Return only the requested predictions
         return forecast_df[(forecast_df.Date >= start_date) & (forecast_df.Date <= end_date)]
 
-    def _get_new_cases_preds(self, c_df, g, npis_df):
+    def _get_new_cases_preds(self, c_df, g, npis_df, initial_context_input, initial_action_input):
         cdf = c_df[c_df.ConfirmedCases.notnull()]
-        initial_context_input = self.country_samples[g]['X_test_context'][-1]
-        initial_action_input = self.country_samples[g]['X_test_action'][-1]
         # Predictions with passed npis
         cnpis_df = npis_df[npis_df.GeoID == g]
         npis_sequence = np.array(cnpis_df[NPI_COLUMNS])
@@ -170,59 +142,6 @@ class XPrizePredictor(object):
 
         return pred_new_cases
 
-    def _prepare_dataframe(self, data_url: str) -> pd.DataFrame:
-        """
-        Loads the Oxford dataset, cleans it up and prepares the necessary columns. Depending on options, also
-        loads the Johns Hopkins dataset and merges that in.
-        :param data_url: the url containing the original data
-        :return: a Pandas DataFrame with the historical data
-        """
-        # Original df from Oxford
-        df1 = self._load_original_data(data_url)
-
-        # Additional context df (e.g Population for each country)
-        df2 = self._load_additional_context_df()
-
-        # Merge the 2 DataFrames
-        df = df1.merge(df2, on=['GeoID'], how='left', suffixes=('', '_y'))
-
-        # Drop countries with no population data
-        df.dropna(subset=['Population'], inplace=True)
-
-        #  Keep only needed columns
-        columns = CONTEXT_COLUMNS + NPI_COLUMNS
-        df = df[columns]
-
-        # Fill in missing values
-        self._fill_missing_values(df)
-
-        # Compute number of new cases and deaths each day
-        df['NewCases'] = df.groupby('GeoID', group_keys=False).ConfirmedCases.diff().fillna(0)
-        df['NewDeaths'] = df.groupby('GeoID', group_keys=False).ConfirmedDeaths.diff().fillna(0)
-
-        # Replace negative values (which do not make sense for these columns) with 0
-        df['NewCases'] = df['NewCases'].clip(lower=0)
-        df['NewDeaths'] = df['NewDeaths'].clip(lower=0)
-
-        # Compute smoothed versions of new cases and deaths each day
-        df['SmoothNewCases'] = df.groupby('GeoID', group_keys=False)['NewCases'].rolling(
-            WINDOW_SIZE, center=False).mean().fillna(0).reset_index(0, drop=True)
-        df['SmoothNewDeaths'] = df.groupby('GeoID', group_keys=False)['NewDeaths'].rolling(
-            WINDOW_SIZE, center=False).mean().fillna(0).reset_index(0, drop=True)
-
-        # Compute percent change in new cases and deaths each day
-        df['CaseRatio'] = df.groupby('GeoID', group_keys=False).SmoothNewCases.pct_change(
-        ).fillna(0).replace(np.inf, 0) + 1
-        df['DeathRatio'] = df.groupby('GeoID', group_keys=False).SmoothNewDeaths.pct_change(
-        ).fillna(0).replace(np.inf, 0) + 1
-
-        # Add column for proportion of population infected
-        df['ProportionInfected'] = df['ConfirmedCases'] / df['Population']
-
-        # Create column of value to predict
-        df['PredictionRatio'] = df['CaseRatio'] / (1 - df['ProportionInfected'])
-
-        return df
 
     @staticmethod
     def _load_original_data(data_url):
@@ -238,96 +157,6 @@ class XPrizePredictor(object):
                                       latest_df["CountryName"],
                                       latest_df["CountryName"] + ' / ' + latest_df["RegionName"])
         return latest_df
-
-    @staticmethod
-    def _fill_missing_values(df):
-        """
-        # Fill missing values by interpolation, ffill, and filling NaNs
-        :param df: Dataframe to be filled
-        """
-        df.update(df.groupby('GeoID', group_keys=False).ConfirmedCases.apply(
-            lambda group: group.interpolate(limit_area='inside')))
-        # Drop country / regions for which no number of cases is available
-        df.dropna(subset=['ConfirmedCases'], inplace=True)
-        df.update(df.groupby('GeoID', group_keys=False).ConfirmedDeaths.apply(
-            lambda group: group.interpolate(limit_area='inside')))
-        # Drop country / regions for which no number of deaths is available
-        df.dropna(subset=['ConfirmedDeaths'], inplace=True)
-        for npi_column in NPI_COLUMNS:
-            df.update(df.groupby('GeoID', group_keys=False)[npi_column].ffill().fillna(0))
-
-    @staticmethod
-    def _load_additional_context_df():
-        # File containing the population for each country
-        # Note: this file contains only countries population, not regions
-        additional_context_df = pd.read_csv(ADDITIONAL_CONTEXT_FILE,
-                                            usecols=['CountryName', 'Population'])
-        additional_context_df['GeoID'] = additional_context_df['CountryName']
-
-        # US states population
-        additional_us_states_df = pd.read_csv(ADDITIONAL_US_STATES_CONTEXT,
-                                              usecols=['NAME', 'POPESTIMATE2019'])
-        # Rename the columns to match measures_df ones
-        additional_us_states_df.rename(columns={'POPESTIMATE2019': 'Population'}, inplace=True)
-        # Prefix with country name to match measures_df
-        additional_us_states_df['GeoID'] = US_PREFIX + additional_us_states_df['NAME']
-
-        # UK population
-        additional_uk_df = pd.read_csv(ADDITIONAL_UK_CONTEXT)
-
-        # Brazil population
-        additional_brazil_df = pd.read_csv(ADDITIONAL_BRAZIL_CONTEXT)
-
-        # Append the new data to additional_df
-        additional_context_df = pd.concat([additional_context_df,
-                                           additional_us_states_df,
-                                           additional_uk_df,
-                                           additional_brazil_df])
-
-        return additional_context_df
-
-    @staticmethod
-    def _create_country_samples(df: pd.DataFrame, geos: list) -> dict:
-        """
-        For each country, creates numpy arrays for Keras
-        :param df: a Pandas DataFrame with historical data for countries (the "Oxford" dataset)
-        :param geos: a list of geo names
-        :return: a dictionary of train and test sets, for each specified country
-        """
-        context_column = 'PredictionRatio'
-        action_columns = NPI_COLUMNS
-        outcome_column = 'PredictionRatio'
-        country_samples = {}
-        for g in geos:
-            cdf = df[df.GeoID == g]
-            cdf = cdf[cdf.ConfirmedCases.notnull()]
-            context_data = np.array(cdf[context_column])
-            action_data = np.array(cdf[action_columns])
-            outcome_data = np.array(cdf[outcome_column])
-            context_samples = []
-            action_samples = []
-            outcome_samples = []
-            nb_total_days = outcome_data.shape[0]
-            for d in range(NB_LOOKBACK_DAYS, nb_total_days):
-                context_samples.append(context_data[d - NB_LOOKBACK_DAYS:d])
-                action_samples.append(action_data[d - NB_LOOKBACK_DAYS:d])
-                outcome_samples.append(outcome_data[d])
-            if len(outcome_samples) > 0:
-                X_context = np.expand_dims(np.stack(context_samples, axis=0), axis=2)
-                X_action = np.stack(action_samples, axis=0)
-                y = np.stack(outcome_samples, axis=0)
-                country_samples[g] = {
-                    'X_context': X_context,
-                    'X_action': X_action,
-                    'y': y,
-                    'X_train_context': X_context[:-NB_TEST_DAYS],
-                    'X_train_action': X_action[:-NB_TEST_DAYS],
-                    'y_train': y[:-NB_TEST_DAYS],
-                    'X_test_context': X_context[-NB_TEST_DAYS:],
-                    'X_test_action': X_action[-NB_TEST_DAYS:],
-                    'y_test': y[-NB_TEST_DAYS:],
-                }
-        return country_samples
 
     # Function for performing roll outs into the future
     @staticmethod
@@ -387,7 +216,7 @@ class XPrizePredictor(object):
     def train(self):
         print("Creating numpy arrays for Keras for each country...")
         geos = self._most_affected_geos(self.df, MAX_NB_COUNTRIES, NB_LOOKBACK_DAYS)
-        country_samples = self._create_country_samples(self.df, geos)
+        country_samples = create_country_samples(self.df, geos, CONTEXT_COLUMN, NB_TEST_DAYS, NB_LOOKBACK_DAYS)
         print("Numpy arrays created")
 
         # Aggregate data for training
@@ -477,7 +306,7 @@ class XPrizePredictor(object):
         return best_model
 
     @staticmethod
-    def _most_affected_geos(df, nb_geos, min_historical_days):
+    def _most_affected_geos(df: pd.DataFrame, nb_geos: int, min_historical_days: int) -> list[str]:
         """
         Returns the list of most affected countries, in terms of confirmed deaths.
         :param df: the data frame containing the historical data
