@@ -14,6 +14,8 @@ DATA_PATH = Path(__file__).parent / 'test_OxCGRT_data.csv'
 class TestPrepareData(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        if DATA_PATH.exists():
+            return
         data = oxford_data.load_oxford_data_trimmed(end_date="2020-12-31")
         data.to_csv(DATA_PATH, index=False)
 

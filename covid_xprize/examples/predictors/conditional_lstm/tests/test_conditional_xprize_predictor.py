@@ -28,11 +28,11 @@ class TestXPrizePredictor(unittest.TestCase):
         urllib.request.urlretrieve(DATA_URL, DATA_FILE)
 
     def test_predict(self):
-        predictor = XPrizePredictor(PREDICTOR_WEIGHTS, DATA_FILE)
+        predictor = ConditionalXPrizePredictor(PREDICTOR_WEIGHTS, DATA_FILE)
         pred_df = predictor.predict(START_DATE, END_DATE, EXAMPLE_INPUT_FILE)
         self.assertIsInstance(pred_df, pd.DataFrame)
 
     def test_train(self):
-        predictor = XPrizePredictor(None, DATA_FILE)
+        predictor = ConditionalXPrizePredictor(None, DATA_FILE)
         model = predictor.train()
         self.assertIsNotNone(model)
