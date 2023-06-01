@@ -10,7 +10,8 @@ from pathlib import Path
 from covid_xprize.validation.scenario_generator import get_raw_data, generate_scenario
 
 # URL for Oxford data
-DATA_URL = "https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv"
+DATA_URL =\
+    "https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker-legacy/main/legacy_data_202207/OxCGRT_latest.csv"
 
 # Path to where this script lives
 ROOT_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
