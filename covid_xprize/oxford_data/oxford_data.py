@@ -16,11 +16,13 @@ import pytz
 
 import numpy as np
 import pandas as pd
+import requests
+from pathlib import Path
 
 
 # A link to the Oxford data set.
 OXFORD_DATA_URL = 'https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker-legacy/main/legacy_data_202207/OxCGRT_latest.csv'
-
+OXFORD_DATA_CACHE_FILE_PATH = Path(__file__).parent / 'data' / 'OxCGRT_latest.csv'
 
 # Paths to population metadata.
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -74,12 +76,17 @@ def _load_geospatial_df(file_path: str) -> pd.DataFrame:
                         encoding="ISO-8859-1",
                         dtype={"RegionName": str,
                                 "RegionCode": str},
-                        on_bad_lines='skip')
+                        on_bad_lines='skip',
+                        low_memory=False)
 
 
 def load_original_oxford_data() -> pd.DataFrame:
     """Loads the original Oxford dataset with no preprocessing."""
-    return _load_geospatial_df(OXFORD_DATA_URL)
+    if not OXFORD_DATA_CACHE_FILE_PATH.exists():
+        data = requests.get(OXFORD_DATA_URL)
+        with open(OXFORD_DATA_CACHE_FILE_PATH, 'wb') as f:
+            f.write(data.content)
+    return _load_geospatial_df(OXFORD_DATA_CACHE_FILE_PATH)
 
 
 def load_oxford_data_trimmed(end_date: str) -> pd.DataFrame:

@@ -20,14 +20,7 @@ from keras.layers import Lambda
 from keras.models import Model
 from keras.constraints import Constraint
 
-# Silence spammy Theano messages
-logging.getLogger('theano.gof.compilelock').setLevel(logging.ERROR)
-logging.getLogger('theano.tensor.blas').setLevel(logging.ERROR)
-warnings.filterwarnings("ignore", message="`output_shape` argument not specified", category=UserWarning)
-warnings.filterwarnings("ignore", message="No training configuration found in save file", category=UserWarning)
-# End silence spammy Theano messages
-
-from .conditional_lstm_model import construct_conditional_lstm_model
+from covid_xprize.examples.predictors.conditional_lstm.conditional_lstm_model import construct_conditional_lstm_model
 from covid_xprize.oxford_data import most_affected_countries, create_country_samples
 
 

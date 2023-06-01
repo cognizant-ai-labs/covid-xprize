@@ -3,7 +3,7 @@
 import argparse
 import os
 
-from covid_xprize.examples.predictors.conditional_lstm.xprize_predictor import XPrizePredictor
+from covid_xprize.examples.predictors.conditional_lstm.conditional_xprize_predictor import ConditionalXPrizePredictor
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -30,7 +30,7 @@ def predict(start_date: str,
     with columns "CountryName,RegionName,Date,PredictedDailyNewCases"
     """
     # !!! YOUR CODE HERE !!!
-    predictor = XPrizePredictor(MODEL_WEIGHTS_FILE, DATA_FILE)
+    predictor = ConditionalXPrizePredictor(MODEL_WEIGHTS_FILE, DATA_FILE)
     # Generate the predictions
     preds_df = predictor.predict(start_date, end_date, path_to_ips_file)
     # Create the output path
