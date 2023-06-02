@@ -213,7 +213,7 @@ class XPrizePredictor(object):
     def _smooth_case_list(case_list, window):
         return pd.Series(case_list).rolling(window).mean().to_numpy()
 
-    def train(self):
+    def train(self, num_epochs=NUM_TRIALS):
         print("Creating numpy arrays for Keras for each country...")
         geos = self._most_affected_geos(self.df, MAX_NB_COUNTRIES, NB_LOOKBACK_DAYS)
         country_samples = create_country_samples(self.df, geos, CONTEXT_COLUMN, NB_TEST_DAYS, NB_LOOKBACK_DAYS)
@@ -256,7 +256,7 @@ class XPrizePredictor(object):
         train_losses = []
         val_losses = []
         test_losses = []
-        for t in range(NUM_TRIALS):
+        for t in range(num_epochs):
             print('Trial', t)
             X_context, X_action, y = self._permute_data(X_context, X_action, y, seed=t)
             model, training_model = self._construct_model(nb_context=X_context.shape[-1],

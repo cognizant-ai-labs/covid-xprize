@@ -149,16 +149,14 @@ def train_predictor(training_data: pd.DataFrame,
     # Gather test info
     country_indeps = []
     country_predss = []
-    country_casess = []
     for model in models:
-        country_indep, country_preds, country_cases = _lstm_get_test_rollouts(model,
-                                                                              df,
-                                                                              test_countries,
-                                                                              country_samples,
-                                                                              context_column)
+        country_indep, country_preds = _lstm_get_test_rollouts( model,
+                                                                df,
+                                                                test_countries,
+                                                                country_samples,
+                                                                context_column)
         country_indeps.append(country_indep)
         country_predss.append(country_preds)
-        country_casess.append(country_cases)
 
     # Compute daily smooth cases per 100K mae
     test_case_maes = []
@@ -166,7 +164,7 @@ def train_predictor(training_data: pd.DataFrame,
         total_loss = 0.
         for c in test_countries:
             true_cases = np.array(df[df.GeoID == c].SmoothNewCasesPer100K)[-nb_test_days:]
-            pred_cases = country_casess[m][c][-nb_test_days:]
+            pred_cases = country_predss[m][c][-nb_test_days:]
             if true_cases.shape != pred_cases.shape: # Insufficient data
                 continue
             total_loss += np.mean(np.abs(true_cases - pred_cases))
@@ -228,7 +226,6 @@ def _lstm_roll_out_predictions(model, initial_context_input, initial_action_inpu
 def _lstm_get_test_rollouts(model, df, top_countries, country_samples, context_column):
     country_indep = {}
     country_preds = {}
-    country_cases = {}
     for c in top_countries:
         X_test_context = country_samples[c]['X_test_context']
         X_test_action = country_samples[c]['X_test_action']
@@ -250,4 +247,4 @@ def _lstm_get_test_rollouts(model, df, top_countries, country_samples, context_c
                                            future_action_sequence)
         country_preds[c] = preds
 
-    return country_indep, country_preds, country_cases
+    return country_indep, country_preds

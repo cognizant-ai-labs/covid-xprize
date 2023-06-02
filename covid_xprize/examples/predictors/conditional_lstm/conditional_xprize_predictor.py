@@ -46,16 +46,21 @@ class ConditionalXPrizePredictor(object):
 
         self.df = prepare_cases_dataframe(data_url, threshold_min_cases=True)
 
-    def train(self, return_results=False) -> Union[Model, tuple[Model, dict]]:
+    def train(self,
+              return_results=False,
+              nb_training_geos: int = NB_TRAINING_DAYS,
+              nb_testing_geos: int = NB_TESTING_GEOS,
+              nb_trials: int = NUM_TRIALS,
+              nb_epochs: int = NUM_EPOCHS,) -> Union[Model, tuple[Model, dict]]:
         best_model, results_df = train_predictor(
             training_data=self.df,
             nb_lookback_days=NB_LOOKBACK_DAYS,
             nb_training_days=NB_TRAINING_DAYS,
             nb_test_days=NB_TEST_DAYS,
-            nb_training_geos=NB_TRAINING_GEOS,
-            nb_testing_geos=NB_TESTING_GEOS,
-            nb_trials=NUM_TRIALS,
-            nb_epochs=NUM_EPOCHS,
+            nb_training_geos=nb_training_geos,
+            nb_testing_geos=nb_testing_geos,
+            nb_trials=nb_trials,
+            nb_epochs=nb_epochs,
             lstm_size=LSTM_SIZE,
         )
         if return_results:

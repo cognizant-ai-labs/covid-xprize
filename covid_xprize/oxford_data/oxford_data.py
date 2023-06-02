@@ -320,6 +320,8 @@ def create_prediction_initial_context_and_action_vectors(
     df = df[df.Date <= start_date]
     country_samples = create_country_samples(df, countries, context_column, nb_lookback_days=nb_lookback_days)
     for c in countries:
+        if c not in country_samples.keys():
+            continue
         context_vectors[c] = country_samples[c]['X_test_context'][-1]
         action_vectors[c] =  country_samples[c]['X_test_action'][-1]
     return context_vectors, action_vectors
