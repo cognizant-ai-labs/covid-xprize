@@ -26,6 +26,7 @@ class TestXPrizePredictor(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        FIXTURES_PATH.mkdir(exist_ok=True)
         if not DATA_FILE.exists():
             df = load_oxford_data_trimmed(end_date=TRAINING_END_DATE, start_date=TRAINING_START_DATE)
             df.to_csv(DATA_FILE, index=False)
