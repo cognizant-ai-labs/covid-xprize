@@ -89,7 +89,7 @@ def load_original_oxford_data() -> pd.DataFrame:
     return _load_geospatial_df(OXFORD_DATA_CACHE_FILE_PATH)
 
 
-def load_oxford_data_trimmed(end_date: str) -> pd.DataFrame:
+def load_oxford_data_trimmed(end_date: str, start_date: str = None) -> pd.DataFrame:
     """
     Loads the very original Oxford dataset and removes dates after the given end_date.
 
@@ -98,6 +98,9 @@ def load_oxford_data_trimmed(end_date: str) -> pd.DataFrame:
     end_date = datetime.strptime(end_date, '%Y-%m-%d')
     df = load_original_oxford_data()
     df = df[(df.Date <= end_date)]
+    if start_date is not None:
+        start_date = datetime.strptime(start_date, '%Y-%m-%d')
+        df = df[(df.Date >= start_date)]
     return df
 
 
@@ -332,7 +335,7 @@ def most_affected_countries(df, nb_countries, min_historical_days):
     country names that have at least min_look_back_days data points.
     """
     # By default use most affected countries with enough history
-    gdf = df.groupby('CountryName')['ConfirmedDeaths'].agg(['max', 'count']).sort_values(by='max', ascending=False)
+    gdf = df.groupby('GeoID')['ConfirmedDeaths'].agg(['max', 'count']).sort_values(by='max', ascending=False)
     filtered_gdf = gdf[gdf["count"] > min_historical_days]
     countries = list(filtered_gdf.head(nb_countries).index)
     return countries

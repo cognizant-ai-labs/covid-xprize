@@ -73,9 +73,9 @@ def train_predictor(training_data: pd.DataFrame,
 
     # Create data set for training
     if nb_training_geos == None: # Use all countries
-        nb_training_geos = len(df.CountryName.unique())
+        nb_training_geos = len(df.GeoID.unique())
     if nb_testing_geos == None: # Use all countries
-        nb_testing_geos = len(df.CountryName.unique())
+        nb_testing_geos = len(df.GeoID.unique())
 
     train_countries = most_affected_countries(df, nb_training_geos, nb_lookback_days)
     test_countries = most_affected_countries(df, nb_testing_geos, nb_lookback_days)
@@ -165,7 +165,7 @@ def train_predictor(training_data: pd.DataFrame,
     for m in range(len(models)):
         total_loss = 0.
         for c in test_countries:
-            true_cases = np.array(df[df.CountryName == c].SmoothNewCasesPer100K)[-nb_test_days:]
+            true_cases = np.array(df[df.GeoID == c].SmoothNewCasesPer100K)[-nb_test_days:]
             pred_cases = country_casess[m][c][-nb_test_days:]
             if true_cases.shape != pred_cases.shape: # Insufficient data
                 continue
