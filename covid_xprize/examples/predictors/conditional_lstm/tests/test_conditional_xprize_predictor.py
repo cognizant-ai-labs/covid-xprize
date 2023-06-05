@@ -33,6 +33,8 @@ class TestConditionalXPrizePredictor(unittest.TestCase):
 
     def test_train_and_predict(self):
         predictor = ConditionalXPrizePredictor(None, DATA_FILE)
+
+        # Testing on a small number of epochs, trials and geos to make sure everything is wired correctly
         model = predictor.train(nb_epochs=2, nb_trials=2, nb_testing_geos=2, nb_training_geos=2)
         model.save_weights(PREDICTOR_WEIGHTS)
         self.assertIsNotNone(model)

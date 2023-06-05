@@ -33,7 +33,9 @@ class TestXPrizePredictor(unittest.TestCase):
 
     def test_train_and_predict(self):
         predictor = XPrizePredictor(None, DATA_FILE)
-        model = predictor.train(num_epochs=2)
+
+        # Testing on a small number of epochs and trials to make sure everything is wired correctly
+        model = predictor.train(num_trials=2, num_epochs=2)
         model.save_weights(PREDICTOR_WEIGHTS)
         self.assertIsNotNone(model)
 
