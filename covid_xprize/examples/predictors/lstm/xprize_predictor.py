@@ -27,6 +27,7 @@ NB_TEST_DAYS = 14
 WINDOW_SIZE = 7
 US_PREFIX = "United States / "
 NUM_TRIALS = 1
+NUM_EPOCHS = 1000
 LSTM_SIZE = 32
 MAX_NB_COUNTRIES = 20
 
@@ -213,7 +214,7 @@ class XPrizePredictor(object):
     def _smooth_case_list(case_list, window):
         return pd.Series(case_list).rolling(window).mean().to_numpy()
 
-    def train(self):
+    def train(self, num_trials=NUM_TRIALS, num_epochs=NUM_EPOCHS):
         print("Creating numpy arrays for Keras for each country...")
         geos = self._most_affected_geos(self.df, MAX_NB_COUNTRIES, NB_LOOKBACK_DAYS)
         country_samples = create_country_samples(self.df, geos, CONTEXT_COLUMN, NB_TEST_DAYS, NB_LOOKBACK_DAYS)
@@ -256,14 +257,14 @@ class XPrizePredictor(object):
         train_losses = []
         val_losses = []
         test_losses = []
-        for t in range(NUM_TRIALS):
+        for t in range(num_trials):
             print('Trial', t)
             X_context, X_action, y = self._permute_data(X_context, X_action, y, seed=t)
             model, training_model = self._construct_model(nb_context=X_context.shape[-1],
                                                           nb_action=X_action.shape[-1],
                                                           lstm_size=LSTM_SIZE,
                                                           nb_lookback_days=NB_LOOKBACK_DAYS)
-            history = self._train_model(training_model, X_context, X_action, y, epochs=1000, verbose=0)
+            history = self._train_model(training_model, X_context, X_action, y, epochs=num_epochs, verbose=0)
             top_epoch = np.argmin(history.history['val_loss'])
             train_loss = history.history['loss'][top_epoch]
             val_loss = history.history['val_loss'][top_epoch]
