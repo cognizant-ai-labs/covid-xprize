@@ -26,6 +26,8 @@ covid_xprize/examples/predictors/conditional_lstm/models/
 covid_xprize/examples/predictors/conditional_lstm/predictions/
 covid_xprize/examples/predictors/conditional_lstm/tests/fixtures/
 
+covid_xprize/oxford_data/tests/test_OxCGRT_data.csv
+
 *prescription_*.csv
 **/neat-checkpoint-*
 covid_xprize/examples/prescriptors/neat/data/
