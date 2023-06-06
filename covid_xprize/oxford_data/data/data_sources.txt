@@ -1,0 +1,7 @@
+# This file shows where datasets were obtained from.
+# Format is:
+# dataset_name: source
+Additional_Context_Data_Global.csv: unknown, latest update: wikipedia
+US_states_populations.csv: unknown
+brazil_populations.csv: https://en.wikipedia.org/wiki/States_of_Brazil
+uk_populations.csv: Google, queries like "population england" on Sep 17, 2020

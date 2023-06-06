@@ -5,6 +5,7 @@ venv/
 __pycache__
 *.pyc
 .idea/
+.vscode/
 **/.DS_Store
 
 predictions/
@@ -19,6 +20,13 @@ covid_xprize/examples/predictors/lstm/data/OxCGRT_latest.csv
 covid_xprize/examples/predictors/lstm/models/
 covid_xprize/examples/predictors/lstm/predictions/
 covid_xprize/examples/predictors/lstm/tests/fixtures/OxCGRT_latest.csv
+
+covid_xprize/examples/predictors/conditional_lstm/data/
+covid_xprize/examples/predictors/conditional_lstm/models/
+covid_xprize/examples/predictors/conditional_lstm/predictions/
+covid_xprize/examples/predictors/conditional_lstm/tests/fixtures/
+
+covid_xprize/oxford_data/tests/test_OxCGRT_data.csv
 
 *prescription_*.csv
 **/neat-checkpoint-*
