@@ -7,7 +7,7 @@ import os
 import sys
 from setuptools import setup, find_packages
 
-LIBRARY_VERSION = '2.0.1'
+LIBRARY_VERSION = '2.0.3'
 
 CURRENT_PYTHON = sys.version_info[:2]
 REQUIRED_PYTHON = (3, 10)
@@ -54,13 +54,14 @@ setup(
             'covid_xprize/standard_predictor/models/*',
             'covid_xprize/validation/data',
             'examples/predictors/lstm/data/*',
+            'oxford_data/data/*',
         ],
         '.': [
             'LICENSE.md'
         ]
     },
     install_requires=[
-        'keras==2.11.0',
+        'keras==2.12.0',
         'neat-python==0.92',
         'numpy==1.24.2',
         'pandas==1.5.3',
