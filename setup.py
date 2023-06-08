@@ -61,7 +61,7 @@ setup(
         ]
     },
     install_requires=[
-        'keras==2.12.0',
+        'keras==2.11.0',
         'neat-python==0.92',
         'numpy==1.24.2',
         'pandas==1.5.3',
