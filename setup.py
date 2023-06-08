@@ -49,11 +49,11 @@ setup(
         PACKAGE_NAME: [
             'countries_regions.csv',
             'countries_regions_phase1_fix.csv',
-            'covid_xprize/examples/predictors/lstm/tests/fixtures/*',
-            'covid_xprize/standard_predictor/data/*',
-            'covid_xprize/standard_predictor/models/*',
-            'covid_xprize/validation/data',
+            'examples/predictors/lstm/tests/fixtures/*',
             'examples/predictors/lstm/data/*',
+            'standard_predictor/data/*',
+            'standard_predictor/models/*',
+            'validation/data',
             'oxford_data/data/*',
         ],
         '.': [
