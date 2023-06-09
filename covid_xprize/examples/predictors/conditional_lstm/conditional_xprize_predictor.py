@@ -44,7 +44,7 @@ class ConditionalXPrizePredictor(object):
                                             nb_lookback_days=NB_LOOKBACK_DAYS)
             self.predictor.load_weights(path_to_model_weights)
 
-        self.df = prepare_cases_dataframe(data_url, threshold_min_cases=True)
+        self.df = prepare_cases_dataframe(data_url)
 
     def train(self,
               return_results=False,

@@ -177,7 +177,7 @@ def add_population_column(df: pd.DataFrame) -> pd.DataFrame:
     return df.merge(pop_df[['GeoID', 'Population']], on=['GeoID'], how='left', suffixes=('', '_y'))
 
 
-def prepare_cases_dataframe(data_url: str, threshold_min_cases=False) -> pd.DataFrame:
+def prepare_cases_dataframe(data_url: str) -> pd.DataFrame:
     """
     Loads the cases dataset from the given file, cleans it, and computes cases columns.
     :param data_url: the url containing the original data
@@ -218,10 +218,6 @@ def prepare_cases_dataframe(data_url: str, threshold_min_cases=False) -> pd.Data
     df['DeathRatio'] = df.groupby('GeoID', group_keys=False).SmoothNewDeaths.pct_change(
     ).fillna(0).replace(np.inf, 0) + 1
 
-    # Remove all rows with too few cases
-    if threshold_min_cases:
-        df.drop(df[df.ConfirmedCases < MIN_CASES].index, inplace=True)
-
     # Add column for proportion of population infected
     df['ProportionInfected'] = df['ConfirmedCases'] / df['Population']
 
@@ -232,6 +228,11 @@ def prepare_cases_dataframe(data_url: str, threshold_min_cases=False) -> pd.Data
     df['SmoothNewCasesPer100K'] = df['SmoothNewCases'] / (df['Population'] / 100_000)
 
     return df
+
+
+def threshold_min_cases(df: pd.DataFrame) -> pd.DataFrame:
+    # Remove all rows with too few cases
+    return df.drop(df[df.ConfirmedCases < MIN_CASES].index)
 
 
 def create_country_samples(df: pd.DataFrame,
