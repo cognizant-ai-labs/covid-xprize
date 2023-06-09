@@ -7,7 +7,7 @@ import os
 import sys
 from setuptools import setup, find_packages
 
-LIBRARY_VERSION = '2.0.1'
+LIBRARY_VERSION = '2.0.2'
 
 CURRENT_PYTHON = sys.version_info[:2]
 REQUIRED_PYTHON = (3, 10)
@@ -49,11 +49,12 @@ setup(
         PACKAGE_NAME: [
             'countries_regions.csv',
             'countries_regions_phase1_fix.csv',
-            'covid_xprize/examples/predictors/lstm/tests/fixtures/*',
-            'covid_xprize/standard_predictor/data/*',
-            'covid_xprize/standard_predictor/models/*',
-            'covid_xprize/validation/data',
+            'examples/predictors/lstm/tests/fixtures/*',
             'examples/predictors/lstm/data/*',
+            'standard_predictor/data/*',
+            'standard_predictor/models/*',
+            'validation/data',
+            'oxford_data/data/*',
         ],
         '.': [
             'LICENSE.md'
