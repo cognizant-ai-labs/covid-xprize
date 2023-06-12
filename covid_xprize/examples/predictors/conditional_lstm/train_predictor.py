@@ -21,7 +21,7 @@ from keras.models import Model
 from keras.constraints import Constraint
 
 from covid_xprize.examples.predictors.conditional_lstm.conditional_lstm_model import construct_conditional_lstm_model
-from covid_xprize.oxford_data import most_affected_countries, create_country_samples
+from covid_xprize.oxford_data import most_affected_countries, create_country_samples, threshold_min_cases
 
 
 def construct_model(nb_context: int, nb_action: int, lstm_size: int = 32, nb_lookback_days: int = 21) -> Model:
@@ -70,6 +70,9 @@ def train_predictor(training_data: pd.DataFrame,
     """
     df = training_data
     context_column = 'SmoothNewCasesPer100K'
+
+    # Only look at data with # cases above a minimum.
+    df = threshold_min_cases(df)
 
     # Create data set for training
     if nb_training_geos == None: # Use all countries
