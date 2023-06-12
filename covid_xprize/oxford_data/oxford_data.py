@@ -231,7 +231,7 @@ def prepare_cases_dataframe(data_url: str) -> pd.DataFrame:
 
 
 def threshold_min_cases(df: pd.DataFrame) -> pd.DataFrame:
-    # Remove all rows with too few cases
+    """Remove all rows with too few cases"""
     return df.drop(df[df.ConfirmedCases < MIN_CASES].index)
 
 
