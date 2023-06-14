@@ -122,6 +122,9 @@ def generate_scenario(start_date_str,
     for npi_col in npi_columns:
         ips_df.update(ips_df.groupby(['CountryName', 'RegionName'], group_keys=False)[npi_col].ffill().fillna(0))
 
+    # Use a value instead of NaN for missing RegionName.
+    ips_df['RegionName'] = ips_df['RegionName'].fillna("")
+
     if scenario == "Historical":
         return ips_df
 
