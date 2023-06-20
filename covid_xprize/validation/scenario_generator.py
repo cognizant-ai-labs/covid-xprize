@@ -118,6 +118,9 @@ def generate_scenario(start_date_str,
     if countries:
         ips_df = ips_df[ips_df.CountryName.isin(countries)]
 
+    # Use a value instead of NaN for missing RegionName.
+    ips_df['RegionName'] = ips_df['RegionName'].fillna("")
+
     # Fill any missing "supposedly known" NPIs by assuming they are the same as previous day, or 0 if none is available
     for npi_col in npi_columns:
         ips_df.update(ips_df.groupby(['CountryName', 'RegionName'], group_keys=False)[npi_col].ffill().fillna(0))
