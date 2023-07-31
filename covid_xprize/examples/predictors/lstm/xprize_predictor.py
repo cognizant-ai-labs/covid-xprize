@@ -214,7 +214,12 @@ class XPrizePredictor(object):
     def _smooth_case_list(case_list, window):
         return pd.Series(case_list).rolling(window).mean().to_numpy()
 
-    def train(self, num_trials=NUM_TRIALS, num_epochs=NUM_EPOCHS):
+    def train(self, num_trials=NUM_TRIALS, num_epochs=NUM_EPOCHS, return_all_trials=False):
+        """Trains the weights of the predictor model on a prediction loss.
+        :param num_trials: The number of LSTM models to train. The top performer is selected.
+        :param num_epochs: The number of iterations through the training data performed.
+        :param return_all_trials: If set to True, then this function returns all trials as a list.
+        """
         print("Creating numpy arrays for Keras for each country...")
         geos = self._most_affected_geos(self.df, MAX_NB_COUNTRIES, NB_LOOKBACK_DAYS)
         country_samples = create_country_samples(self.df, geos, CONTEXT_COLUMN, NB_TEST_DAYS, NB_LOOKBACK_DAYS)
@@ -276,6 +281,10 @@ class XPrizePredictor(object):
             print('Train Loss:', train_loss)
             print('Val Loss:', val_loss)
             print('Test Loss:', test_loss)
+
+        if return_all_trials:
+            # Shortcut to avoid model evaluation & winner selection.
+            return models
 
         # Gather test info
         country_indeps = []
