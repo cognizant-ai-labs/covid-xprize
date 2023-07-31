@@ -40,6 +40,7 @@ def train_predictor(training_data: pd.DataFrame,
                     nb_trials: int,
                     nb_epochs: int,
                     lstm_size: int,
+                    return_all_trials: bool = False,
                     verbose = False) -> tuple[Model, pd.DataFrame]:
     """Trains a prediction model using the given hyperparameter arguments. 
     :param nb_lookback_days: This option is not fully implemented yet. Completing implementation
@@ -65,6 +66,7 @@ def train_predictor(training_data: pd.DataFrame,
     :param context_column: Which column in the data df to use as context and outcome.
     :param arch: Which predictor architecture to use.
         Current options are 'conditional' and 'independent'.
+    :param return_all_trials: If set to True, then this function returns all trials as a list.
     :param verbose: Verbosity level for model.fit() when training the predictor.
     :returns: (best_model, results_df)
     """
@@ -181,10 +183,13 @@ def train_predictor(training_data: pd.DataFrame,
         'test_loss': test_losses,
         'test_case_mae': test_case_maes})
 
-    # Select best model
-    print("Best test case mae:", np.min(test_case_maes))
-    best_model = models[np.argmin(test_case_maes)]
-    return best_model, results_df
+    if return_all_trials:
+        return models, results_df
+    else:
+        # Select best model
+        print("Best test case mae:", np.min(test_case_maes))
+        best_model = models[np.argmin(test_case_maes)]
+        return best_model, results_df
 
 
 # Shuffling data prior to train/val split
