@@ -66,7 +66,7 @@ def train_predictor(training_data: pd.DataFrame,
     :param context_column: Which column in the data df to use as context and outcome.
     :param arch: Which predictor architecture to use.
         Current options are 'conditional' and 'independent'.
-    :param return_all_trials: If set to True, then this function returns all trials as a list.
+    :param return_all_trials: If set to True, then this function returns all trials as a list of trained models.
     :param verbose: Verbosity level for model.fit() when training the predictor.
     :returns: (best_model, results_df)
     """

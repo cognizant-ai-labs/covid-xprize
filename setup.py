@@ -7,7 +7,7 @@ import os
 import sys
 from setuptools import setup, find_packages
 
-LIBRARY_VERSION = '2.0.2'
+LIBRARY_VERSION = '2.0.3'
 
 CURRENT_PYTHON = sys.version_info[:2]
 REQUIRED_PYTHON = (3, 10)
@@ -61,14 +61,14 @@ setup(
         ]
     },
     install_requires=[
-        'keras==2.11.0',
         'neat-python==0.92',
         'numpy==1.24.2',
         'pandas==1.5.3',
         'scikit-learn==1.2.2',
         'scipy==1.10.1',
         'setuptools==67.6.0',
-        'tensorflow==2.11.1',
+        'tensorflow==2.13.0',
+        'keras==2.13.1',
         'h5py==3.8.0'
     ],
     description='Contains sample code and notebooks '
