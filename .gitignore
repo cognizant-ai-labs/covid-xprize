@@ -7,6 +7,8 @@ __pycache__
 .idea/
 .vscode/
 **/.DS_Store
+build/
+covid_xprize.egg-info/
 
 predictions/
 prescriptions/
