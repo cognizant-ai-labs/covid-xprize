@@ -164,7 +164,7 @@ class ConditionalXPrizePredictor(object):
             # Use the passed actions
             action_sequence = future_action_sequence[d]
             action_input[:, -1] = action_sequence
-            pred = predictor.predict([context_input, action_input])
+            pred = predictor.predict([context_input, action_input], verbose=0)
             pred_output[d] = pred
             context_input[:, :-1] = context_input[:, 1:]
             context_input[:, -1] = pred
