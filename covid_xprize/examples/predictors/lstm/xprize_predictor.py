@@ -171,7 +171,7 @@ class XPrizePredictor(object):
             # Use the passed actions
             action_sequence = future_action_sequence[d]
             action_input[:, -1] = action_sequence
-            pred = predictor.predict([context_input, action_input])
+            pred = predictor.predict([context_input, action_input], verbose=0)
             pred_output[d] = pred
             context_input[:, :-1] = context_input[:, 1:]
             context_input[:, -1] = pred
@@ -404,7 +404,7 @@ class XPrizePredictor(object):
         for d in range(nb_test_days):
             action_input[:, :-1] = action_input[:, 1:]
             action_input[:, -1] = future_action_sequence[d]
-            pred = model.predict([context_input, action_input])
+            pred = model.predict([context_input, action_input], verbose=0)
             pred_output[d] = pred
             context_input[:, :-1] = context_input[:, 1:]
             context_input[:, -1] = pred
@@ -417,7 +417,7 @@ class XPrizePredictor(object):
         for g in top_geos:
             X_test_context = country_samples[g]['X_test_context']
             X_test_action = country_samples[g]['X_test_action']
-            country_indep[g] = model.predict([X_test_context, X_test_action])
+            country_indep[g] = model.predict([X_test_context, X_test_action], verbose=0)
 
             initial_context_input = country_samples[g]['X_test_context'][0]
             initial_action_input = country_samples[g]['X_test_action'][0]

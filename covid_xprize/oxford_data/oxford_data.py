@@ -348,8 +348,18 @@ def convert_smooth_cases_per_100K_to_new_cases(smooth_cases_per_100K,
                                                window_size,
                                                prev_new_cases_list,
                                                pop_size):
-    return (((window_size * pop_size) / 100000.) * smooth_cases_per_100K \
-            - np.sum(prev_new_cases_list[-(window_size-1):])).clip(min=0.0)
+    # Smooth cases per 100K -> Smooth cases
+    smooth_cases = (pop_size / 100000.) * smooth_cases_per_100K
+    # Solve:
+    # (new_cases[-6:].sum() + x) / 7 = smooth_cases[0]
+    # x = smooth_cases[0] * 7 - new_cases[-6:].sum()
+    all_unsmooth_cases = np.zeros(smooth_cases_per_100K.shape[0] + window_size)
+    all_unsmooth_cases[:window_size] = prev_new_cases_list[-window_size:]
+    for i in range(window_size, all_unsmooth_cases.shape[0]):
+        all_unsmooth_cases[i] = smooth_cases[i - window_size] * window_size - all_unsmooth_cases[i - (window_size-1): i].sum()
+    unsmooth_cases = all_unsmooth_cases[window_size:]
+    # Never return anything less than zero.
+    return unsmooth_cases.clip(min=0.0)
 
 
 def convert_ratio_to_new_cases(ratio,

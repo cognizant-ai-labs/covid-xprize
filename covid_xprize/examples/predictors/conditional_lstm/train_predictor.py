@@ -224,7 +224,7 @@ def _lstm_roll_out_predictions(model, initial_context_input, initial_action_inpu
     for d in range(nb_test_days):
         action_input[:, :-1] = action_input[:, 1:]
         action_input[:, -1] = future_action_sequence[d]
-        pred = model.predict([context_input, action_input])
+        pred = model.predict([context_input, action_input], verbose=0)
         pred_output[d] = pred
         context_input[:, :-1] = context_input[:, 1:]
         context_input[:, -1] = pred
@@ -237,7 +237,7 @@ def _lstm_get_test_rollouts(model, df, top_countries, country_samples, context_c
     for c in top_countries:
         X_test_context = country_samples[c]['X_test_context']
         X_test_action = country_samples[c]['X_test_action']
-        country_indep[c] = model.predict([X_test_context, X_test_action])
+        country_indep[c] = model.predict([X_test_context, X_test_action], verbose=0)
 
         initial_context_input = country_samples[c]['X_test_context'][0]
         initial_action_input = country_samples[c]['X_test_action'][0]

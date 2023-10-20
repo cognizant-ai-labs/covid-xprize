@@ -7,7 +7,9 @@ import gc
 from datetime import datetime
 from pathlib import Path
 import pandas as pd
+
 from covid_xprize import oxford_data
+
 
 DATA_PATH = Path(__file__).parent / 'test_OxCGRT_data.csv'
 
@@ -68,6 +70,30 @@ class TestPrepareData(unittest.TestCase):
         last_day_of_training_cases_data = df[(df.Date == TRAINING_END_DATE) & (df.GeoID == 'France')].SmoothNewCasesPer100K.item()
         self.assertEqual(last_day_of_training_cases_data, prediction_context[-1])
         gc.collect()
+
+    def test_convert_to_new_cases(self):
+        df = oxford_data.prepare_cases_dataframe(DATA_PATH)
+        PRIOR_DATA_START       = "2020-10-01"
+        PREDICTIONS_START_DATE = "2020-11-01"
+        PREDICTIONS_END_DATE   = "2020-11-30"
+        TEST_COUNTRY           = 'France'
+        cdf       = df[(df['GeoID'] == TEST_COUNTRY) & (df['Date'] >= PREDICTIONS_START_DATE) & (df['Date'] <= PREDICTIONS_END_DATE)]
+        cdf_prior = df[(df['GeoID'] == TEST_COUNTRY) & (df['Date'] >= PRIOR_DATA_START) & (df['Date'] < PREDICTIONS_START_DATE)]
+        # print(cdf.columns)
+        # print(cdf)
+
+        WINDOW_SIZE = 7
+
+        # Converting back from SmoothNewCasesPer100K should equals the original column NewCases
+        new_cases_reconstructed = oxford_data.convert_smooth_cases_per_100K_to_new_cases(
+            cdf['SmoothNewCasesPer100K'].to_numpy(),
+            WINDOW_SIZE,
+            cdf_prior['NewCases'].to_numpy(),
+            cdf['Population'].max(),
+        )
+        original_new_cases = cdf['NewCases'].to_numpy()
+        for i in range(original_new_cases.shape[0]):
+            self.assertAlmostEqual(original_new_cases[i], new_cases_reconstructed[i])
 
 
 if __name__ == '__main__':
