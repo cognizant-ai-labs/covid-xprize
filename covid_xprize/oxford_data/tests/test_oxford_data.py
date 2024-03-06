@@ -18,7 +18,7 @@ class TestPrepareData(unittest.TestCase):
     def setUpClass(cls):
         if DATA_PATH.exists():
             return
-        data = oxford_data.load_oxford_data_trimmed(end_date="2020-12-31")
+        data = oxford_data.load_oxford_data_trimmed(end_date="2021-12-31")
         data.to_csv(DATA_PATH, index=False)
 
     def test_load_oxford_data_trimmed(self):
@@ -73,12 +73,12 @@ class TestPrepareData(unittest.TestCase):
 
     def test_convert_to_new_cases(self):
         df = oxford_data.prepare_cases_dataframe(DATA_PATH)
-        PRIOR_DATA_START       = "2020-10-01"
-        PREDICTIONS_START_DATE = "2020-11-01"
-        PREDICTIONS_END_DATE   = "2020-11-30"
-        TEST_COUNTRY           = 'France'
+        PRIOR_DATA_START       = "2021-10-01"
+        PREDICTIONS_START_DATE = "2021-11-01"
+        PREDICTIONS_END_DATE   = "2021-11-30"
+        TEST_COUNTRY           = 'United Kingdom'
         cdf       = df[(df['GeoID'] == TEST_COUNTRY) & (df['Date'] >= PREDICTIONS_START_DATE) & (df['Date'] <= PREDICTIONS_END_DATE)]
-        cdf_prior = df[(df['GeoID'] == TEST_COUNTRY) & (df['Date'] >= PRIOR_DATA_START) & (df['Date'] < PREDICTIONS_START_DATE)]
+        cdf_prior = df[(df['GeoID'] == TEST_COUNTRY) & (df['Date'] >= PRIOR_DATA_START)       & (df['Date'] < PREDICTIONS_START_DATE)]
         # print(cdf.columns)
         # print(cdf)
 
@@ -95,6 +95,47 @@ class TestPrepareData(unittest.TestCase):
         for i in range(original_new_cases.shape[0]):
             self.assertAlmostEqual(original_new_cases[i], new_cases_reconstructed[i])
 
+        # Converting back from PredictionRatio should equals the original column NewCases
+        ratios = cdf['PredictionRatio'].to_numpy()
+        pop_size = cdf['Population'].max()
+        prev_new_cases = cdf_prior['NewCases'].to_numpy()
+        initial_total_cases = cdf_prior['ConfirmedCases'].iloc[-1]
+        new_cases_reconstructed = oxford_data.convert_prediction_ratios_to_new_cases(
+            ratios,
+            WINDOW_SIZE,
+            prev_new_cases,
+            initial_total_cases,
+            pop_size,
+        )
+        original_new_cases = cdf['NewCases'].to_numpy()
+        for i in range(original_new_cases.shape[0]):
+            self.assertAlmostEqual(original_new_cases[i], new_cases_reconstructed[i], delta=original_new_cases[i] * 1e-1)
+
+    def test_convert_ratio_to_new_cases(self):
+        """Test the `convert_ratio_to_new_cases` method."""
+        df = oxford_data.prepare_cases_dataframe(DATA_PATH)
+        PRIOR_DATA_START       = "2021-10-01"
+        PREDICTIONS_START_DATE = "2021-11-01"
+        PREDICTIONS_END_DATE   = "2021-11-30"
+        TEST_COUNTRY           = 'United Kingdom'
+        cdf       = df[(df['GeoID'] == TEST_COUNTRY) & (df['Date'] >= PREDICTIONS_START_DATE) & (df['Date'] <= PREDICTIONS_END_DATE)]
+        cdf_prior = df[(df['GeoID'] == TEST_COUNTRY) & (df['Date'] >= PRIOR_DATA_START)       & (df['Date'] < PREDICTIONS_START_DATE)]
+
+        WINDOW_SIZE = 7
+
+        # Converting back from CaseRatio should equals the original column NewCases
+        ratio = cdf['PredictionRatio'].iloc[0]
+        prev_new_cases = cdf_prior['NewCases'].to_numpy()
+        prev_pct_infected = cdf['ProportionInfected'].iloc[0]
+        new_cases_reconstructed = oxford_data.convert_ratio_to_new_cases(
+            ratio,
+            WINDOW_SIZE,
+            prev_new_cases,
+            prev_pct_infected,
+        )
+        original_new_cases = cdf['NewCases'].iloc[0]
+        self.assertAlmostEqual(new_cases_reconstructed, original_new_cases)
+
 
 if __name__ == '__main__':
-    unittest.main()
+     unittest.main()
