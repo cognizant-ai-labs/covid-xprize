@@ -91,13 +91,7 @@ class ConditionalXPrizePredictor(object):
         geos = npis_df.GeoID.unique()
 
         # Prepare context vectors.
-        initial_context, initial_action = create_prediction_initial_context_and_action_vectors(
-            self.df,
-            geos,
-            CONTEXT_COLUMN,
-            start_date,
-            NB_LOOKBACK_DAYS,
-        )
+        initial_context, initial_action = self._initial_context_action_vectors(geos, start_date)
         for g in geos:
             cdf = self.df[self.df.GeoID == g]
             if len(cdf) == 0:
@@ -126,7 +120,18 @@ class ConditionalXPrizePredictor(object):
         # Return only the requested predictions
         return forecast_df[(forecast_df.Date >= start_date) & (forecast_df.Date <= end_date)]
 
+    def _initial_context_action_vectors(self, geos, start_date):
+        return create_prediction_initial_context_and_action_vectors(
+            self.df,
+            geos,
+            CONTEXT_COLUMN,
+            start_date,
+            NB_LOOKBACK_DAYS,
+        )
+
     def _get_new_cases_preds(self, c_df: pd.DataFrame, g: str, npis_df, initial_context_input, initial_action_input):
+        """Run the neural network to compute the context column, and convert the context column to new cases.
+        :return: An array of NewCases as predicted by the network."""
         cdf = c_df[c_df.ConfirmedCases.notnull()]
         # Predictions with passed npis
         cnpis_df = npis_df[npis_df.GeoID == g]
@@ -137,9 +142,7 @@ class ConditionalXPrizePredictor(object):
                                            initial_action_input,
                                            npis_sequence)
         # Gather info to convert to total cases
-        prev_confirmed_cases = np.array(cdf.ConfirmedCases)
         prev_new_cases = np.array(cdf.NewCases)
-        initial_total_cases = prev_confirmed_cases[-1]
         pop_size = np.array(cdf.Population)[-1]  # Population size doesn't change over time
 
         # Compute predictor's forecast

@@ -1,7 +1,7 @@
 """
 Copyright 2020 (c) Cognizant Digital Business, Evolutionary AI. All rights reserved. Issued under the Apache 2.0 License.
 
-This script creates plots for each stage of the LSTM pipeline. The plots are saved in the directory figures/. 
+This script creates plots for each stage of the v2 Conditional LSTM pipeline. The plots are saved in the directory figures/. 
 """
 import argparse
 import time
@@ -17,7 +17,7 @@ import tqdm
 
 from covid_xprize.oxford_data.oxford_data import load_ips_file
 from covid_xprize.oxford_data.npi_static import MAX_NPIS_VECTOR
-from covid_xprize.examples.predictors.lstm.xprize_predictor import XPrizePredictor
+from covid_xprize.examples.predictors.conditional_lstm import ConditionalXPrizePredictor
 from covid_xprize.validation.scenario_generator import ID_COLS, NPI_COLUMNS
 from covid_xprize import oxford_data
 
@@ -51,14 +51,6 @@ def _write_ips_file_for_country(df: pd.DataFrame, country: str, start_date: date
     for npi_col in NPI_COLUMNS:
         ips_df.update(ips_df.groupby(['CountryName', 'RegionName'], group_keys=False)[npi_col].ffill().fillna(0))
     ips_df.to_csv(file, index=False)
-
-
-def test_predictions_path(country, start_date_str) -> Path:
-    directory = Path(__file__).parent / 'data' / 'predictions'; directory.mkdir(exist_ok=True)
-    name_parts = []
-    name_parts.append(f'country{country.replace(" ", "_")}')
-    name_parts.append(start_date_str)
-    return directory / ('_'.join(name_parts) + '.csv')
 
 
 ###############################################################################
@@ -207,8 +199,8 @@ def test_train_predict_pipeline():
 ###############################################################################
     
 def test_artificial_data(path_to_model_weights: str, start_date_str: str):
-    _test_artificial_data_helper(path_to_model_weights, start_date_str, context_const=0.95)
-    _test_artificial_data_helper(path_to_model_weights, start_date_str, context_const=1.05)
+    _test_artificial_data_helper(path_to_model_weights, start_date_str, context_const=10.0)
+    _test_artificial_data_helper(path_to_model_weights, start_date_str, context_const=60.0)
 
 
 def _test_artificial_data_helper(path_to_model_weights: str, start_date_str: str, context_const: float):
@@ -232,7 +224,7 @@ def _test_artificial_data_helper(path_to_model_weights: str, start_date_str: str
     df.to_csv(path_to_oxford_data, index=False)
 
     # Load the given model weights.
-    model = XPrizePredictor(path_to_model_weights, path_to_oxford_data)
+    model = ConditionalXPrizePredictor(path_to_model_weights, path_to_oxford_data)
 
     # Prepare some metadata. 
     start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
@@ -269,12 +261,12 @@ def _test_artificial_data_helper(path_to_model_weights: str, start_date_str: str
     assert(len(set(labels)) == len(labels)) # Make sure there's no duplicate labels.
 
     # Create the prediction vectors for each scenario.
-    prediction_ratios_by_label: dict[str, np.ndarray] = {}
+    smooth_per_100k_ratios_by_label: dict[str, np.ndarray] = {}
     for scenario_label, scenario in tqdm.tqdm(test_scenarios, desc="Predictions (scenarios)"):
         # Check the cache for already-made results.
-        pred_ratios_cache_path = data_dir / f"{scenario_label}_{start_date_str}_{context_const}.npy"
-        if pred_ratios_cache_path.exists():
-            prediction_ratios_by_label[scenario_label] = np.load(pred_ratios_cache_path)
+        smooth_per_100k_cache_path = data_dir / f"{scenario_label}_{start_date_str}_{context_const}.npy"
+        if smooth_per_100k_cache_path.exists():
+            smooth_per_100k_ratios_by_label[scenario_label] = np.load(smooth_per_100k_cache_path)
             continue
 
         # Get the initial context & action vectors.
@@ -290,17 +282,17 @@ def _test_artificial_data_helper(path_to_model_weights: str, start_date_str: str
 
         # Get the predictions with the passed NPIs
         npis_sequence = scenario # shape (PredictionDates, NPIs)
-        pred_ratios = model._roll_out_predictions( # shape (PredictionDates,)
+        smooth_per_100k = model._roll_out_predictions( # shape (PredictionDates,)
             model.predictor, 
             context,
             action,
             npis_sequence)
 
         # Add result to cache.
-        np.save(pred_ratios_cache_path, pred_ratios)
+        np.save(smooth_per_100k_cache_path, smooth_per_100k)
 
         # Add result to collection.
-        prediction_ratios_by_label[scenario_label] = pred_ratios
+        smooth_per_100k_ratios_by_label[scenario_label] = smooth_per_100k
 
     # Compute some additional columns on the GT data including prediction ratios. 
     df = oxford_data.prepare_cases_dataframe()
@@ -316,29 +308,30 @@ def _test_artificial_data_helper(path_to_model_weights: str, start_date_str: str
     ax.axis("off")
     ax.text(0.1, 0.5, "\n".join([
         figure_name,
-        "PredictionRatios are the immediate output of the v1 LSTM model."
+        "SmoothNewCasesPer100K are the immediate output of the v2 Conditional LSTM model.",
+        f"In these trials the context value leading up to the predictions is SmoothNewCasesPer100K={context_const}.",
     ]), in_layout=False)
 
     plot_i = n_cols + 1
     for label, scenario in tqdm.tqdm(test_scenarios, desc="Plots (Scenarios)"):
         # predictions = oxford_data.process_submission(predictions, start_date, end_date)
-        prediction_ratios = prediction_ratios_by_label[label]
+        smooth_per_100k = smooth_per_100k_ratios_by_label[label]
 
         # data = df[(df.Date >= start_date) & (df.Date <= end_date) & (df.GeoID == country)]
         # data = data.copy()
-        # data["PredictedPredictionRatio"] = prediction_ratios
+        # data["PredictedPredictionRatio"] = smooth_per_100k
 
         ax = plt.subplot(n_rows, n_cols, plot_i); plot_i += 1
         sns.set_palette(sns.husl_palette(8))
-        plot = sns.lineplot(prediction_ratios, legend=do_legend, label="Predicted", color="black", ax=ax)
+        plot = sns.lineplot(smooth_per_100k, legend=do_legend, label="Predicted", color="black", ax=ax)
         # plot = sns.lineplot(data, x="Date", y="PredictedPredictionRatio",
         #                     legend=do_legend, label="Predicted PredictionRatio", color="red", ax=ax)
         # plot = sns.lineplot(data, x="Date", y="PredictionRatio",
         #                     legend=do_legend, label="Ground Truth PredictionRatio", color="black", ax=ax)
         # plot.get_figure().autofmt_xdate()
-        ax.axhline(1.0, color="red", linestyle='--') # Draw a line at identity.
+        # ax.axhline(1.0, color="red", linestyle='--') # Draw a line at identity.
         ax.set_ylabel("")
-        ax.set_ylim(0.9, 1.2)
+        # ax.set_ylim(0.9, 1.2)
         ax.set_title(label)
         if do_legend:
             # Put the lower left of the bounding box at axes coordinates (0, 1.20).
@@ -356,12 +349,12 @@ def _test_artificial_data_helper(path_to_model_weights: str, start_date_str: str
 ###############################################################################
 
 
-def _test_plot_prediction_ratios_helper(path_to_model_weights: str, start_date_str: str, on_training_data: bool = False):
+def _test_plot_smooth_per100K_helper(path_to_model_weights: str, start_date_str: str, on_training_data: bool = False):
     # Prepare some paths for output and working data. 
     current_dir = Path(__file__).parent
     plots_dir = current_dir / 'plots'; plots_dir.mkdir(exist_ok=True)
     data_root_dir = current_dir / 'data'; data_root_dir.mkdir(exist_ok=True)
-    data_dir = data_root_dir / '06_prediction_ratios'; data_dir.mkdir(exist_ok=True)
+    data_dir = data_root_dir / '04_smooth_per_100K'; data_dir.mkdir(exist_ok=True)
     figures_dir = current_dir / 'figures'; figures_dir.mkdir(exist_ok=True)
 
     # Prepare the original data.
@@ -371,7 +364,7 @@ def _test_plot_prediction_ratios_helper(path_to_model_weights: str, start_date_s
     df.to_csv(path_to_oxford_data, index=False)
 
     # Load the given model weights.
-    model = XPrizePredictor(path_to_model_weights, path_to_oxford_data)
+    model = ConditionalXPrizePredictor(path_to_model_weights, path_to_oxford_data)
 
     # Prepare some metadata. 
     if on_training_data: # The training evaluations should be done on earlier data.
@@ -385,15 +378,15 @@ def _test_plot_prediction_ratios_helper(path_to_model_weights: str, start_date_s
     ips_path = data_dir / f"ips_file.csv"
 
     tr_or_st_label = "tr" if on_training_data else "st"
-    figure_name = f"04_prediction_ratios_{start_date_str}_{tr_or_st_label}"
+    figure_name = f"04_smooth_per_100K_{start_date_str}_{tr_or_st_label}"
 
     # Create the prediction vectors for each country.
-    prediction_ratios_by_country: dict[str, np.ndarray] = {}
+    smooth_per_100K_by_country: dict[str, np.ndarray] = {}
     for country_i, country in enumerate(tqdm.tqdm(sorted(countries), desc="Predictions (Countries)")):
         # Check the cache for already-made results.
         pred_ratios_cache_path = data_dir / f"{country}_{start_date_str}.npy"
         if pred_ratios_cache_path.exists():
-            prediction_ratios_by_country[country] = np.load(pred_ratios_cache_path)
+            smooth_per_100K_by_country[country] = np.load(pred_ratios_cache_path)
             continue
 
         # Get the initial context & action vectors.
@@ -427,7 +420,7 @@ def _test_plot_prediction_ratios_helper(path_to_model_weights: str, start_date_s
         np.save(pred_ratios_cache_path, pred_ratios)
 
         # Add result to collection.
-        prediction_ratios_by_country[country] = pred_ratios
+        smooth_per_100K_by_country[country] = pred_ratios
 
     # Compute some additional columns on the GT data including prediction ratios. 
     df = oxford_data.prepare_cases_dataframe()
@@ -443,28 +436,28 @@ def _test_plot_prediction_ratios_helper(path_to_model_weights: str, start_date_s
     ax.axis("off")
     ax.text(0.1, 0.5, "\n".join([
         figure_name,
-        "PredictionRatios are the immediate output of the v1 LSTM model."
+        "SmoothNewCasesPer100K are the immediate output of the v2 Conditional LSTM model."
     ]), in_layout=False)
 
     plot_i = n_cols + 1
     for country in tqdm.tqdm(sorted(countries), desc="Plots (Countries)"):
         # predictions = oxford_data.process_submission(predictions, start_date, end_date)
-        prediction_ratios = prediction_ratios_by_country[country]
+        smooth_per_100K = smooth_per_100K_by_country[country]
 
         data = df[(df.Date >= start_date) & (df.Date <= end_date) & (df.GeoID == country)]
         data = data.copy()
-        data["PredictedPredictionRatio"] = prediction_ratios
+        data["PredictedSmoothPer100K"] = smooth_per_100K
 
         ax = plt.subplot(n_rows, n_cols, plot_i); plot_i += 1
         sns.set_palette(sns.husl_palette(8))
-        # plot = sns.lineplot(prediction_ratios, legend=do_legend, label="Predicted", color="red", ax=ax)
-        plot = sns.lineplot(data, x="Date", y="PredictedPredictionRatio",
-                            legend=do_legend, label="Predicted PredictionRatio", color="red", ax=ax)
-        plot = sns.lineplot(data, x="Date", y="PredictionRatio",
-                            legend=do_legend, label="Ground Truth PredictionRatio", color="black", ax=ax)
+        # plot = sns.lineplot(smooth_per_100K, legend=do_legend, label="Predicted", color="red", ax=ax)
+        plot = sns.lineplot(data, x="Date", y="PredictedSmoothPer100K",
+                            legend=do_legend, label="Predicted SmoothPer100K", color="red", ax=ax)
+        plot = sns.lineplot(data, x="Date", y="SmoothNewCasesPer100K",
+                            legend=do_legend, label="Actual SmoothPer100K", color="black", ax=ax)
         plot.get_figure().autofmt_xdate()
         ax.set_ylabel("")
-        ax.set_ylim(0.9, 1.2)
+        # ax.set_ylim(0.9, 1.2)
         ax.set_title(country)
         if do_legend:
             # Put the lower left of the bounding box at axes coordinates (0, 1.20).
@@ -477,10 +470,10 @@ def _test_plot_prediction_ratios_helper(path_to_model_weights: str, start_date_s
     print(figure_path)
 
 
-def test_plot_prediction_ratios(path_to_model_weights: str, start_date_str: str):
+def test_plot_smooth_per100k(path_to_model_weights: str, start_date_str: str):
     """Plot the immediate output of the neural network against the true data."""
-    _test_plot_prediction_ratios_helper(path_to_model_weights, start_date_str, on_training_data=False)
-    _test_plot_prediction_ratios_helper(path_to_model_weights, start_date_str, on_training_data=True)
+    _test_plot_smooth_per100K_helper(path_to_model_weights, start_date_str, on_training_data=False)
+    _test_plot_smooth_per100K_helper(path_to_model_weights, start_date_str, on_training_data=True)
 
 
 
@@ -489,7 +482,7 @@ def test_plot_prediction_ratios(path_to_model_weights: str, start_date_str: str)
 ###############################################################################
 
 
-def test_plot_input_output_pipeline(path_to_model_weights: str, start_date_str: str):
+def plot_input_output_pipeline(path_to_model_weights: str, start_date_str: str):
     """Plot the inputs to the neural network along with the raw prediction ratio outputs."""
     # Prepare some paths for output and working data. 
     current_dir = Path(__file__).parent
@@ -504,7 +497,7 @@ def test_plot_input_output_pipeline(path_to_model_weights: str, start_date_str: 
     df.to_csv(path_to_oxford_data, index=False)
 
     # Load the given model weights.
-    model = XPrizePredictor(path_to_model_weights, path_to_oxford_data)
+    model = ConditionalXPrizePredictor(path_to_model_weights, path_to_oxford_data)
 
     # Prepare some related parameters.
     start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
@@ -521,8 +514,12 @@ def test_plot_input_output_pipeline(path_to_model_weights: str, start_date_str: 
     plot_i = n_cols + 1
     do_legend = True
 
+    # Prep GT data
+    df_orig = oxford_data.prepare_cases_dataframe()
+
+
     # Create the context vectors for each country and plot them.
-    for country_i, country in tqdm.tqdm(enumerate(sorted(countries)), desc="test_plot_input_output_pipeline (Countries)", total=len(countries)):
+    for country_i, country in tqdm.tqdm(enumerate(sorted(countries)), desc="plot_input_output_pipeline (Countries)", total=len(countries)):
         # Get the initial context & action vectors.
         context, action = model._initial_context_action_vectors([country], start_date)
         context = context[country] # shape (Days, 1)
@@ -544,10 +541,15 @@ def test_plot_input_output_pipeline(path_to_model_weights: str, start_date_str: 
         cnpis_df = npis_df[npis_df.GeoID == country] # TODO double check this isn't empty
         npis_sequence = np.array(cnpis_df[NPI_COLUMNS]) # shape (PredictionDates, NPIs)
         # Get the predictions with the passed NPIs
-        pred_ratios = model._roll_out_predictions(model.predictor, # shape (PredictionDates,)
+        pred_smooth_per100k = model._roll_out_predictions(model.predictor, # shape (PredictionDates,)
                                                   context,
                                                   action,
                                                   npis_sequence)
+
+        # Add the GT data.
+        data = df_orig[(df_orig.Date >= start_date) & (df_orig.Date <= end_date) & (df_orig.GeoID == country)]
+        data = data.copy()
+        data["PredictedSmoothPer100K"] = pred_smooth_per100k
 
         # Plot the predictions.
         row = 1 + 2 * (country_i // n_cols) # Skip the first row, then 2 rows per country.
@@ -557,17 +559,23 @@ def test_plot_input_output_pipeline(path_to_model_weights: str, start_date_str: 
         plt.subplots_adjust(hspace=0)
         sns.set_palette(sns.husl_palette(8))
         plot = sns.lineplot(
-            x=cnpis_df.Date,
-            y=pred_ratios, 
-            color="red", legend=do_legend, label="Prediction Ratios", ax=ax)
+            x=data.Date,
+            y=data.PredictedSmoothPer100K, 
+            color="red", legend=do_legend, label="Predicted SmoothPer100K", ax=ax)
+        plot = sns.lineplot(
+            x=data.Date,
+            y=data.SmoothNewCasesPer100K, 
+            color="black", legend=do_legend, label="Actual SmoothPer100K", ax=ax)
         plot.get_figure().autofmt_xdate()
         ax.set_ylabel("")
         ax.set_title(country)
-        ax.axhline(y=1.0, color='blue', linestyle='--', alpha=0.8) # Show the identity prediction ratio.
+
+
+        # ax.axhline(y=1.0, color='blue', linestyle='--', alpha=0.8) # Show the identity prediction ratio.
         # Also show the 2% increase and decrease ratios. (Remark: these two are not actually inverse operations.)
-        r = 0.02
-        ax.axhline(y=1+r, color='blue', linestyle='--',  alpha=0.4) 
-        ax.axhline(y=1-r, color='blue', linestyle='--',  alpha=0.4)
+        # r = 0.02
+        # ax.axhline(y=1+r, color='blue', linestyle='--',  alpha=0.4) 
+        # ax.axhline(y=1-r, color='blue', linestyle='--',  alpha=0.4)
 
         if do_legend:
             # Put the lower left of the bounding box at axes coordinates (0, 1.20).
@@ -589,14 +597,14 @@ def test_plot_input_output_pipeline(path_to_model_weights: str, start_date_str: 
     plot_i = 1
     ax = plt.subplot(n_rows, n_cols, plot_i); plot_i += 1
     debug = "\n".join([
-        f"test_plot_pred_ratios: Prediction Ratios output along with plus/minus {r:.2} marks (blue dashes).",
-        f"Prediction Ratios are the raw output of the V1 LSTM-based neural network.",
+        f"input_output_pipeline: SmoothNewCasesPer100K output.",
+        f"SmoothNewCasesPer100K are the raw output of the V2 Conditional LSTM-based neural network.",
         f"Below is the NPIs, divided by the max possible value in each NPI.",
     ])
     ax.axis("off")
     ax.text(0, 1, debug)
 
-    figure_path = figures_dir / f"03_pred_ratios_{start_date}.png"
+    figure_path = figures_dir / f"03_input_output_pipeline_{start_date}.png"
     plt.tight_layout()
     plt.savefig(figure_path, dpi=100)
     print(figure_path)
@@ -622,7 +630,7 @@ def test_plot_initial_context(path_to_model_weights: str, start_date_str: str):
     df.to_csv(path_to_oxford_data, index=False)
 
     # Load the given model weights.
-    model = XPrizePredictor(path_to_model_weights, path_to_oxford_data)
+    model = ConditionalXPrizePredictor(path_to_model_weights, path_to_oxford_data)
 
     # Prepare some related parameters.
     start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
@@ -667,6 +675,14 @@ def test_plot_initial_context(path_to_model_weights: str, start_date_str: str):
 ###############################################################################
 
 
+def test_predictions_path(country, start_date_str) -> Path:
+    directory = Path(__file__).parent / 'data' / '01_predictions'; directory.mkdir(exist_ok=True)
+    name_parts = []
+    name_parts.append(f'country{country.replace(" ", "_")}')
+    name_parts.append(start_date_str)
+    return directory / ('_'.join(name_parts) + '.csv')
+
+
 def test_plot_predictions(path_to_model_weights: str, start_date_str: str):
     print(f"test_plot_predictions:")
     print(f"    path_to_model_weights: {path_to_model_weights}")
@@ -682,6 +698,7 @@ def _test_plot_predictions_helper(path_to_model_weights: str, start_date_str: st
     plots_dir = current_dir / 'plots'; plots_dir.mkdir(exist_ok=True)
     data_dir = current_dir / 'data'; data_dir.mkdir(exist_ok=True)
     figures_dir = current_dir / 'figures'; figures_dir.mkdir(exist_ok=True)
+    tr_or_st_label = "tr" if on_training_data else "st"
 
     # Prepare the original data.
     df = oxford_data.load_original_oxford_data()
@@ -690,9 +707,9 @@ def _test_plot_predictions_helper(path_to_model_weights: str, start_date_str: st
     df.to_csv(path_to_oxford_data, index=False)
 
     # Load the given model weights.
-    model = XPrizePredictor(path_to_model_weights, path_to_oxford_data)
+    model = ConditionalXPrizePredictor(path_to_model_weights, path_to_oxford_data)
 
-    # Create the model predictions. 
+    # Prepare some metadata.
     if on_training_data: # The training evaluations should be done on earlier data.
         pred_start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
         start_date: datetime = pred_start_date - timedelta(days=60)
@@ -702,6 +719,9 @@ def _test_plot_predictions_helper(path_to_model_weights: str, start_date_str: st
     end_date = start_date + timedelta(days=30)
     countries = _most_affected_countries(df, 30, 50)
     ips_path = data_dir / f"ips_file.csv"
+    figure_name = f"01_final_predictions_{start_date_str}_{tr_or_st_label}.png"
+
+    # Create the model predictions. 
     for country in tqdm.tqdm(countries, desc="Predictions (Countries)"):
         # Skip if already predicted.
         predictions_path = test_predictions_path(country, start_date_str)
@@ -727,6 +747,13 @@ def _test_plot_predictions_helper(path_to_model_weights: str, start_date_str: st
     n_rows = int(np.floor(np.sqrt(n_countries))) + 2
     n_cols = int(np.ceil(n_countries / n_rows))
     fig = plt.figure(figsize=(3 * n_cols, 2 * n_rows))
+    ax = plt.subplot(n_rows, n_cols, 1)
+    ax.axis("off")
+    ax.text(0.1, 0.5, "\n".join([
+        figure_name,
+        "The true predictions from the model."
+    ]), in_layout=False)
+
     plot_i = n_cols + 1
     do_legend = True
     for country in tqdm.tqdm(sorted(countries), desc="Plots (Countries)"):
@@ -742,6 +769,8 @@ def _test_plot_predictions_helper(path_to_model_weights: str, start_date_str: st
         sns.set_palette(sns.husl_palette(8))
         plot = sns.lineplot(predictions, x="Date", y="PredictedDailyNewCases7DMA", legend=do_legend, label="Predicted", color="red", ax=ax)
         plot = sns.lineplot(gt         , x="Date", y="ActualDailyNewCases7DMA", legend=do_legend, label="Ground Truth", color="black", ax=ax)
+        plot = sns.lineplot(predictions, x="Date", y="PredictedDailyNewCases", legend=do_legend, label="Predicted", color="red", ax=ax, linestyle='--')
+        plot = sns.lineplot(gt         , x="Date", y="ActualDailyNewCases", legend=do_legend, label="Ground Truth", color="black", ax=ax, linestyle='--')
         plot.get_figure().autofmt_xdate()
         ax.set_ylabel("")
         ax.set_title(country)
@@ -750,8 +779,7 @@ def _test_plot_predictions_helper(path_to_model_weights: str, start_date_str: st
             sns.move_legend(ax, "lower left", bbox_to_anchor=(0, 1.20))
             do_legend = False
 
-    tr_or_st_label = "tr" if on_training_data else "st"
-    figure_path = figures_dir / f"01_final_predictions_{start_date_str}_{tr_or_st_label}.png"
+    figure_path = figures_dir / figure_name
     plt.tight_layout()
     plt.savefig(figure_path, dpi=100)
     print(figure_path)
@@ -765,11 +793,11 @@ def main(path_to_model_weights: str, start_date_str: str):
     print(f"    path_to_model_weights: {path_to_model_weights}")
     print(f"    start_date_str: {start_date_str}")
     test_plot_predictions(path_to_model_weights, start_date_str)
-    test_plot_initial_context(path_to_model_weights, start_date_str)
-    test_plot_input_output_pipeline(path_to_model_weights, start_date_str)
-    test_plot_prediction_ratios(path_to_model_weights, start_date_str)
-    test_artificial_data(path_to_model_weights, start_date_str)
-    test_train_predict_pipeline()
+    # test_plot_initial_context(path_to_model_weights, start_date_str)
+    # plot_input_output_pipeline(path_to_model_weights, start_date_str)
+    # test_plot_smooth_per100k(path_to_model_weights, start_date_str)
+    # test_artificial_data(path_to_model_weights, start_date_str)
+    # test_train_predict_pipeline()
 
 
 if __name__ == '__main__':
@@ -777,7 +805,7 @@ if __name__ == '__main__':
 
     parser.add_argument("--path_to_model_weights",
                         help="path to LSTM weights",
-                        default="/Users/964353/PandemicResilience/Cognizant/models/scenario2_lstm_trained_model_weights.h5")
+                        default="/Users/964353/PandemicResilience/Cognizant/models/scenario2_conditional_lstm_trained_model_weights.h5")
     
     # Scenario 2: Argentina, 2021-03-1 - 2021-04-31
     # Scenario 4: Kenya, 2020-10-01 - 2020-11-30
