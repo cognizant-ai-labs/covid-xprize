@@ -223,8 +223,8 @@ def prepare_cases_dataframe(data_url: str = None) -> pd.DataFrame:
     df['DeathRatio'] = df.groupby('GeoID', group_keys=False).SmoothNewDeaths.pct_change(
     ).fillna(0).replace(np.inf, 0) + 1
 
-    # Add column for proportion of population infected
-    df['ProportionInfected'] = df['ConfirmedCases'] / df['Population']
+    # Add column for proportion of population infected on the previous day
+    df['ProportionInfected'] = (df['ConfirmedCases'] - df['NewCases']) / df['Population']
 
     # Create column of value to predict
     df['PredictionRatio'] = df['CaseRatio'] / (1 - df['ProportionInfected'])
