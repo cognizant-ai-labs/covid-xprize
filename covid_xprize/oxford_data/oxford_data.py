@@ -337,6 +337,14 @@ def convert_smooth_cases_per_100K_to_new_cases(smooth_cases_per_100K,
                                                window_size,
                                                prev_new_cases_list,
                                                pop_size):
+    """Process a list of smooth cases per 100k population into a list of daily new cases.
+    :param smooth_cases_per_100K: Shape (PredictionDays,)
+        A column corresponding to the SmoothNewCasesPer100K column.
+    :param window_size: The number of days in the smoothing window.
+    :param prev_new_cases_list: The NewCases column values prior to, but not including, the given day.
+    :param pop_size: The population of the region.
+    :return: NewCases, an array corresponding to the input smooth_cases_per_100K.
+    """
     # Smooth cases per 100K -> Smooth cases
     smooth_cases = (pop_size / 100000.) * smooth_cases_per_100K
     # Solve:
@@ -361,7 +369,7 @@ def convert_prediction_ratios_to_new_cases(ratios: np.ndarray,
         A column corresponding to the PredictionRatio.
     :param window_size: The number of days in the smoothing window.
     :param prev_new_cases: Shape (SmoothingWindow,). The array of NewCases leading up to the prediction window.
-    :param initial_total_cases: The value of ConfirmedCases indicating the total cases on the first day of the prediction window.
+    :param initial_total_cases: The value of ConfirmedCases indicating the total cases on the day prior to the prediction window.
     :param pop_size: The population of the region.
     :return: NewCases, an array corresponding to the input ratios.
     """
@@ -391,33 +399,8 @@ def convert_ratio_to_new_cases(ratio: float,
     :param ratio: The value of PredictionRatio on the given day.
     :param window_size: The number of days in the smoothing window.
     :param prev_new_cases_list: The NewCases column values prior to, but not including, the given day.
-    :param prev_pct_infected: The value of the ProportionInfected column on the given day. 
+    :param prev_pct_infected: The value of the ProportionInfected column on the prior day. 
     :return: The value of the NewCases column on the given day."""
-    # if len(prev_new_cases_list) < window_size:
-    #     raise TypeError("System needs more samples for conversion.")
-    # # Find the inverse transformation:
-    # # PredictionRatio = CaseRatio / (1 - ProportionInfected)
-    # # => CaseRatio = (1 - ProportionInfected) * PredictionRatio
-    # case_ratio = ratio * (1 - prev_pct_infected)
-    
-
-    # # PredictionRatio = CaseRatio / (1 - ProportionInfected)
-    # # => (1 - ProportionInfected) = CaseRatio/PredictionRatio
-    # # => 1 - CaseRatio/PredictionRatio = ProportionInfected
-    # # => CaseRatio = (1 - ProportionInfected) * PredictionRatio
-    # case_ratio = ratio * (1 - prev_pct_infected)
-
-    # # Find the inverse transformation:
-    # # CaseRatio[1] = SmoothNewCases[1] / SmoothNewCases[0]
-    # # => SmoothNewCases[1] = CaseRatio[1] * SmoothNewCases[0]
-    # smooth_new_cases = case_ratio * np.mean(prev_new_cases_list[-window_size:])
-    
-    # # Find the inverse transformation:
-    # # SmoothNewCases[7] = (1/7) * (NewCases[1] + ... + NewCases[7])
-    # # => NewCases[7] = 7 * SmoothNewCases[7] - (NewCases[1] + ... + NewCases[6])
-    # new_cases = window_size * smooth_new_cases - np.sum(prev_new_cases_list[-(window_size-1):])
-    # return new_cases
-
     return (ratio * (1 - prev_pct_infected) - 1) * \
             (window_size * np.mean(prev_new_cases_list[-window_size:])) \
             + prev_new_cases_list[-window_size]
@@ -514,14 +497,14 @@ def most_affected_countries(df: pd.DataFrame, nb_geos: int, min_historical_days:
     return geos
 
 
-def most_affected_geos(df, nb_geos, min_historical_days):
+def most_affected_geos(df: pd.DataFrame, nb_geos: int, min_historical_days: int) -> list[str]:
     """
     Returns the list of most affected countries, in terms of confirmed deaths.
     :param df: the data frame containing the historical data
     :param nb_geos: the number of countries to return
     :param min_historical_days: the minimum days of historical data the countries must have
-    :return: a list of country names of size nb_geos if there were enough, and otherwise a list of all the
-    country names that have at least min_look_back_days data points.
+    :return: a list of GeoIDs of size nb_geos if there were enough, and otherwise a list of all the
+    GeoIDs that have at least min_look_back_days data points.
     """
     # By default use most affected countries with enough history
     gdf = df.groupby('GeoID')['ConfirmedDeaths'].agg(['max', 'count']).sort_values(by='max', ascending=False)

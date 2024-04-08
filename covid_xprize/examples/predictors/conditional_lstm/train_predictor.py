@@ -21,7 +21,7 @@ from keras.models import Model
 from keras.constraints import Constraint
 
 from covid_xprize.examples.predictors.conditional_lstm.conditional_lstm_model import construct_conditional_lstm_model
-from covid_xprize.oxford_data import most_affected_countries, create_country_samples, threshold_min_cases
+from covid_xprize.oxford_data import most_affected_geos, create_country_samples, threshold_min_cases
 
 
 def construct_model(nb_context: int, nb_action: int, lstm_size: int = 32, nb_lookback_days: int = 21) -> Model:
@@ -82,8 +82,8 @@ def train_predictor(training_data: pd.DataFrame,
     if nb_testing_geos == None: # Use all countries
         nb_testing_geos = len(df.GeoID.unique())
 
-    train_countries = most_affected_countries(df, nb_training_geos, nb_lookback_days)
-    test_countries = most_affected_countries(df, nb_testing_geos, nb_lookback_days)
+    train_countries = most_affected_geos(df, nb_training_geos, nb_lookback_days)
+    test_countries = most_affected_geos(df, nb_testing_geos, nb_lookback_days)
 
     # Create numpy arrays for Keras for each country
     if nb_training_geos > nb_testing_geos:
