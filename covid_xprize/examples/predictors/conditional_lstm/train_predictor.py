@@ -21,7 +21,7 @@ from keras.models import Model
 from keras.constraints import Constraint
 
 from covid_xprize.examples.predictors.conditional_lstm.conditional_lstm_model import construct_conditional_lstm_model
-from covid_xprize.oxford_data import most_affected_countries, create_country_samples, threshold_min_cases
+from covid_xprize.oxford_data import most_affected_geos, create_country_samples, threshold_min_cases
 
 
 def construct_model(nb_context: int, nb_action: int, lstm_size: int = 32, nb_lookback_days: int = 21) -> Model:
@@ -82,8 +82,8 @@ def train_predictor(training_data: pd.DataFrame,
     if nb_testing_geos == None: # Use all countries
         nb_testing_geos = len(df.GeoID.unique())
 
-    train_countries = most_affected_countries(df, nb_training_geos, nb_lookback_days)
-    test_countries = most_affected_countries(df, nb_testing_geos, nb_lookback_days)
+    train_countries = most_affected_geos(df, nb_training_geos, nb_lookback_days)
+    test_countries = most_affected_geos(df, nb_testing_geos, nb_lookback_days)
 
     # Create numpy arrays for Keras for each country
     if nb_training_geos > nb_testing_geos:
@@ -224,7 +224,7 @@ def _lstm_roll_out_predictions(model, initial_context_input, initial_action_inpu
     for d in range(nb_test_days):
         action_input[:, :-1] = action_input[:, 1:]
         action_input[:, -1] = future_action_sequence[d]
-        pred = model.predict([context_input, action_input])
+        pred = model.predict([context_input, action_input], verbose=0)
         pred_output[d] = pred
         context_input[:, :-1] = context_input[:, 1:]
         context_input[:, -1] = pred
@@ -237,7 +237,7 @@ def _lstm_get_test_rollouts(model, df, top_countries, country_samples, context_c
     for c in top_countries:
         X_test_context = country_samples[c]['X_test_context']
         X_test_action = country_samples[c]['X_test_action']
-        country_indep[c] = model.predict([X_test_context, X_test_action])
+        country_indep[c] = model.predict([X_test_context, X_test_action], verbose=0)
 
         initial_context_input = country_samples[c]['X_test_context'][0]
         initial_action_input = country_samples[c]['X_test_action'][0]

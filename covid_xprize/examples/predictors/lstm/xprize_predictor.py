@@ -3,6 +3,7 @@
 import os
 import urllib.request
 
+
 # Suppress noisy Tensorflow debug logging
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -19,7 +20,8 @@ from keras.layers import Lambda
 from keras.models import Model
 
 from covid_xprize.oxford_data import prepare_cases_dataframe, load_ips_file, create_country_samples, NPI_COLUMNS, \
-                                     create_prediction_initial_context_and_action_vectors
+                                     create_prediction_initial_context_and_action_vectors, convert_ratio_to_new_cases
+from covid_xprize import oxford_data
 
 CONTEXT_COLUMN = 'PredictionRatio'
 NB_LOOKBACK_DAYS = 21
@@ -67,6 +69,11 @@ class XPrizePredictor(object):
                 start_date_str: str,
                 end_date_str: str,
                 path_to_ips_file: str) -> pd.DataFrame:
+        """Main predict function following a standard interface.
+        :param start_date_str: Prediction start date, in format '%Y-%m-%d'.
+        :param end_date_str: Prediction end date, in format '%Y-%m-%d'.
+        :param path_to_ips_file: Path to a CSV file containing the intervention plan for the prediction period.
+        """
         start_date = pd.to_datetime(start_date_str, format='%Y-%m-%d')
         end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
         nb_days = (end_date - start_date).days + 1
@@ -84,33 +91,33 @@ class XPrizePredictor(object):
         geos = npis_df.GeoID.unique()
 
         # Prepare context vectors.
-        initial_context, initial_action = create_prediction_initial_context_and_action_vectors(
-            self.df,
-            geos,
-            CONTEXT_COLUMN,
-            start_date,
-            NB_LOOKBACK_DAYS,
-        )
+        initial_context, initial_action = self._initial_context_action_vectors(geos, start_date)
+
+        # Make predictions for each GeoID asked for.
         for g in geos:
             cdf = self.df[self.df.GeoID == g]
             if len(cdf) == 0:
                 # we don't have historical data for this geo: return zeroes
+                geo_pred_start_date = start_date
                 pred_new_cases = [0] * nb_days
-                geo_start_date = start_date
             else:
+                # Start predicting from start_date, unless there's a gap since last known date,
+                #   in which case regenerate the entire timeline since the last known data.
                 last_known_date = cdf.Date.max()
-                # Start predicting from start_date, unless there's a gap since last known date
-                geo_start_date = min(last_known_date + np.timedelta64(1, 'D'), start_date)
-                npis_gdf = npis_df[(npis_df.Date >= geo_start_date) & (npis_df.Date <= end_date)]
-                pred_new_cases = self._get_new_cases_preds(cdf, g, npis_gdf, initial_context[g], initial_action[g])
+                geo_pred_start_date = min(last_known_date + np.timedelta64(1, 'D'), start_date)
+
+                # Make the predictions.
+                pred_new_cases = self._get_new_cases_preds(cdf, g, npis_df, initial_context[g], initial_action[g], geo_pred_start_date, end_date)
+
+            # Read some meta columns from the first row of the NPIs.
+            country = npis_df[npis_df.GeoID == g].iloc[0].CountryName
+            region  = npis_df[npis_df.GeoID == g].iloc[0].RegionName
 
             # Append forecast data to results to return
-            country = npis_df[npis_df.GeoID == g].iloc[0].CountryName
-            region = npis_df[npis_df.GeoID == g].iloc[0].RegionName
             for i, pred in enumerate(pred_new_cases):
                 forecast["CountryName"].append(country)
                 forecast["RegionName"].append(region)
-                current_date = geo_start_date + pd.offsets.Day(i)
+                current_date = geo_pred_start_date + pd.offsets.Day(i)
                 forecast["Date"].append(current_date)
                 forecast["PredictedDailyNewCases"].append(pred)
 
@@ -118,23 +125,38 @@ class XPrizePredictor(object):
         # Return only the requested predictions
         return forecast_df[(forecast_df.Date >= start_date) & (forecast_df.Date <= end_date)]
 
-    def _get_new_cases_preds(self, c_df, g, npis_df, initial_context_input, initial_action_input):
-        cdf = c_df[c_df.ConfirmedCases.notnull()]
-        # Predictions with passed npis
-        cnpis_df = npis_df[npis_df.GeoID == g]
-        npis_sequence = np.array(cnpis_df[NPI_COLUMNS])
+    def _initial_context_action_vectors(self, geos, start_date):
+        return create_prediction_initial_context_and_action_vectors(
+            self.df,
+            geos,
+            CONTEXT_COLUMN,
+            start_date,
+            NB_LOOKBACK_DAYS,
+        )
+
+    def _get_new_cases_preds(self, c_df, g, npis_df, initial_context_input, initial_action_input, start_date, end_date) -> np.ndarray:
+        """Run the neural network to compute the context column, and convert the context column to new cases.
+        :return: An array of NewCases as predicted by the network."""
+        # Extract an array of the NPI data.
+        cnpis_df = npis_df[ (npis_df.Date >= start_date) & (npis_df.Date <= end_date) & # Match NPIs in prediction window;
+                            (npis_df.GeoID == g)]                                       # Match NPIs for region.
+        npis_sequence = np.array(cnpis_df[NPI_COLUMNS]) # shape (PredictionDates, NPIs)
+
         # Get the predictions with the passed NPIs
         preds = self._roll_out_predictions(self.predictor,
                                            initial_context_input,
                                            initial_action_input,
                                            npis_sequence)
+        
         # Gather info to convert to total cases
-        prev_confirmed_cases = np.array(cdf.ConfirmedCases)
-        prev_new_cases = np.array(cdf.NewCases)
-        initial_total_cases = prev_confirmed_cases[-1]
+        cdf = c_df[c_df.ConfirmedCases.notnull()]
+        prev_cdf = cdf[cdf.Date < start_date]
+        prev_new_cases      = np.array(prev_cdf.NewCases)
+        initial_total_cases = np.array(prev_cdf.ConfirmedCases)[-1]
         pop_size = np.array(cdf.Population)[-1]  # Population size doesn't change over time
+        
         # Compute predictor's forecast
-        pred_new_cases = self._convert_ratios_to_total_cases(
+        pred_new_cases = oxford_data.convert_prediction_ratios_to_new_cases(
             preds,
             WINDOW_SIZE,
             prev_new_cases,
@@ -143,25 +165,9 @@ class XPrizePredictor(object):
 
         return pred_new_cases
 
-
     @staticmethod
-    def _load_original_data(data_url):
-        latest_df = pd.read_csv(data_url,
-                                parse_dates=['Date'],
-                                encoding="ISO-8859-1",
-                                dtype={"RegionName": str,
-                                       "RegionCode": str},
-                                on_bad_lines='skip')
-        # GeoID is CountryName / RegionName
-        # np.where usage: if A then B else C
-        latest_df["GeoID"] = np.where(latest_df["RegionName"].isnull(),
-                                      latest_df["CountryName"],
-                                      latest_df["CountryName"] + ' / ' + latest_df["RegionName"])
-        return latest_df
-
-    # Function for performing roll outs into the future
-    @staticmethod
-    def _roll_out_predictions(predictor, initial_context_input, initial_action_input, future_action_sequence):
+    def _roll_out_predictions(predictor, initial_context_input, initial_action_input, future_action_sequence) -> np.ndarray:
+        """Run the neural network autoregressively to compute a prediction of the context column."""
         nb_roll_out_days = future_action_sequence.shape[0]
         pred_output = np.zeros(nb_roll_out_days)
         context_input = np.expand_dims(np.copy(initial_context_input), axis=0)
@@ -171,48 +177,11 @@ class XPrizePredictor(object):
             # Use the passed actions
             action_sequence = future_action_sequence[d]
             action_input[:, -1] = action_sequence
-            pred = predictor.predict([context_input, action_input])
+            pred = predictor.predict([context_input, action_input], verbose=0)
             pred_output[d] = pred
             context_input[:, :-1] = context_input[:, 1:]
             context_input[:, -1] = pred
         return pred_output
-
-    # Functions for converting predictions back to number of cases
-    @staticmethod
-    def _convert_ratio_to_new_cases(ratio,
-                                    window_size,
-                                    prev_new_cases_list,
-                                    prev_pct_infected):
-        return (ratio * (1 - prev_pct_infected) - 1) * \
-               (window_size * np.mean(prev_new_cases_list[-window_size:])) \
-               + prev_new_cases_list[-window_size]
-
-    def _convert_ratios_to_total_cases(self,
-                                       ratios,
-                                       window_size,
-                                       prev_new_cases,
-                                       initial_total_cases,
-                                       pop_size):
-        new_new_cases = []
-        prev_new_cases_list = list(prev_new_cases)
-        curr_total_cases = initial_total_cases
-        for ratio in ratios:
-            new_cases = self._convert_ratio_to_new_cases(ratio,
-                                                         window_size,
-                                                         prev_new_cases_list,
-                                                         curr_total_cases / pop_size)
-            # new_cases can't be negative!
-            new_cases = max(0, new_cases)
-            # Which means total cases can't go down
-            curr_total_cases += new_cases
-            # Update prev_new_cases_list for next iteration of the loop
-            prev_new_cases_list.append(new_cases)
-            new_new_cases.append(new_cases)
-        return new_new_cases
-
-    @staticmethod
-    def _smooth_case_list(case_list, window):
-        return pd.Series(case_list).rolling(window).mean().to_numpy()
 
     def train(self, num_trials=NUM_TRIALS, num_epochs=NUM_EPOCHS, return_all_trials=False):
         """Trains the weights of the predictor model on a prediction loss.
@@ -404,7 +373,7 @@ class XPrizePredictor(object):
         for d in range(nb_test_days):
             action_input[:, :-1] = action_input[:, 1:]
             action_input[:, -1] = future_action_sequence[d]
-            pred = model.predict([context_input, action_input])
+            pred = model.predict([context_input, action_input], verbose=0)
             pred_output[d] = pred
             context_input[:, :-1] = context_input[:, 1:]
             context_input[:, -1] = pred
@@ -415,27 +384,28 @@ class XPrizePredictor(object):
         country_preds = {}
         country_cases = {}
         for g in top_geos:
-            X_test_context = country_samples[g]['X_test_context']
-            X_test_action = country_samples[g]['X_test_action']
-            country_indep[g] = model.predict([X_test_context, X_test_action])
+            X_test_context = country_samples[g]['X_test_context'] # shape (TestDays, LookbackDays, Context)
+            X_test_action  = country_samples[g]['X_test_action']  # shape (TestDays, LookbackDays, Actions)
+            country_indep[g] = model.predict([X_test_context, X_test_action], verbose=0) # shape (TestDays, Context)
 
-            initial_context_input = country_samples[g]['X_test_context'][0]
-            initial_action_input = country_samples[g]['X_test_action'][0]
-            y_test = country_samples[g]['y_test']
+            initial_context_input = country_samples[g]['X_test_context'][0] # shape (LookbackDays, Context)
+            initial_action_input  = country_samples[g]['X_test_action'][0]  # shape (LookbackDays, Actions)
+            y_test = country_samples[g]['y_test'] # shape (TestDays,)
 
             nb_test_days = y_test.shape[0]
             nb_actions = initial_action_input.shape[-1]
 
-            future_action_sequence = np.zeros((nb_test_days, nb_actions))
+            future_action_sequence = np.zeros((nb_test_days, nb_actions)) # shape (TestDays, Actions)
             future_action_sequence[:nb_test_days] = country_samples[g]['X_test_action'][:, -1, :]
             current_action = country_samples[g]['X_test_action'][:, -1, :][-1]
             future_action_sequence[14:] = current_action
             preds = self._lstm_roll_out_predictions(model,
                                                     initial_context_input,
                                                     initial_action_input,
-                                                    future_action_sequence)
-            country_preds[g] = preds
+                                                    future_action_sequence) # preds shape (TestDays,)
+            country_preds[g] = preds # shape (TestDays,)
 
+            # All the data prior to the start of the prediction window.
             prev_confirmed_cases = np.array(
                 df[df.GeoID == g].ConfirmedCases)[:-nb_test_days]
             prev_new_cases = np.array(
@@ -443,7 +413,7 @@ class XPrizePredictor(object):
             initial_total_cases = prev_confirmed_cases[-1]
             pop_size = np.array(df[df.GeoID == g].Population)[0]
 
-            pred_new_cases = self._convert_ratios_to_total_cases(
+            pred_new_cases = oxford_data.convert_prediction_ratios_to_new_cases(
                 preds, WINDOW_SIZE, prev_new_cases, initial_total_cases, pop_size)
             country_cases[g] = pred_new_cases
 

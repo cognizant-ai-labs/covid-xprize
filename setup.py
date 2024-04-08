@@ -7,7 +7,7 @@ import os
 import sys
 from setuptools import setup, find_packages
 
-LIBRARY_VERSION = '2.0.3'
+LIBRARY_VERSION = '2.1.0'
 
 CURRENT_PYTHON = sys.version_info[:2]
 REQUIRED_PYTHON = (3, 10)
