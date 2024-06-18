@@ -64,7 +64,7 @@ setup(
         'neat-python==0.92',
         'numpy==1.24.2',
         'pandas==1.5.3',
-        'scikit-learn==1.2.2',
+        'scikit-learn==1.5.0',
         'scipy==1.10.1',
         'setuptools==67.6.0',
         'tensorflow==2.13.0',
