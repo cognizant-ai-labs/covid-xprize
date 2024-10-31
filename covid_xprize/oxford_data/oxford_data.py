@@ -111,6 +111,7 @@ def _add_geoid_column(df: pd.DataFrame) -> None:
     df["GeoID"] = np.where( df["RegionName"].isnull(),
                             df["CountryName"],
                             df["CountryName"] + ' / ' + df["RegionName"])
+    return df
 
 
 def load_ips_file(file_path: str) -> pd.DataFrame:
@@ -177,13 +178,17 @@ def add_population_column(df: pd.DataFrame) -> pd.DataFrame:
     return df.merge(pop_df[['GeoID', 'Population']], on=['GeoID'], how='left', suffixes=('', '_y'))
 
 
-def prepare_cases_dataframe(data_url: str) -> pd.DataFrame:
+def prepare_cases_dataframe(data_url: str = None) -> pd.DataFrame:
     """
     Loads the cases dataset from the given file, cleans it, and computes cases columns.
     :param data_url: the url containing the original data
     :return: a Pandas DataFrame with the historical data
     """
-    df = load_ips_file(data_url)
+    if data_url is None:
+        df = load_original_oxford_data()
+        _add_geoid_column(df)
+    else:
+        df = load_ips_file(data_url)
 
     # Additional context df (e.g Population for each country)
     df = add_population_column(df)
@@ -218,8 +223,8 @@ def prepare_cases_dataframe(data_url: str) -> pd.DataFrame:
     df['DeathRatio'] = df.groupby('GeoID', group_keys=False).SmoothNewDeaths.pct_change(
     ).fillna(0).replace(np.inf, 0) + 1
 
-    # Add column for proportion of population infected
-    df['ProportionInfected'] = df['ConfirmedCases'] / df['Population']
+    # Add column for proportion of population infected on the previous day
+    df['ProportionInfected'] = (df['ConfirmedCases'] - df['NewCases']) / df['Population']
 
     # Create column of value to predict
     df['PredictionRatio'] = df['CaseRatio'] / (1 - df['ProportionInfected'])
@@ -328,35 +333,182 @@ def create_prediction_initial_context_and_action_vectors(
     return context_vectors, action_vectors
 
 
-def most_affected_countries(df, nb_countries, min_historical_days):
-    """
-    Returns the list of most affected countries, in terms of confirmed deaths.
-    :param df: the data frame containing the historical data
-    :param nb_countries: the number of countries to return
-    :param min_historical_days: the minimum days of historical data the countries must have
-    :return: a list of country names of size nb_countries if there were enough, and otherwise a list of all the
-    country names that have at least min_look_back_days data points.
-    """
-    # By default use most affected countries with enough history
-    gdf = df.groupby('GeoID')['ConfirmedDeaths'].agg(['max', 'count']).sort_values(by='max', ascending=False)
-    filtered_gdf = gdf[gdf["count"] > min_historical_days]
-    countries = list(filtered_gdf.head(nb_countries).index)
-    return countries
-
-
 def convert_smooth_cases_per_100K_to_new_cases(smooth_cases_per_100K,
                                                window_size,
                                                prev_new_cases_list,
                                                pop_size):
-    return (((window_size * pop_size) / 100000.) * smooth_cases_per_100K \
-            - np.sum(prev_new_cases_list[-(window_size-1):])).clip(min=0.0)
+    """Process a list of smooth cases per 100k population into a list of daily new cases.
+    :param smooth_cases_per_100K: Shape (PredictionDays,)
+        A column corresponding to the SmoothNewCasesPer100K column.
+    :param window_size: The number of days in the smoothing window.
+    :param prev_new_cases_list: The NewCases column values prior to, but not including, the given day.
+    :param pop_size: The population of the region.
+    :return: NewCases, an array corresponding to the input smooth_cases_per_100K.
+    """
+    # Smooth cases per 100K -> Smooth cases
+    smooth_cases = (pop_size / 100000.) * smooth_cases_per_100K
+    # Solve:
+    # (new_cases[-6:].sum() + x) / 7 = smooth_cases[0]
+    # x = smooth_cases[0] * 7 - new_cases[-6:].sum()
+    all_unsmooth_cases = np.zeros(smooth_cases_per_100K.shape[0] + window_size)
+    all_unsmooth_cases[:window_size] = prev_new_cases_list[-window_size:]
+    for i in range(window_size, all_unsmooth_cases.shape[0]):
+        all_unsmooth_cases[i] = smooth_cases[i - window_size] * window_size - all_unsmooth_cases[i - (window_size-1): i].sum()
+    unsmooth_cases = all_unsmooth_cases[window_size:]
+    # Never return anything less than zero.
+    return unsmooth_cases.clip(min=0.0)
 
 
-def convert_ratio_to_new_cases(ratio,
-                                window_size,
-                                prev_new_cases_list,
-                                prev_pct_infected):
+def convert_prediction_ratios_to_new_cases(ratios: np.ndarray,
+                                            window_size: int,
+                                            prev_new_cases: np.ndarray,
+                                            initial_total_cases: float,
+                                            pop_size: float) -> np.ndarray:
+    """Process a list of case ratios into a list of daily new cases.
+    :param ratios: Shape (PredictionDays,)
+        A column corresponding to the PredictionRatio.
+    :param window_size: The number of days in the smoothing window.
+    :param prev_new_cases: Shape (SmoothingWindow,). The array of NewCases leading up to the prediction window.
+    :param initial_total_cases: The value of ConfirmedCases indicating the total cases on the day prior to the prediction window.
+    :param pop_size: The population of the region.
+    :return: NewCases, an array corresponding to the input ratios.
+    """
+    new_new_cases = []
+    prev_new_cases_list = list(prev_new_cases)
+    curr_total_cases = initial_total_cases
+    for ratio in ratios:
+        new_cases = convert_ratio_to_new_cases(ratio,
+                                                window_size,
+                                                prev_new_cases_list,
+                                                curr_total_cases / pop_size)
+        # new_cases can't be negative!
+        new_cases = max(0, new_cases)
+        # Which means total cases can't go down
+        curr_total_cases += new_cases
+        # Update prev_new_cases_list for next iteration of the loop
+        prev_new_cases_list.append(new_cases)
+        new_new_cases.append(new_cases)
+    return new_new_cases
+
+
+def convert_ratio_to_new_cases(ratio: float,
+                                window_size: int,
+                                prev_new_cases_list: list[float],
+                                prev_pct_infected: float) -> np.ndarray:
+    """Convert the PredictionRatio column into the NewCases column.
+    :param ratio: The value of PredictionRatio on the given day.
+    :param window_size: The number of days in the smoothing window.
+    :param prev_new_cases_list: The NewCases column values prior to, but not including, the given day.
+    :param prev_pct_infected: The value of the ProportionInfected column on the prior day. 
+    :return: The value of the NewCases column on the given day."""
     return (ratio * (1 - prev_pct_infected) - 1) * \
             (window_size * np.mean(prev_new_cases_list[-window_size:])) \
             + prev_new_cases_list[-window_size]
+
+
+def _select_meta_cases_and_deaths_cols(df: pd.DataFrame) -> pd.DataFrame:
+    desired_columns = ["CountryName", "RegionName", "Date",
+                       "ConfirmedCases", "ConfirmedDeaths",
+                       "PredictedDailyNewCases", "PredictedDailyNewDeaths"]
+    take_columns = df.columns.intersection(desired_columns)
+    return df[take_columns].copy(deep=True)
+
+
+def _cut_to_range_and_add_diffs(
+        df: pd.DataFrame,
+        start_date: datetime,
+        end_date: datetime,
+        WINDOW_SIZE: int) -> pd.DataFrame:
+    # 1 day earlier to compute the daily diff
+    start_date_for_diff = start_date - pd.offsets.Day(WINDOW_SIZE)
+    # Filter out the data set to include all the data needed to compute the diff
+    df = df[(df.Date >= start_date_for_diff) & (df.Date <= end_date)].copy(deep=True)
+    df.sort_values(by=["GeoID","Date"], inplace=True)
+    # Compute the diff
+    for src_column, tgt_column in (
+        ("ConfirmedCases", "ActualDailyNewCases"),
+        ("ConfirmedDeaths", "ActualDailyNewDeaths"),
+    ):
+        if not src_column in df.columns:
+            continue
+        df[tgt_column] = df.groupby("GeoID", group_keys=False)[src_column].diff()
+    return df
+
+
+def _moving_average_inplace(df: pd.DataFrame, src_column: str, tgt_column: str, window_size: int):
+    """In-place operation to add a moving average column.
+    :param df: The Oxford dataframe.
+    :param src_column: The name of the column to use as the data soruce.
+    :param tgt_column: The name of the column to store the moving average.
+    :param window_size: The moving average window size."""
+    df[tgt_column] = df.groupby(
+        "GeoID", group_keys=False)[src_column].rolling(
+        window_size, center=False).mean().reset_index(0, drop=True)
+
+
+def _cut_to_range_and_add_diffs_and_smooth_diffs(
+        df: pd.DataFrame,
+        start_date: datetime,
+        end_date: datetime) -> pd.DataFrame:
+    """Compute moving average columns and add them to the dataframe.
+    Works with both cases & deaths and both actual and predicted cases."""
+    df = _cut_to_range_and_add_diffs(df, start_date, end_date, WINDOW_SIZE)
+    for src_column, tgt_column in (
+        ('ActualDailyNewCases', f'ActualDailyNewCases{WINDOW_SIZE}DMA'),
+        ('ActualDailyNewDeaths', f'ActualDailyNewDeaths{WINDOW_SIZE}DMA'),
+        ('PredictedDailyNewCases', f'PredictedDailyNewCases{WINDOW_SIZE}DMA'),
+        ('PredictedDailyNewDeaths', f'PredictedDailyNewDeaths{WINDOW_SIZE}DMA'),
+        ):
+        if not src_column in df.columns:
+            continue
+        _moving_average_inplace(df, src_column, tgt_column, WINDOW_SIZE)
+    return df
+
+
+def _sort_by_id_cols(df: pd.DataFrame) -> pd.DataFrame:
+    df.sort_values(by=ID_COLS, inplace=True, ignore_index=True)
+    return df
+
+
+def process_submission(dataset: pd.DataFrame, start_date: datetime, end_date: datetime) -> pd.DataFrame:
+    df = dataset
+    df = _select_meta_cases_and_deaths_cols(df)
+    df = _add_geoid_column(df)
+    df = _cut_to_range_and_add_diffs_and_smooth_diffs(df, start_date, end_date)
+    df = _sort_by_id_cols(df)
+    return df
+
+
+def most_affected_countries(df: pd.DataFrame, nb_geos: int, min_historical_days: int) -> list[str]:
+    """
+    Returns the list of most affected countries, in terms of confirmed deaths.
+    :param df: the data frame containing the historical data
+    :param nb_geos: the number of geos to return
+    :param min_historical_days: the minimum days of historical data the countries must have
+    :return: a list of country names of size nb_countries if there were enough, and otherwise a list of all the
+    country names that have at least min_look_back_days data points.
+    """
+    # Don't include the region-level data, just the country-level summaries.
+    gdf = df[df.RegionName.isna()]
+    gdf = gdf.groupby('CountryName', group_keys=False)['ConfirmedDeaths'].agg(['max', 'count']).sort_values(
+        by='max', ascending=False)
+    filtered_gdf = gdf[gdf["count"] > min_historical_days]
+    geos = list(filtered_gdf.head(nb_geos).index)
+    return geos
+
+
+def most_affected_geos(df: pd.DataFrame, nb_geos: int, min_historical_days: int) -> list[str]:
+    """
+    Returns the list of most affected countries, in terms of confirmed deaths.
+    :param df: the data frame containing the historical data
+    :param nb_geos: the number of countries to return
+    :param min_historical_days: the minimum days of historical data the countries must have
+    :return: a list of GeoIDs of size nb_geos if there were enough, and otherwise a list of all the
+    GeoIDs that have at least min_look_back_days data points.
+    """
+    # By default use most affected countries with enough history
+    gdf = df.groupby('GeoID')['ConfirmedDeaths'].agg(['max', 'count']).sort_values(by='max', ascending=False)
+    filtered_gdf = gdf[gdf["count"] > min_historical_days]
+    countries = list(filtered_gdf.head(nb_geos).index)
+    return countries
 

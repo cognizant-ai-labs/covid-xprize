@@ -7,6 +7,8 @@ __pycache__
 .idea/
 .vscode/
 **/.DS_Store
+build/
+covid_xprize.egg-info/
 
 predictions/
 prescriptions/
@@ -20,13 +22,19 @@ covid_xprize/examples/predictors/lstm/data/OxCGRT_latest.csv
 covid_xprize/examples/predictors/lstm/models/
 covid_xprize/examples/predictors/lstm/predictions/
 covid_xprize/examples/predictors/lstm/tests/fixtures/OxCGRT_latest.csv
+covid_xprize/examples/predictors/lstm/tests/fixtures/
+covid_xprize/examples/predictors/lstm/tests/data/
+covid_xprize/examples/predictors/lstm/tests/figures/
 
 covid_xprize/examples/predictors/conditional_lstm/data/
 covid_xprize/examples/predictors/conditional_lstm/models/
 covid_xprize/examples/predictors/conditional_lstm/predictions/
 covid_xprize/examples/predictors/conditional_lstm/tests/fixtures/
+covid_xprize/examples/predictors/conditional_lstm/tests/data/
+covid_xprize/examples/predictors/conditional_lstm/tests/figures/
 
 covid_xprize/oxford_data/tests/test_OxCGRT_data.csv
+covid_xprize/oxford_data/tests/figures/
 
 *prescription_*.csv
 **/neat-checkpoint-*
