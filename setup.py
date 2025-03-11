@@ -68,7 +68,7 @@ setup(
         'scipy==1.10.1',
         'setuptools==70.0.0',
         'tensorflow==2.13.0',
-        'keras==2.13.1',
+        'keras==3.9.0',
         'h5py==3.8.0'
     ],
     description='Contains sample code and notebooks '
